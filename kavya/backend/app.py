@@ -96,19 +96,23 @@ def delete_user(user_id):
 # --- MULTIPLE FILE UPLOAD ---
 @app.route('/upload_excel', methods=['POST'])
 def upload_excel():
-    if 'files' not in request.files:
-        return jsonify({"message": "No files part in the request"}), 400
-    
+    insight_id = request.form.get('insight_id')
     files = request.files.getlist('files')
-    saved_files = []
     
+    # Save files and convert to a dictionary of DataFrames for the script
+    df_dict = {}
     for file in files:
-        if file.filename != '':
-            file_path = os.path.join(UPLOAD_FOLDER, file.filename)
-            file.save(file_path)
-            saved_files.append(file.filename)
-            
-    return jsonify({"message": f"Successfully uploaded {len(saved_files)} files"}), 200
+        df_dict[file.filename] = pd.read_excel(file)
+
+    # Route to the correct processing logic
+    result_data = {}
+    if insight_id == "PJPA39":
+        result_data = process_pjpa39.process_pjpa39(df_dict)
+    else:
+        # Fallback for other insights
+        result_data = {"message": "Insight logic not implemented yet"}
+
+    return jsonify(result_data), 200
 
 # --- GET INSIGHTS ---
 @app.route('/get_insights', methods=['GET'])

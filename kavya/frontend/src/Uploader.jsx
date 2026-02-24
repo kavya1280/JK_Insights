@@ -1,174 +1,245 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef } from "react";
 import "./uploader.css";
 import uploaderImg from "./assets/images/upload.png";
+import ajalabsblack from "./assets/images/ajalabs-black.png";
+
+// Import Charting library if installed, otherwise we use a simple list for demo
+// npm install recharts
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 const INSIGHT_OPTIONS = [
-  { id: "PJPA13", label: "PJPA13 - Policy Validation - Bike" },
-  { id: "PJPA13", label: "PJPA13 - Policy Validation - Car" },
-  { id: "PJPA13", label: "PJPA13 - Policy Validation - Lodging" },
-  { id: "PJPA13", label: "PJPA13 - Policy Validation - Daily Allowance" },
-  { id: "PJPA14", label: "PJPA14 - Duplicate Claim" },
-  { id: "PJPA15", label: "PJPA15 - Split Expenses" },
-  { id: "PJPA16", label: "PJPA16 - Duplicate Employee" },
-  { id: "PJPA17", label: "PJPA17 - Junior employees more than Senior" },
-  { id: "PJPA18", label: "PJPA18 - Multiple Submits for Same Travel" },
-  { id: "PJPA19", label: "PJPA19 - Multiple Travel Modes" },
-  { id: "PJPA20", label: "PJPA20 - Odd Time Submission" },
-  { id: "PJPA21", label: "PJPA21 - Overlapping Travel" },
-  { id: "PJPA22", label: "PJPA22 - Same claim, multiple employees" },
-  { id: "PJPA23", label: "PJPA23 - Submit Date before Report Start date" },
-  { id: "PJPA24", label: "PJPA24 - ZSCore - Analysis" },
-  { id: "PJPA25", label: "PJPA25 - Modified ZSCore Analysis" },
-  { id: "PJPA26", label: "PJPA26 - Variance Analysis" },
-  { id: "PJPA27", label: "PJPA27 - Notice Period Spending Spree" },
-  { id: "PJPA28", label: "PJPA28 - Benford's Law Analysis" },
-  { id: "PJPA29", label: "PJPA29 - New Joiner Early Claims" },
-  { id: "PJPA30", label: "PJPA30 - Short Trip Frequency Abuse" },
-  { id: "PJPA31", label: "PJPA31 - Structural Splitting (Structuring)" },
-  { id: "PJPA32", label: "PJPA32 - Weekend or Holiday Travel" },
-  { id: "PJPA33", label: "PJPA33 - Bulk Booker Receipt Error" },
-  { id: "PJPA34", label: "PJPA34 - High-Frequency Low Value Claims" },
-  { id: "PJPA35", label: "PJPA35 - Duplicate Report ID" },
-  { id: "PJPA36", label: "PJPA36 - EDA Check - Missing Submit Date" },
-  { id: "PJPA37", label: "PJPA37 - ML - On the Report Name" },
-  { id: "PJPA38", label: "PJPA38 - Odd Travel Modes (5%)" },
-  { id: "PJPA39", label: "PJPA39 - Separation Date Status Validation" },
+  { id: "PJPA27", label: "PJPA27 - Notice Period Expense Risk" },
+  { id: "PJPA28", label: "PJPA28 - Benford's Law" },
+  { id: "PJPA29", label: "PJPA29 - Split Expenses" },
+  { id: "PJPA30", label: "PJPA30 - Short Trip Frequency Abuse Dashboard" },
+  { id: "PJPA39", label: "PJPA39 - Separated Employee Marked as Active" },
 ];
 
-const Uploader = ({ logo, ajalabsblack, handleLogout }) => {
+const Uploader = ({ logo, handleLogout }) => {
+  const [step, setStep] = useState("idle"); // idle, setup, processing, completed
+  const [viewMode, setViewMode] = useState("uploader"); // uploader, dashboard, table
   const [files, setFiles] = useState([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [selectedInsight, setSelectedInsight] = useState("");
-  const [isUploading, setIsUploading] = useState(false);
+  const [analysisData, setAnalysisData] = useState(null);
   const inputRef = useRef(null);
-
-  const ACCEPTED = ".xlsx,.xls,.csv,.tsv";
 
   const processFiles = (newFiles) => {
     const validFiles = Array.from(newFiles).filter((f) =>
       /\.(xlsx|xls|csv|tsv)$/i.test(f.name)
     );
-    if (validFiles.length !== newFiles.length) {
-      alert("Only Excel, CSV, and TSV files are allowed.");
+    setFiles((prev) => [...prev, ...validFiles]);
+  };
+
+  const handleRunAnalysis = async () => {
+    if (!selectedInsight || files.length === 0) return alert("Select insight and files.");
+
+    setStep("processing");
+
+    const formData = new FormData();
+    files.forEach((f) => formData.append("files", f));
+    formData.append("insight_id", selectedInsight);
+
+    try {
+      const response = await fetch("http://localhost:5000/upload_excel", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setAnalysisData(data); // Stores kpis, charts, table from PJPA39.py
+        setStep("completed");
+      } else {
+        alert("Upload failed. Please check backend.");
+        setStep("setup");
+      }
+    } catch (err) {
+      alert("Server not reachable.");
+      setStep("setup");
     }
-    setFiles((prev) => {
-      const existing = new Set(prev.map((f) => f.name + f.size));
-      return [...prev, ...validFiles.filter((f) => !existing.has(f.name + f.size))];
-    });
   };
 
-  const onDrop = useCallback((e) => {
-    e.preventDefault();
-    setIsDragging(false);
-    processFiles(e.dataTransfer.files);
-  }, []);
-
-  const removeFile = (name) => {
-    setFiles((prev) => prev.filter((f) => f.name !== name));
+  const resetAll = () => {
+    setStep("idle");
+    setViewMode("uploader");
+    setFiles([]);
+    setSelectedInsight("");
+    setAnalysisData(null);
   };
+
+  // --- SUB-COMPONENT: DASHBOARD VIEW ---
+  const renderDashboard = () => (
+    <div className="view-container animate-in">
+      <div className="view-header">
+        <button className="back-btn" onClick={() => setViewMode("uploader")}>← Back</button>
+        <h2>{selectedInsight} Analysis Dashboard</h2>
+      </div>
+
+      <div className="kpi-grid">
+        {analysisData?.kpis?.map((kpi, i) => (
+          <div key={i} className="kpi-card">
+            <span className="kpi-label">{kpi.label}</span>
+            <span className="kpi-value">{kpi.value}</span>
+          </div>
+        ))}
+      </div>
+
+      <div className="charts-grid">
+        {analysisData?.charts?.map((chart, i) => (
+          <div key={i} className="chart-box">
+            <h4>{chart.title}</h4>
+            <ResponsiveContainer width="100%" height={250}>
+              {chart.type === 'line' ? (
+                <LineChart data={chart.data}>
+                  <XAxis dataKey="category" /> <YAxis /> <Tooltip />
+                  <Line type="monotone" dataKey="value" stroke="#00df81" />
+                </LineChart>
+              ) : (
+                <BarChart data={chart.data}>
+                  <XAxis dataKey="category" /> <YAxis /> <Tooltip />
+                  <Bar dataKey="value" fill="#05192d" />
+                </BarChart>
+              )}
+            </ResponsiveContainer>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // --- SUB-COMPONENT: TABLE VIEW ---
+  const renderTable = () => (
+    <div className="view-container animate-in">
+      <div className="view-header">
+        <button className="back-btn" onClick={() => setViewMode("uploader")}>← Back</button>
+        <h2>Data Preview</h2>
+      </div>
+      <div className="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              {analysisData?.table?.length > 0 && Object.keys(analysisData.table[0]).map(key => (
+                <th key={key}>{key}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {analysisData?.table?.slice(0, 50).map((row, i) => (
+              <tr key={i}>
+                {Object.values(row).map((val, j) => <td key={j}>{val}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // --- MAIN RENDER LOGIC ---
+  if (viewMode === "dashboard") return renderDashboard();
+  if (viewMode === "table") return renderTable();
 
   return (
-    <div className="up-container">
-      {/* Navigation matching requested order */}
-      <nav className="up-navbar">
-        <div className="nav-left">
-          {/* Removed Interface 2 text as requested */}
-        </div>
-        <div className="nav-right">
+    <div className="up-page-wrapper">
+      <nav className="up-nav">
+        <div className="up-inner-nav">
           <img src={ajalabsblack} alt="AJA Labs" className="nav-logo-aja" />
-          <img src={logo} alt="JK Cement" className="nav-logo-jk" />
-          <button className="nav-logout-btn" onClick={handleLogout}>Logout</button>
+          <div className="nav-right">
+            <img src={logo} alt="JK Cement" className="nav-logo-jk" />
+            <button className="logout-link" onClick={handleLogout}>Logout</button>
+          </div>
         </div>
       </nav>
 
-      <main className="up-hero-section">
-        <div className="up-content-left">
-          <h1 className="up-main-title">
-            Interface <br />
-            <span className="title-bold">Dashboard</span>
-            <span className="title-version">2</span>
-          </h1>
+      <div className="up-main-container">
+        <div className="up-main-layout">
+          <section className="up-column-left">
+            <div className="text-content-wrapper">
+              <h1 className="hero-title">
+                Upload File <br />
+                <span className="accent-text">for Analysis</span>
+              </h1>
+              <p className="hero-subtitle">
+                Automated data integrity checks and visualization <br />
+                for your financial dashboard projects.
+              </p>
 
-          <p className="up-subtitle">
-            A modern and minimal style for your <br /> next Data Dashboard Project.
-          </p>
+              <div className="flow-container">
+                {step === "idle" && (
+                  <button className="main-start-btn" onClick={() => setStep("setup")}>
+                    Start New Analysis
+                  </button>
+                )}
 
-          <div className="up-insight-dropdown">
-            <select
-              value={selectedInsight}
-              onChange={(e) => setSelectedInsight(e.target.value)}
-              className="up-custom-select"
-            >
-              <option value="">Select Insight Analysis...</option>
-              {INSIGHT_OPTIONS.map((opt, idx) => (
-                <option key={idx} value={opt.id}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+                {step === "setup" && (
+                  <div className="setup-box animate-in">
+                    <select
+                      className="up-select-field"
+                      value={selectedInsight}
+                      onChange={(e) => setSelectedInsight(e.target.value)}
+                    >
+                      <option value="">Select Insight Analysis...</option>
+                      {INSIGHT_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>{opt.label}</option>
+                      ))}
+                    </select>
 
-          {/* Upload Section - Styled like the newsletter box in image */}
-          <div
-            className={`up-upload-box ${isDragging ? "dragging" : ""}`}
-            onDrop={onDrop}
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-            onDragLeave={() => setIsDragging(false)}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              accept={ACCEPTED}
-              onChange={(e) => processFiles(e.target.files)}
-              style={{ display: "none" }}
-            />
-            <div className="up-input-wrapper">
-              <span className="upload-icon">📁</span>
-              <input
-                type="text"
-                readOnly
-                placeholder="Select multiple files to upload"
-                onClick={() => inputRef.current.click()}
-              />
-              <button className="up-upload-btn" onClick={() => inputRef.current.click()}>
-                Upload Files
-              </button>
-            </div>
-          </div>
+                    <div className="pill-input" onClick={() => inputRef.current.click()}>
+                      <span className="icon">📂</span>
+                      <span className="placeholder">
+                        {files.length > 0 ? `${files.length} files selected` : "Select multiple files"}
+                      </span>
+                      <button className="browse-btn">Upload Files</button>
+                    </div>
+                    <input
+                      ref={inputRef}
+                      type="file"
+                      multiple
+                      style={{ display: "none" }}
+                      onChange={(e) => processFiles(e.target.files)}
+                    />
 
-          {/* List of uploaded files */}
-          {files.length > 0 && (
-            <div className="up-file-preview-list">
-              <p className="file-count">Selected Files ({files.length}):</p>
-              <div className="files-scroll-area">
-                {files.map((f, i) => (
-                  <div key={i} className="file-pill">
-                    <span>{f.name}</span>
-                    <button onClick={() => removeFile(f.name)}>✕</button>
+                    <button className="process-trigger-btn" onClick={handleRunAnalysis}>
+                      Process for Analysis
+                    </button>
                   </div>
-                ))}
+                )}
+
+                {step === "processing" && (
+                  <div className="loading-container animate-in">
+                    <div className="spinner"></div>
+                    <h3>Processing Integrity Analysis...</h3>
+                  </div>
+                )}
+
+                {step === "completed" && (
+                  <div className="results-group animate-in">
+                    <div className="action-btns">
+                      <button className="btn-result table-btn" onClick={() => setViewMode("table")}>
+                        View as Table
+                      </button>
+                      <button className="btn-result dash-btn" onClick={() => setViewMode("dashboard")}>
+                        View as Dashboard
+                      </button>
+                    </div>
+                    <button className="reset-link" onClick={resetAll}>
+                      ← Start Different Analysis
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
-          )}
+          </section>
 
-          {/* View Action Buttons */}
-          <div className="up-action-group">
-            <button className="btn-secondary" disabled={files.length === 0}>View as Table</button>
-            <button className="btn-primary" disabled={files.length === 0}>View as Dashboard</button>
-          </div>
+          <section className="up-column-right">
+            <div className="viz-wrapper">
+              <img src={uploaderImg} alt="Analysis Illustration" className="hero-img" />
+              <div className="decor-circle"></div>
+              <div className="vertical-label-inner">JK CEMENT DATA PIPELINE —</div>
+            </div>
+          </section>
         </div>
-
-        {/* Illustration Section */}
-        <div className="up-content-right">
-          <div className="illustration-placeholder">
-            {/* Add your Illustration image or component here */}
-            <img src={uploaderImg} alt="Illustration" className="main-illustration" />
-            <div className="bg-circle"></div>
-          </div>
-        </div>
-      </main>
-
-
-      <div className="side-text">See more features —</div>
+      </div>
     </div>
   );
 };
