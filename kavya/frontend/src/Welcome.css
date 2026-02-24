@@ -1,0 +1,125 @@
+.welcome-page-container {
+  background-color: #fcfbf7;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Nav Bar Logic */
+.top-nav {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  padding: 30px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+/* Logos: Matches Login.css */
+.logo-jk { height: 25px; width: auto; }
+.logo-aja { height: 45px; width: auto; }
+
+.signout-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  cursor: pointer;
+  margin-right: 20px;
+}
+
+/* Welcome Card */
+.welcome-card {
+  background: white;
+  width: 400px;
+  padding: 40px;
+  border-radius: 30px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.05);
+  text-align: center;
+  z-index: 5;
+}
+
+.role-tag { color: #00df81; font-weight: bold; }
+
+/* Buttons */
+.action-buttons { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+
+.btn-primary {
+  background-color: #00df81;
+  color: #05192d;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background-color: #f0fff8;
+  color: #00df81;
+  border: 2px solid #00df81;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Upload UI */
+.upload-box {
+  border: 2px dashed #00df81;
+  padding: 30px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  background: #f9fffb;
+}
+
+.upload-label { cursor: pointer; color: #00df81; font-weight: 600; }
+
+/* Insights UI */
+.insight-select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.insight-result {
+  background: #f0fdf4;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: left;
+  border-left: 4px solid #00df81;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Blobs */
+.blue-blob { position: absolute; border-radius: 50%; filter: blur(60px); z-index: 1; opacity: 0.4; }
+.blob-1 { width: 300px; height: 300px; top: -50px; right: -50px; background: #e3f2fd; }
+.blob-2 { width: 400px; height: 400px; bottom: -100px; left: -100px; background: #bbdefb; }
+
+/* Footer: Matches Login.jsx Style but visible on white */
+.welcome-footer {
+  position: absolute;
+  bottom: 20px;
+  width: 100%;
+  text-align: center;
+  z-index: 10;
+}
+
+.welcome-footer p {
+  color: rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+}
+
+.back-btn { background: none; border: 1px solid #ccc; padding: 8px 15px; border-radius: 20px; cursor: pointer; color: #888; }

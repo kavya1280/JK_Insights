@@ -1,0 +1,294 @@
+/* App.css - Corrected sections */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.login-page {
+  background-color: #05192d;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Logos Positioning - Fixed size */
+.top-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding: 30px 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+}
+
+.logo-jk { height: auto; width: 90px; } 
+.logo-aja { height: auto; width: 90px; }
+
+/* ... keep the rest of your App.css ... */
+
+/* Welcome Page Styling */
+.welcome-page {
+  background-color: #05192d;
+  min-height: 100vh;
+  width: 100vw;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.welcome-content {
+  margin-top: 120px;
+  text-align: center;
+  width: 90%;
+  max-width: 600px;
+}
+
+.insight-dropdown {
+  width: 100%;
+  padding: 12px;
+  margin: 20px 0;
+  background: #1e293b;
+  color: white;
+  border-radius: 8px;
+  border: 1px solid #00df81;
+}
+
+.insight-display-card {
+  background: #1e293b;
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 5px solid #00df81;
+  text-align: left;
+}
+
+/* App.css - Welcome Page specific styles */
+.welcome-container {
+  background-color: #05192d;
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Floating Blue Accents */
+.blue-blob-1 {
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 400px;
+  height: 400px;
+  background: rgba(135, 206, 250, 0.2);
+  border-radius: 50%;
+  filter: blur(80px);
+}
+
+.blue-blob-2 {
+  position: absolute;
+  bottom: -50px;
+  left: -50px;
+  width: 300px;
+  height: 300px;
+  background: rgba(100, 149, 237, 0.15);
+  border-radius: 50%;
+  filter: blur(60px);
+}
+
+.welcome-nav {
+  position: absolute;
+  top: 0;
+  width: 100%;
+  padding: 20px 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-logo { height: 35px; }
+.nav-logo-small { height: 40px; }
+
+.welcome-card {
+  background: white;
+  padding: 50px;
+  border-radius: 25px;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+  text-align: center;
+  width: 90%;
+  max-width: 450px;
+  z-index: 10;
+}
+
+.welcome-card h1 { font-size: 32px; color: #333; margin-bottom: 10px; }
+.welcome-sub { color: #888; margin-bottom: 40px; font-size: 14px; }
+
+.welcome-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.action-btn {
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.green-btn {
+  background-color: #00df81;
+  color: #05192d;
+  border: none;
+}
+
+.green-btn:hover { background-color: #04c774; }
+
+.white-btn {
+  background-color: white;
+  color: #00df81;
+  border: 2px solid #00df81;
+}
+
+.white-btn:hover { background-color: #f0fff4; }
+
+.sub-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.insight-select {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.insight-box {
+  background: #f0fff4;
+  padding: 15px;
+  border-radius: 8px;
+  border-left: 5px solid #00df81;
+  text-align: left;
+  font-size: 14px;
+}
+
+.back-link {
+  background: none;
+  border: none;
+  color: #888;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.signout-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 600;
+  margin-right: 20px;
+}
+
+.welcome-footer {
+  position: absolute;
+  bottom: 20px;
+  color: #bbb;
+  font-size: 12px;
+}
+
+
+.dashboard-container {
+  background-color: #f0f7f4; /* Same green as login for consistency */
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-nav {
+  background: #ffffff;
+  padding: 15px 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.dashboard-content {
+  padding: 40px 100px;
+  flex: 1;
+}
+
+.role-badge {
+  background: #4f46e5; /* Indigo */
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: bold;
+  margin-right: 15px;
+}
+
+.role-view {
+  background: white;
+  padding: 30px;
+  border-radius: 20px;
+  margin-top: 20px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+}
+
+.content-header h1 { color: #1f2937; margin-bottom: 5px; }
+
+.insight-card-item {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  color: #4b5563;
+}
+
+.signout-btn {
+  background: none;
+  border: 1px solid #4f46e5;
+  color: #4f46e5;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-right: 20px;
+  font-weight: 600;
+}
+
+
+.welcome-banner {
+  background: white;
+  padding: 20px 30px;
+  border-radius: 15px;
+  margin-bottom: 30px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  border-left: 5px solid #4f46e5; /* Indigo accent */
+}
+
+.welcome-banner h1 {
+  font-size: 24px;
+  color: #1f2937;
+}
+
+.welcome-banner p {
+  color: #6b7280;
+  font-size: 14px;
+}
