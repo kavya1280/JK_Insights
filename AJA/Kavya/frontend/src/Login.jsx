@@ -49,6 +49,7 @@ const Login = ({
 
         {/* Removed "fade-out-elements" class here */}
         <div className="login-card">
+
           <div className="card-brand-area">
             {/* Removed the animation class logic from the logo */}
             <img
