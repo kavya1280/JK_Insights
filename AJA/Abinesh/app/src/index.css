@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --background: 214 32% 97%;
+    --foreground: 221 39% 11%;
+    --radius: 10px;
+}
