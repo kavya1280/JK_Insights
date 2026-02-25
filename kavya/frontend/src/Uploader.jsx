@@ -10,9 +10,18 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 const INSIGHT_OPTIONS = [
   { id: "PJPA27", label: "PJPA27 - Notice Period Expense Risk" },
   { id: "PJPA28", label: "PJPA28 - Benford's Law" },
-  { id: "PJPA29", label: "PJPA29 - Split Expenses" },
+  { id: "PJPA29", label: "PJPA29 - New Joiner Early Claims" },
   { id: "PJPA30", label: "PJPA30 - Short Trip Frequency Abuse Dashboard" },
+  { id: "PJPA31", label: "PJPA31 - Structural Splitting - Multiple Claims Submitted by the same employee on the same day" },
+  { id: "PJPA32", label: "PJPA32 - Travel Claims During Holidays" },
+  { id: "PJPA33", label: "PJPA33 - Bulk Booking Reimbursements" },
+  { id: "PJPA34", label: "PJPA34 - High - Frequency Low Value Claims" },
+  { id: "PJPA35", label: "PJPA35 - Duplicate Report ID" },
+  { id: "PJPA36", label: "PJPA36 - Missing Submit Date" },
+  { id: "PJPA37", label: "PJPA37 - Report Name Anomalies" },
+  { id: "PJPA38", label: "PJPA38 - Odd Travel Modes" },
   { id: "PJPA39", label: "PJPA39 - Separated Employee Marked as Active" },
+  { id: "PJPA40", label: "PJPA40 - Transaction Date is before Report Start Date" },
 ];
 
 const Uploader = ({ logo, handleLogout }) => {
@@ -47,7 +56,7 @@ const Uploader = ({ logo, handleLogout }) => {
 
       if (response.ok) {
         const data = await response.json();
-        setAnalysisData(data); // Stores kpis, charts, table from PJPA39.py
+        setAnalysisData(data); // Stores kpis, charts, table from backend
         setStep("completed");
       } else {
         alert("Upload failed. Please check backend.");

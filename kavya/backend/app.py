@@ -105,12 +105,7 @@ def upload_excel():
         df_dict[file.filename] = pd.read_excel(file)
 
     # Route to the correct processing logic
-    result_data = {}
-    if insight_id == "PJPA39":
-        result_data = process_pjpa39.process_pjpa39(df_dict)
-    else:
-        # Fallback for other insights
-        result_data = {"message": "Insight logic not implemented yet"}
+    result_data = {"message": "Insight logic not implemented yet"}
 
     return jsonify(result_data), 200
 
