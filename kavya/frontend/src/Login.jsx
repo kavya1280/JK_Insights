@@ -17,20 +17,13 @@ const Login = ({
     e.preventDefault();
     setIsAuthenticating(true);
 
-    // 1. Brief delay to allow the "JK Cement" logo animation to start
-    setTimeout(async () => {
-      // 2. Call handleLogin and wait for the server response
-      const success = await handleLogin();
+    // Call handleLogin and wait for the server response
+    const success = await handleLogin();
 
-      // 3. Logic: 
-      // If successful: We do NOT set setIsAuthenticating(false). 
-      // We keep it true so the "fade-out" animation stays active until App.jsx swaps this page.
-
-      // If failed: We stop the animation so the user can see the error and try again.
-      if (!success) {
-        setIsAuthenticating(false);
-      }
-    }, 800);
+    // If failed: We stop the loading state so the user can see the error
+    if (!success) {
+      setIsAuthenticating(false);
+    }
   };
 
   const togglePasswordVisibility = () => {
@@ -38,31 +31,30 @@ const Login = ({
   };
 
   return (
-    <div className={`login-page ${isAuthenticating ? "page-loading" : ""}`}>
+    <div className="login-page">
       {/* Top Navigation */}
       <nav className="top-nav">
         <div className="nav-left">
           <img src={ajalabsblack} alt="Ajalabs" className="nav-logo-small" />
         </div>
         <div className="nav-right">
-          {/* Placeholder for the logo to move into during animation */}
           <div className="nav-logo-placeholder"></div>
         </div>
       </nav>
 
       <div className="main-content">
-        {/* Left Illustration */}
         <div className="side-illustration left">
           <img src={rightIllustration} alt="Design Left" />
         </div>
 
-        {/* Central Login Card */}
-        <div className={`login-card ${isAuthenticating ? "fade-out-elements" : ""}`}>
+        {/* Removed "fade-out-elements" class here */}
+        <div className="login-card">
           <div className="card-brand-area">
+            {/* Removed the animation class logic from the logo */}
             <img
               src={logo}
               alt="JK Cement"
-              className={`card-logo-jk ${isAuthenticating ? "animate-to-top-right" : ""}`}
+              className="card-logo-jk"
             />
           </div>
 
@@ -107,11 +99,9 @@ const Login = ({
             </button>
           </form>
 
-          {/* Error message display */}
           {error && <div className="error-text-container"><p className="error-text">{error}</p></div>}
         </div>
 
-        {/* Right Illustration */}
         <div className="side-illustration right">
           <img src={leftIllustration} alt="Design Right" />
         </div>
