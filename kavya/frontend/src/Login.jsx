@@ -1,20 +1,36 @@
 import React, { useState } from "react";
-import "./Login.css";
+import "./login.css";
 
-const Login = ({ handleLogin, handleInputChange, error, logo, ajalabsblack, leftIllustration, rightIllustration }) => {
+const Login = ({
+  handleLogin,
+  handleInputChange,
+  error,
+  logo,
+  ajalabsblack,
+  leftIllustration,
+  rightIllustration
+}) => {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
-
   const [showPassword, setShowPassword] = useState(false);
 
   const onFormSubmit = async (e) => {
     e.preventDefault();
-    // Start animation
     setIsAuthenticating(true);
 
-    // Slight delay to let the user see the logo travel before the page redirects
-    setTimeout(() => {
-      handleLogin(e);
-    }, 800); // Adjust duration to match your CSS transition
+    // 1. Brief delay to allow the "JK Cement" logo animation to start
+    setTimeout(async () => {
+      // 2. Call handleLogin and wait for the server response
+      const success = await handleLogin();
+
+      // 3. Logic: 
+      // If successful: We do NOT set setIsAuthenticating(false). 
+      // We keep it true so the "fade-out" animation stays active until App.jsx swaps this page.
+
+      // If failed: We stop the animation so the user can see the error and try again.
+      if (!success) {
+        setIsAuthenticating(false);
+      }
+    }, 800);
   };
 
   const togglePasswordVisibility = () => {
@@ -29,21 +45,19 @@ const Login = ({ handleLogin, handleInputChange, error, logo, ajalabsblack, left
           <img src={ajalabsblack} alt="Ajalabs" className="nav-logo-small" />
         </div>
         <div className="nav-right">
-          {/* This is where the logo will move to */}
+          {/* Placeholder for the logo to move into during animation */}
           <div className="nav-logo-placeholder"></div>
         </div>
       </nav>
 
       <div className="main-content">
-        {/* Left Side Illustration */}
+        {/* Left Illustration */}
         <div className="side-illustration left">
-          <img src={rightIllustration} alt="Construction Design" />
+          <img src={rightIllustration} alt="Design Left" />
         </div>
 
         {/* Central Login Card */}
         <div className={`login-card ${isAuthenticating ? "fade-out-elements" : ""}`}>
-
-          {/* JK Cement Branding with animation class */}
           <div className="card-brand-area">
             <img
               src={logo}
@@ -54,7 +68,7 @@ const Login = ({ handleLogin, handleInputChange, error, logo, ajalabsblack, left
 
           <div className="card-header">
             <h1>User Login</h1>
-            <p className="subtitle">Hey, Enter your details to get sign in to your account</p>
+            <p className="subtitle">Enter your details to sign in to your account</p>
           </div>
 
           <form onSubmit={onFormSubmit}>
@@ -62,18 +76,22 @@ const Login = ({ handleLogin, handleInputChange, error, logo, ajalabsblack, left
               <input
                 type="text"
                 name="username"
-                placeholder="Enter your User Name"
+                placeholder="User Name"
                 onChange={handleInputChange}
                 required
+                autoComplete="username"
+                disabled={isAuthenticating}
               />
             </div>
             <div className="input-group">
               <input
                 type={showPassword ? "text" : "password"}
                 name="password"
-                placeholder="Enter your Password"
+                placeholder="Password"
                 onChange={handleInputChange}
                 required
+                autoComplete="current-password"
+                disabled={isAuthenticating}
               />
               <span className="show-hide" onClick={togglePasswordVisibility}>
                 {showPassword ? (
@@ -89,17 +107,18 @@ const Login = ({ handleLogin, handleInputChange, error, logo, ajalabsblack, left
             </button>
           </form>
 
-          {error && <p className="error-text">{error}</p>}
+          {/* Error message display */}
+          {error && <div className="error-text-container"><p className="error-text">{error}</p></div>}
         </div>
 
-        {/* Right Side Illustration */}
+        {/* Right Illustration */}
         <div className="side-illustration right">
-          <img src={leftIllustration} alt="Logistics Illustration" />
+          <img src={leftIllustration} alt="Design Right" />
         </div>
       </div>
 
       <footer className="login-page-footer">
-        <p>Copyright @ 2024 | Powered by Ajalabs | Data Privacy </p>
+        <p>Copyright @ 2024 | Powered by Ajalabs | Data Privacy</p>
       </footer>
     </div>
   );

@@ -7,15 +7,13 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
   const [usersList, setUsersList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // State for Edit/Add Modal
   const [showModal, setShowModal] = useState(false);
-  const [currentUser, setCurrentUser] = useState({ id: "", name: "", role: "viewer", status: "Active" });
+  const [currentUser, setCurrentUser] = useState({ id: "", username: "", role: "viewer", status: "Active" });
 
-  // 1. Fetch Users from Backend (user.json)
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/get_users"); // Adjust to your actual endpoint
+      const response = await fetch("http://localhost:5000/get_users");
       const data = await response.json();
       setUsersList(data);
     } catch (err) {
@@ -29,7 +27,6 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
     fetchUsers();
   }, []);
 
-  // 2. Delete User
   const handleDelete = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
@@ -37,7 +34,7 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
           method: "DELETE",
         });
         if (response.ok) {
-          setUsersList(usersList.filter((u) => u.id !== userId));
+          fetchUsers(); // ✅ Re-fetch instead of local filter to keep IDs accurate
         }
       } catch (err) {
         alert("Delete failed");
@@ -45,28 +42,33 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
     }
   };
 
-  // 3. Save User (Update or Create)
   const handleSaveUser = async (e) => {
     e.preventDefault();
-    const method = currentUser.id ? "PUT" : "POST";
-    const endpoint = currentUser.id
+    const isEditing = !!currentUser.id;
+    const method = isEditing ? "PUT" : "POST";
+    const endpoint = isEditing
       ? `http://localhost:5000/update_user/${currentUser.id}`
       : "http://localhost:5000/add_user";
 
+    const { id, ...payload } = currentUser;
+
     try {
-      const response = await fetch(endpoint, {
-        method: method,
+      const res = await fetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(currentUser),
+        body: JSON.stringify(payload),
       });
 
-      if (response.ok) {
+      if (res.ok) {
         setShowModal(false);
-        fetchUsers(); // Refresh the list
-        setCurrentUser({ id: "", name: "", role: "viewer", status: "Active" });
+        fetchUsers();
+        setCurrentUser({ id: "", username: "", role: "viewer", status: "Active" });
+      } else {
+        const data = await res.json();
+        alert(data.message);
       }
     } catch (err) {
-      alert("Action failed");
+      alert("Backend unreachable");
     }
   };
 
@@ -79,7 +81,7 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
 
   return (
     <div className="admin-container">
-      {/* SIDEBAR (Same as before) */}
+      {/* SIDEBAR */}
       <aside className="admin-sidebar">
         <div className="sidebar-header">
           <img src={ajalabsblack} alt="Ajalabs" className="sidebar-logo" />
@@ -96,7 +98,7 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
             {isUsersDropdownOpen && (
               <div className="sidebar-dropdown">
                 {["uploader", "reviewer", "viewer"].map(role => (
-                  <div key={role} className={`drop-item ${activeTab === role ? 'sel' : ''}`} onClick={() => setActiveTab(role)}>
+                  <div key={role} className={`drop-item ${activeTab === role ? "sel" : ""}`} onClick={() => setActiveTab(role)}>
                     {role.charAt(0).toUpperCase() + role.slice(1)}s
                   </div>
                 ))}
@@ -122,7 +124,10 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
         <section className="admin-content">
           <div className="content-top">
             <h2 className="page-title">User Management ({activeTab.toUpperCase()})</h2>
-            <button className="add-btn" onClick={() => { setCurrentUser({ id: "", name: "", role: "viewer", status: "Active" }); setShowModal(true); }}>
+            <button className="add-btn" onClick={() => {
+              setCurrentUser({ id: "", username: "", role: "viewer", status: "Active" });
+              setShowModal(true);
+            }}>
               + Add New User
             </button>
           </div>
@@ -139,11 +144,17 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((u) => (
+                  {filteredUsers.length === 0 ? (
+                    <tr><td colSpan="4" style={{ textAlign: "center", padding: "20px" }}>No users found</td></tr>
+                  ) : filteredUsers.map((u) => (
                     <tr key={u.id}>
-                      <td className="user-cell"><div className="user-avatar">{u.username?.charAt(0)}</div>{u.username}</td>
+                      <td className="user-cell">
+                        <div className="user-avatar">{u.username?.charAt(0).toUpperCase()}</div>
+                        {u.username}
+                      </td>
                       <td><span className={`role-tag ${u.role}`}>{u.role}</span></td>
-                      <td><span className={`status-badge ${u.status?.toLowerCase()}`}>{u.status}</span></td>
+                      {/* ✅ FIX: Fallback to "Active" if status is missing */}
+                      <td><span className={`status-badge ${(u.status || "active").toLowerCase()}`}>{u.status || "Active"}</span></td>
                       <td>
                         <div className="action-buttons">
                           <button onClick={() => openEditModal(u)} className="edit-icon">✏️</button>
@@ -169,11 +180,23 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
                 <label>Username</label>
                 <input
                   type="text"
-                  value={currentUser.username}
+                  value={currentUser.username || ""}
                   onChange={(e) => setCurrentUser({ ...currentUser, username: e.target.value })}
                   required
                 />
               </div>
+              {/* ✅ Show password field only when adding a new user */}
+              {!currentUser.id && (
+                <div className="form-group">
+                  <label>Password</label>
+                  <input
+                    type="password"
+                    value={currentUser.password || ""}
+                    onChange={(e) => setCurrentUser({ ...currentUser, password: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
               <div className="form-group">
                 <label>Role</label>
                 <select value={currentUser.role} onChange={(e) => setCurrentUser({ ...currentUser, role: e.target.value })}>
@@ -184,7 +207,7 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
               </div>
               <div className="form-group">
                 <label>Status</label>
-                <select value={currentUser.status} onChange={(e) => setCurrentUser({ ...currentUser, status: e.target.value })}>
+                <select value={currentUser.status || "Active"} onChange={(e) => setCurrentUser({ ...currentUser, status: e.target.value })}>
                   <option value="Active">Active</option>
                   <option value="Inactive">Inactive</option>
                 </select>

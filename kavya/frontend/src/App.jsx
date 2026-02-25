@@ -5,7 +5,6 @@ import Uploader from "./Uploader";
 import Reviewer from "./Reviewer";
 import Viewer from "./Viewer";
 
-// Assets
 import logo from "./assets/images/jkc.png";
 import ajalabsblack from "./assets/images/ajalabs-black.png";
 import leftImg from "./assets/images/homedesign1.png";
@@ -20,28 +19,26 @@ function App() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setError("");
-
     try {
-      // Assuming your Flask/Node backend has a /login endpoint that reads user.json
       const response = await fetch("http://localhost:5000/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       const data = await response.json();
 
       if (response.ok) {
-        // Data should contain { username, role }
         setUser(data);
+        return true;
       } else {
-        setError(data.message || "Invalid Username or Password");
+        setError(data.message || "Invalid credentials");
+        return false;
       }
     } catch (err) {
-      setError("Backend server not reachable.");
+      setError("Server connection failed.");
+      return false;
     }
   };
 
@@ -50,8 +47,6 @@ function App() {
     setFormData({ username: "", password: "" });
   };
 
-  // --- ROLE BASED ROUTING ---
-  // If not logged in, show Login page
   if (!user) {
     return (
       <Login
@@ -66,28 +61,15 @@ function App() {
     );
   }
 
-  // Common props for all dashboards
-  const dashboardProps = { user, logo, ajalabsblack, handleLogout };
+  const props = { user, logo, ajalabsblack, handleLogout };
+  const role = user.role.toLowerCase();
 
-  // Navigate to corresponding pages based on role in user.json
-  switch (user.role) {
-    case "admin":
-      return <Admin {...dashboardProps} />;
-    case "uploader":
-      return <Uploader {...dashboardProps} />;
-    case "reviewer":
-      return <Reviewer {...dashboardProps} />;
-    case "viewer":
-      return <Viewer {...dashboardProps} />;
-    default:
-      return (
-        <div style={{ textAlign: 'center', marginTop: '50px' }}>
-          <h1>Role Error</h1>
-          <p>No dashboard assigned to this role.</p>
-          <button onClick={handleLogout}>Back to Login</button>
-        </div>
-      );
-  }
+  if (role === "admin") return <Admin {...props} />;
+  if (role === "uploader") return <Uploader {...props} />;
+  if (role === "reviewer") return <Reviewer {...props} />;
+  if (role === "viewer") return <Viewer {...props} />;
+
+  return <div>Role not recognized.</div>;
 }
 
 export default App;
