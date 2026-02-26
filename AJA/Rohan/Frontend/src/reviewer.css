@@ -1,0 +1,24 @@
+.reviewer-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 60px;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.reviewer-logo-left {
+    height: 55px;
+    width: auto;
+}
+
+.reviewer-logo-right-animate {
+    height: 75px;
+    animation: flyInFromLogin 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+.review-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 30px;
+}
