@@ -17,13 +17,13 @@ const Login = ({
     e.preventDefault();
     setIsAuthenticating(true);
 
-    // Call handleLogin and wait for the server response
     const success = await handleLogin();
 
-    // If failed: We stop the loading state so the user can see the error
+    // If login fails, allow user to try again
     if (!success) {
       setIsAuthenticating(false);
     }
+    // If success, the App.jsx will re-render and remove this component
   };
 
   const togglePasswordVisibility = () => {
@@ -32,7 +32,6 @@ const Login = ({
 
   return (
     <div className="login-page">
-      {/* Top Navigation */}
       <nav className="top-nav">
         <div className="nav-left">
           <img src={ajalabsblack} alt="Ajalabs" className="nav-logo-small" />
@@ -47,16 +46,9 @@ const Login = ({
           <img src={rightIllustration} alt="Design Left" />
         </div>
 
-        {/* Removed "fade-out-elements" class here */}
         <div className="login-card">
-
           <div className="card-brand-area">
-            {/* Removed the animation class logic from the logo */}
-            <img
-              src={logo}
-              alt="JK Cement"
-              className="card-logo-jk"
-            />
+            <img src={logo} alt="JK Cement" className="card-logo-jk" />
           </div>
 
           <div className="card-header">
@@ -86,7 +78,7 @@ const Login = ({
                 autoComplete="current-password"
                 disabled={isAuthenticating}
               />
-              <span className="show-hide" onClick={togglePasswordVisibility}>
+              <span className="show-hide" onClick={togglePasswordVisibility} style={{ cursor: 'pointer' }}>
                 {showPassword ? (
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
                 ) : (
@@ -100,7 +92,11 @@ const Login = ({
             </button>
           </form>
 
-          {error && <div className="error-text-container"><p className="error-text">{error}</p></div>}
+          {error && (
+            <div className="error-text-container">
+              <p className="error-text">{error}</p>
+            </div>
+          )}
         </div>
 
         <div className="side-illustration right">
