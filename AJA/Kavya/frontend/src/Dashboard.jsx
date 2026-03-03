@@ -117,8 +117,8 @@ const BarChart = ({ data, isHorizontal = false }) => {
         }));
 
         series.columns.template.setAll({ cornerRadiusTL: 5, cornerRadiusTR: 5, strokeOpacity: 0 });
-        xAxis.data.setAll(data);
-        yAxis.data ? yAxis.data.setAll(data) : null;
+        if (xAxis.data) xAxis.data.setAll(data);
+        if (yAxis.data) yAxis.data.setAll(data);
         series.data.setAll(data);
         series.appear(1000);
         return () => root.dispose();

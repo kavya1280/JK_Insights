@@ -86,19 +86,70 @@ def upload_files():
                                         else:
                                             df = pd.read_excel(io.BytesIO(file_bytes))
                                         dfs.append(df)
-                        
                         if dfs:
                             combined_df = pd.concat(dfs, ignore_index=True)
-                            # We now explicitly force it to save as an Excel file
                             combined_df.to_excel(save_path, index=False)
                         else:
                             return jsonify({"status": "error", "message": f"No valid data files found inside the ZIP for {key}."}), 400
                     else:
                         file.save(save_path)
 
-        # Notice we removed the "run_all_insights()" from here! It ONLY uploads now.
-        return jsonify({"status": "success", "message": "Files uploaded successfully!"}), 200
+        # ==========================================
+        # NEW: KPI GENERATION FOR UPLOAD SCREEN
+        # ==========================================
+        kpis = {}
+        
+        # 1. Concur Header KPIs - ONLY run if Concur file was just uploaded!
+        if 'concurFile' in request.files:
+            concur_path = os.path.join(DATA_DIR, EXPECTED_FILENAMES["concurFile"])
+            if os.path.exists(concur_path):
+                try:
+                    df_concur = pd.read_excel(concur_path)
+                    df_concur.rename(columns=lambda x: str(x).strip(), inplace=True)
+                    
+                    kpis['total_transactions'] = len(df_concur)
+                    if 'Employee ID' in df_concur.columns:
+                        kpis['unique_employees'] = int(df_concur['Employee ID'].nunique())
+                    if 'Amount Approved' in df_concur.columns:
+                        total_amt = float(pd.to_numeric(df_concur['Amount Approved'], errors='coerce').fillna(0).sum())
+                        kpis['total_amount'] = total_amt
+                        kpis['average_claim'] = total_amt / kpis['total_transactions'] if kpis['total_transactions'] > 0 else 0
+                    
+                    rep_col = 'Report Id' if 'Report Id' in df_concur.columns else ('Report ID' if 'Report ID' in df_concur.columns else None)
+                    if rep_col:
+                        kpis['unique_reports'] = int(df_concur[rep_col].nunique())
+                except Exception as e:
+                    print(f"Error calculating Concur KPIs: {e}")
 
+        # 2. Employee Master KPIs - ONLY run if Emp Master file was just uploaded!
+        if 'empMasterFile' in request.files:
+            emp_path = os.path.join(DATA_DIR, EXPECTED_FILENAMES["empMasterFile"])
+            if os.path.exists(emp_path):
+                try:
+                    df_emp = pd.read_excel(emp_path)
+                    df_emp.rename(columns=lambda x: str(x).strip(), inplace=True)
+                    
+                    id_col = 'Employee ID(Only ALPHA NUM)' if 'Employee ID(Only ALPHA NUM)' in df_emp.columns else 'Supplier'
+                    if id_col not in df_emp.columns and len(df_emp.columns) > 1:
+                        id_col = df_emp.columns[1] 
+                    
+                    if id_col in df_emp.columns:
+                        df_emp['Emp_ID_Clean'] = df_emp[id_col].astype(str).str.strip().str.replace(r'\.0$', '', regex=True)
+                        kpis['master_unique_employees'] = int(df_emp['Emp_ID_Clean'].nunique())
+                        
+                        if 'Employee Status' in df_emp.columns:
+                            df_emp['Status_Clean'] = df_emp['Employee Status'].astype(str).str.strip().str.upper()
+                            separated_emps = df_emp[df_emp['Status_Clean'] != 'ACTIVE']['Emp_ID_Clean'].unique()
+                            kpis['master_separated_employees'] = len(separated_emps)
+                            kpis['master_active_employees'] = kpis['master_unique_employees'] - kpis['master_separated_employees']
+                    
+                    if 'Company Code' in df_emp.columns:
+                        kpis['master_company_codes'] = int(df_emp['Company Code'].nunique())
+                        
+                except Exception as e:
+                    print(f"Error calculating Employee Master KPIs: {e}")
+
+        return jsonify({"status": "success", "message": "Files uploaded successfully!", "kpis": kpis}), 200
     except Exception as e:
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -161,6 +212,25 @@ def get_insight_data(insight_id):
         
         return jsonify({"status": "success", "insight_id": insight_id, "data": df.to_dict(orient='records')})
 
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/clear-session', methods=['POST'])
+def clear_session():
+    try:
+        # Delete all files in the Data directory
+        for filename in os.listdir(DATA_DIR):
+            file_path = os.path.join(DATA_DIR, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                
+        # Also clear the Output directory so old reports don't linger
+        for filename in os.listdir(OUTPUT_DIR):
+            file_path = os.path.join(OUTPUT_DIR, filename)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                
+        return jsonify({"status": "success", "message": "Backend session cleared."}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

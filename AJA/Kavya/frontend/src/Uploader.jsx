@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import "./uploader.css";
 import Dashboard from "./Dashboard";
+import PJPA32Dashboard from "./PJPA32Dashboard";
 import uploaderImg from "./assets/images/upload.png";
 import ajalabsblack from "./assets/images/ajalabs-black.png";
 
@@ -11,6 +12,7 @@ const INSIGHT_OPTIONS = [
   { id: "PJPA30", label: "PJPA30 - Short Trip Frequency Abuse", req: ["lineItemFile"] },
   { id: "PJPA31", label: "PJPA31 - Structural Splitting", req: ["lineItemFile"] },
   { id: "PJPA32_HOL", label: "PJPA32 - Holiday Travel & Weekend Travel", req: ["lineItemFile"] },
+  { id: "PJPA32_WE", label: "PJPA32 - Weekend Travel", req: ["lineItemFile"] },
   { id: "PJPA33", label: "PJPA33 - Bulk Booking Reimbursements", req: ["lineItemFile"] },
   { id: "PJPA34", label: "PJPA34 - High-Frequency Low Value Claims", req: ["lineItemFile"] },
   { id: "PJPA35", label: "PJPA35 - Duplicate Report ID", req: ["concurFile"] },
@@ -43,6 +45,7 @@ const Uploader = ({ logo, handleLogout }) => {
   const [activeAnalysisResults, setActiveAnalysisResults] = useState([]);
   const [analysisErrors, setAnalysisErrors] = useState([]);
   const [currentViewMode, setCurrentViewMode] = useState("table");
+  const [uploadKPIs, setUploadKPIs] = useState({});
 
   // --- PERSISTENCE LOGIC (Now acting as the Session Report) ---
   const [history, setHistory] = useState(() => {
@@ -59,6 +62,10 @@ const Uploader = ({ logo, handleLogout }) => {
       localStorage.removeItem("aja_audit_history");
     }
   }, [history]);
+  // Add this to securely wipe backend ghost files if the user hard-refreshes the page!
+  useEffect(() => {
+    fetch("http://localhost:5000/api/clear-session", { method: "POST" }).catch(() => { });
+  }, []);
 
   // --- Handlers ---
   const handleReportToggle = () => {
@@ -70,10 +77,19 @@ const Uploader = ({ logo, handleLogout }) => {
     }
   };
 
-  const startNewSession = () => {
+  const startNewSession = async () => {
+    // 1. Tell the backend to physically delete the old files
+    try {
+      await fetch("http://localhost:5000/api/clear-session", { method: "POST" });
+    } catch (err) {
+      console.warn("Backend clear session failed:", err);
+    }
+
+    // 2. Clear the frontend memory
     setFiles({ concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null });
     setSelectedInsights([]);
     setActiveAnalysisResults([]);
+    setUploadKPIs({});
     setView("upload");
   };
 
@@ -94,11 +110,13 @@ const Uploader = ({ logo, handleLogout }) => {
 
     try {
       const response = await fetch("http://localhost:5000/api/upload", { method: "POST", body: formData });
+      const resData = await response.json(); // Parse the JSON first!
+
       if (response.ok) {
+        setUploadKPIs(resData.kpis || {}); // Save the KPIs from Python
         setView("kpi_overview");
       } else {
-        const errData = await response.json();
-        alert(`Upload error: ${errData.message}`);
+        alert(`Upload error: ${resData.message}`);
       }
     } catch (err) {
       alert("Upload failed. Ensure backend is running.");
@@ -199,10 +217,10 @@ const Uploader = ({ logo, handleLogout }) => {
 
     const successfulReports = currentReports.filter(r => r.status === "Success");
     setActiveAnalysisResults(successfulReports);
-    setHistory(prev => [...currentReports, ...prev].slice(0, 50)); 
+    setHistory(prev => [...currentReports, ...prev].slice(0, 50));
 
     if (isNotifyEnabled && successfulReports.length > 0) alert("Audit session completed.");
-    
+
     // Send user directly to the new Report view to see what passed/failed
     setView("report");
   };
@@ -213,20 +231,41 @@ const Uploader = ({ logo, handleLogout }) => {
     if (fileKey && !file) return;
 
     try {
-      // Show processing status
-      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, status: "Refreshing..." } : item));
-
-      // 1. Upload if there's a file
       if (file) {
+        setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: `Uploading ${FILE_TYPES.find(f => f.key === fileKey)?.label || fileKey}...` } : item));
+
         const formData = new FormData();
         formData.append(fileKey, file);
-        setFiles(prev => ({ ...prev, [fileKey]: file })); // Sync local state
-        
+
+        // Update the React files state
+        setFiles(prev => ({ ...prev, [fileKey]: file }));
+
         const uploadRes = await fetch("http://localhost:5000/api/upload", { method: "POST", body: formData });
         if (!uploadRes.ok) throw new Error("Upload failed");
       }
 
-      // 2. Generate
+      // --- SMART CHECK: Are we still missing other files? ---
+      const insightDef = INSIGHT_OPTIONS.find(o => o.id === reportItem.moduleId);
+      const remainingMissingFiles = insightDef.req.filter(reqFile => {
+        if (reqFile === fileKey) return false; // We just uploaded this one!
+        if (files[reqFile]) return false;      // We already had this one!
+        return true;                           // Still missing!
+      });
+
+      if (remainingMissingFiles.length > 0) {
+        // Don't run the backend yet! Just update the UI to show what is still missing.
+        setHistory(prev => prev.map(item => item.id === reportItem.id ? {
+          ...item,
+          missingFiles: remainingMissingFiles,
+          reason: `Missing Data: ${remainingMissingFiles.map(f => FILE_TYPES.find(ft => ft.key === f)?.label || f).join(", ")}`
+        } : item));
+        return; // Exit out of the function early
+      }
+      // ------------------------------------------------------
+
+      // If we make it here, all required files are present! Time to generate.
+      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Processing Insight..." } : item));
+
       const genRes = await fetch("http://localhost:5000/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -234,28 +273,19 @@ const Uploader = ({ logo, handleLogout }) => {
       });
       if (!genRes.ok) throw new Error("Backend generation failed");
 
-      // 3. Fetch Data
       const dataRes = await fetch(`http://localhost:5000/api/insight/${reportItem.moduleId}/data`);
       if (!dataRes.ok) throw new Error("Data retrieval failed");
 
       const dataJson = await dataRes.json();
       const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
 
-      const updatedItem = {
-        ...reportItem,
-        status: "Success",
-        reason: "",
-        missingFiles: [],
-        data: extractedData,
-        timestamp: new Date().toLocaleString()
-      };
+      const updatedItem = { ...reportItem, status: "Success", reason: "", missingFiles: [], data: extractedData, timestamp: new Date().toLocaleString() };
 
-      // 4. Update the report table to Success
       setHistory(prev => prev.map(item => item.id === reportItem.id ? updatedItem : item));
       setActiveAnalysisResults(prev => [...prev.filter(p => p.moduleId !== reportItem.moduleId), updatedItem]);
 
     } catch (err) {
-      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, status: "Failed", reason: "Retry failed." } : item));
+      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Retry failed. Check file format." } : item));
       alert("Action failed. Ensure backend is running and file is valid.");
     }
   };
@@ -269,7 +299,7 @@ const Uploader = ({ logo, handleLogout }) => {
     }
 
     // Mark all successful items as Refreshing... in the UI
-    setHistory(prev => prev.map(item => 
+    setHistory(prev => prev.map(item =>
       item.status === "Success" ? { ...item, status: "Refreshing..." } : item
     ));
 
@@ -291,13 +321,13 @@ const Uploader = ({ logo, handleLogout }) => {
         const dataJson = await res.json();
         const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
 
-        setHistory(prev => prev.map(item => 
-          item.id === reportItem.id 
-          ? { ...item, status: "Success", data: extractedData, timestamp: new Date().toLocaleString() } 
-          : item
+        setHistory(prev => prev.map(item =>
+          item.id === reportItem.id
+            ? { ...item, status: "Success", data: extractedData, timestamp: new Date().toLocaleString() }
+            : item
         ));
       } catch (err) {
-        setHistory(prev => prev.map(item => 
+        setHistory(prev => prev.map(item =>
           item.id === reportItem.id ? { ...item, status: "Failed", reason: "Refresh failed." } : item
         ));
       }
@@ -355,10 +385,127 @@ const Uploader = ({ logo, handleLogout }) => {
     <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h2 style={{ color: '#05192d', fontSize: '28px' }}>Data Validation Successful</h2>
-        <button onClick={() => setView("upload")} style={{ padding: '8px 15px', borderRadius: '8px', border: '1px solid #789eccff', cursor: 'pointer' }}>← Back</button>
+        <button onClick={() => setView("upload")} style={{ padding: '8px 15px', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', cursor: 'pointer', color: '#000000' }}>← Change Files</button>
       </div>
+
+      {/* --- CONCUR HEADER DATA KPIs --- */}
+      {uploadKPIs && uploadKPIs.total_transactions !== undefined && (
+        <>
+          <h3 style={{ marginBottom: '15px', color: '#05192d', fontSize: '16px', borderLeft: '4px solid #00df81', paddingLeft: '10px' }}>Concur Header Extraction</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px', marginBottom: '30px' }}>
+
+            {uploadKPIs.unique_employees !== undefined && (
+              <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #00df81', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Unique Employees</div>
+                <div style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>{uploadKPIs.unique_employees.toLocaleString()}</div>
+              </div>
+            )}
+
+            {uploadKPIs.unique_reports !== undefined && (
+              <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #2196F3', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Unique Report IDs</div>
+                <div style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>{uploadKPIs.unique_reports.toLocaleString()}</div>
+              </div>
+            )}
+
+            {uploadKPIs.total_transactions !== undefined && (
+              <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #7DC030', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Total Transactions</div>
+                <div style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>{uploadKPIs.total_transactions.toLocaleString()}</div>
+              </div>
+            )}
+
+            {/* Average Claim (Usually smaller, kept normal formatting but with full font size) */}
+            {uploadKPIs.average_claim !== undefined && (
+              <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #FF9800', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Avg Claim Amount</div>
+                <div title={`₹${uploadKPIs.average_claim.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>
+                  ₹{uploadKPIs.average_claim.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+            )}
+
+            {/* Smart Total Amount: Converts to Crores (Cr) or Lakhs (L) dynamically */}
+            {uploadKPIs.total_amount !== undefined && (
+              <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #05192d', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Total Amount Approved</div>
+                <div title={`₹${uploadKPIs.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>
+                  {uploadKPIs.total_amount >= 10000000
+                    ? `₹${(uploadKPIs.total_amount / 10000000).toFixed(2)} Cr`
+                    : uploadKPIs.total_amount >= 100000
+                      ? `₹${(uploadKPIs.total_amount / 100000).toFixed(2)} L`
+                      : `₹${uploadKPIs.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                </div>
+              </div>
+            )}
+
+          </div>
+        </>
+      )}
+
+      {/* --- EMPLOYEE MASTER DATA KPIs --- */}
+      {uploadKPIs && uploadKPIs.master_unique_employees !== undefined && (
+        <>
+          <h3 style={{ marginBottom: '15px', color: '#05192d', fontSize: '16px', borderLeft: '4px solid #8b5cf6', paddingLeft: '10px' }}>Employee Master Extraction</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px', marginBottom: '40px' }}>
+
+            <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #8b5cf6', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+              <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Master Unique Emps</div>
+              <div style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>{uploadKPIs.master_unique_employees.toLocaleString()}</div>
+            </div>
+
+            {uploadKPIs.master_active_employees !== undefined && (
+              <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #10b981', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Active Employees</div>
+                <div style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>{uploadKPIs.master_active_employees.toLocaleString()}</div>
+              </div>
+            )}
+
+            {uploadKPIs.master_separated_employees !== undefined && (
+              <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #ef4444', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Separated Employees</div>
+                <div style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>{uploadKPIs.master_separated_employees.toLocaleString()}</div>
+              </div>
+            )}
+
+            {uploadKPIs.master_company_codes !== undefined && (
+              <div style={{ background: 'white', padding: '20px', borderRadius: '16px', borderLeft: '4px solid #f59e0b', boxShadow: '0 4px 20px rgba(0,0,0,0.04)' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '8px' }}>Company Codes</div>
+                <div style={{ fontSize: '24px', color: '#05192d', fontWeight: '800' }}>{uploadKPIs.master_company_codes.toLocaleString()}</div>
+              </div>
+            )}
+
+          </div>
+        </>
+      )}
+      {/* ------------------------ */}
+
       <div style={{ background: 'white', padding: '40px', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.05)' }}>
-        <h3 style={{ marginBottom: '25px', color: '#05192d' }}>Choose Audit Controls to Run</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' }}>
+          <h3 style={{ color: '#05192d', margin: 0 }}>Choose Audit Controls to Run</h3>
+          <button
+            onClick={() => {
+              if (selectedInsights.length === INSIGHT_OPTIONS.length) {
+                setSelectedInsights([]); // Deselect all
+              } else {
+                setSelectedInsights(INSIGHT_OPTIONS.map(opt => opt.id)); // Select all
+              }
+            }}
+            style={{
+              padding: '8px 16px',
+              background: selectedInsights.length === INSIGHT_OPTIONS.length ? '#fef2f2' : '#f8fafc',
+              color: selectedInsights.length === INSIGHT_OPTIONS.length ? '#ef4444' : '#05192d',
+              border: selectedInsights.length === INSIGHT_OPTIONS.length ? '1px solid #fca5a5' : '1px solid #cbd5e1',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              fontSize: '13px',
+              transition: 'all 0.2s ease-in-out'
+            }}
+          >
+            {selectedInsights.length === INSIGHT_OPTIONS.length ? "✕ Deselect All" : "✓ Select All"}
+          </button>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           {INSIGHT_OPTIONS.map(opt => (
             <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '16px', border: selectedInsights.includes(opt.id) ? '2px solid #00df81' : '1px solid #e2e8f0', background: selectedInsights.includes(opt.id) ? '#f0fff4' : 'white', borderRadius: '12px', cursor: 'pointer', transition: '0.2s' }}>
@@ -429,7 +576,11 @@ const Uploader = ({ logo, handleLogout }) => {
               </div>
             </div>
           ) : (
-            <Dashboard data={insight.data} onBackToTable={() => setCurrentViewMode("table")} />
+            insight.moduleId === "PJPA32_HOL" || insight.moduleId === "PJPA32_WE" ? (
+              <PJPA32Dashboard data={insight.data} onBackToTable={() => setCurrentViewMode("table")} insightId={insight.moduleId} />
+            ) : (
+              <Dashboard data={insight.data} onBackToTable={() => setCurrentViewMode("table")} />
+            )
           )}
         </div>
       ))}
@@ -444,8 +595,8 @@ const Uploader = ({ logo, handleLogout }) => {
           <h2 style={{ color: '#05192d', fontSize: '28px' }}>Execution Report</h2>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
-          <button 
-            onClick={handleRefreshReport} 
+          <button
+            onClick={handleRefreshReport}
             style={{ background: '#00df81', color: '#05192d', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
             ↻ Refresh Successful Controls
           </button>
@@ -482,17 +633,17 @@ const Uploader = ({ logo, handleLogout }) => {
                   </td>
                   <td style={{ padding: '20px' }}>
                     {item.status === 'Success' ? (
-                      <button 
+                      <button
                         onClick={() => {
-                          setActiveAnalysisResults([item]); 
+                          setActiveAnalysisResults([item]);
                           setCurrentViewMode('table');
                           setView('results');
-                        }} 
+                        }}
                         style={{ padding: '8px 16px', background: '#05192d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
                         View Insights
                       </button>
                     ) : item.status === 'Refreshing...' ? (
-                        <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid #f1f5f9', borderTop: '2px solid #2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
+                      <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid #f1f5f9', borderTop: '2px solid #2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {item.missingFiles && item.missingFiles.length > 0 ? (
