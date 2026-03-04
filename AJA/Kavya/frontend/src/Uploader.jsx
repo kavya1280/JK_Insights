@@ -42,16 +42,60 @@ const Uploader = ({ logo, handleLogout }) => {
   });
 
   const [isUploading, setIsUploading] = useState(false);
-  const [activeAnalysisResults, setActiveAnalysisResults] = useState([]);
+  const [activeAnalysisResults, setActiveAnalysisResults] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("aja_last_session_results")) || []; }
+    catch { return []; }
+  });
   const [analysisErrors, setAnalysisErrors] = useState([]);
   const [currentViewMode, setCurrentViewMode] = useState("table");
   const [uploadKPIs, setUploadKPIs] = useState({});
+  const [savedSessions, setSavedSessions] = useState([]);
+  const [isClearModalOpen, setIsClearModalOpen] = useState(false);
+  const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
+
+  // Stores the previous session's results so they remain visible after "New Session"
+  const [lastSessionResults, setLastSessionResults] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("aja_last_session_results")) || []; }
+    catch { return []; }
+  });
+
+  const fetchSavedSessions = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/sessions");
+      if (res.ok) {
+        const data = await res.json();
+        setSavedSessions(data);
+      }
+    } catch (e) { console.warn("Failed to fetch sessions"); }
+  };
+
+  useEffect(() => {
+    fetchSavedSessions();
+  }, [view]);
 
   // --- PERSISTENCE LOGIC (Now acting as the Session Report) ---
   const [history, setHistory] = useState(() => {
     const saved = localStorage.getItem("aja_audit_history");
     return saved ? JSON.parse(saved) : [];
   });
+
+  // Helper to save to localStorage safely
+  const safelyPersistResults = (data) => {
+    const KEY = "aja_last_session_results";
+    try {
+      localStorage.setItem(KEY, JSON.stringify(data));
+    } catch (e) {
+      console.warn("Local storage full for results. Attempting to save metadata only...");
+      try {
+        // Fallback: Strip the 'data' field (which contains the heavy rows)
+        const metadataOnly = data.map(({ data, ...rest }) => ({ ...rest, data: [], isMetadataOnly: true }));
+        localStorage.setItem(KEY, JSON.stringify(metadataOnly));
+      } catch (e2) {
+        console.error("Critical: Local storage exhausted even for metadata.", e2);
+        // If even metadata fails, we just don't persist. No crash.
+      }
+    }
+  };
 
   useEffect(() => {
     try {
@@ -62,6 +106,7 @@ const Uploader = ({ logo, handleLogout }) => {
       localStorage.removeItem("aja_audit_history");
     }
   }, [history]);
+
   // Add this to securely wipe backend ghost files if the user hard-refreshes the page!
   useEffect(() => {
     fetch("http://localhost:5000/api/clear-session", { method: "POST" }).catch(() => { });
@@ -85,12 +130,65 @@ const Uploader = ({ logo, handleLogout }) => {
       console.warn("Backend clear session failed:", err);
     }
 
-    // 2. Clear the frontend memory
+    // 2. Preserve the current results as "last session" before clearing
+    if (activeAnalysisResults.length > 0) {
+      setLastSessionResults(activeAnalysisResults);
+      safelyPersistResults(activeAnalysisResults);
+    }
+
+    // 3. Clear the frontend memory for the new session
     setFiles({ concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null });
     setSelectedInsights([]);
-    setActiveAnalysisResults([]);
+    // activeAnalysisResults stays visible until new ones replace them
     setUploadKPIs({});
     setView("upload");
+  };
+
+  const handleSaveSession = async (name = "") => {
+    try {
+      const response = await fetch("http://localhost:5000/api/save-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name,
+          insights: activeAnalysisResults.map(r => r.moduleId)
+        })
+      });
+      if (response.ok) {
+        fetchSavedSessions();
+        return true;
+      }
+    } catch (e) { console.error("Save failed", e); }
+    return false;
+  };
+
+  const handleLoadSession = async (sessionId) => {
+    try {
+      setView("processing");
+      const session = savedSessions.find(s => s.id === sessionId);
+      if (!session) return;
+
+      const loadedResults = [];
+      for (const insightId of session.insights) {
+        const res = await fetch(`http://localhost:5000/api/sessions/${sessionId}/${insightId}/data`);
+        if (res.ok) {
+          const dataJson = await res.json();
+          loadedResults.push({
+            id: insightId + "_" + Date.now(),
+            moduleId: insightId,
+            name: INSIGHT_OPTIONS.find(o => o.id === insightId)?.label || insightId,
+            status: "Success",
+            reason: "",
+            missingFiles: [],
+            data: dataJson.data || [],
+            timestamp: session.timestamp
+          });
+        }
+      }
+      setActiveAnalysisResults(loadedResults);
+      setHistory(prev => [...loadedResults, ...prev].slice(0, 50));
+      setView("results");
+    } catch (e) { alert("Failed to load session data"); setView("report"); }
   };
 
   const handleFileChange = (e, fileKey) => {
@@ -143,85 +241,89 @@ const Uploader = ({ logo, handleLogout }) => {
           moduleId: insight.id,
           name: insight.label,
           status: "Failed",
-          reason: `Missing Data: ${missingFiles.map(f => FILE_TYPES.find(ft => ft.key === f)?.label || f).join(", ")}`,
+          reason: `Missing Data: ${FILE_TYPES.find(f => f.key === missingFiles[0])?.label || missingFiles[0]}`,
           missingFiles: missingFiles,
           data: [],
           timestamp: new Date().toLocaleString()
         });
       } else {
         toRun.push(insightId);
+        // Pre-add In Progress placeholders for UI feedback
+        currentReports.push({
+          id: insight.id + "_" + Date.now(),
+          moduleId: insight.id,
+          name: insight.label,
+          status: "In Progress",
+          reason: "Processing...",
+          missingFiles: [],
+          data: [],
+          timestamp: new Date().toLocaleString()
+        });
       }
     });
 
-    // 2. Process the valid ones
-    if (toRun.length > 0) {
+    const reportsToUpdate = [...currentReports];
+    setHistory(prev => [...reportsToUpdate, ...prev].slice(0, 50));
+    setView("processing");
+
+    // Process EACH insight individually for real-time updates
+    for (const insightId of toRun) {
+      const insightDef = INSIGHT_OPTIONS.find(o => o.id === insightId);
       try {
-        const generateResponse = await fetch("http://localhost:5000/api/generate", {
+        // Individual backend call
+        const genRes = await fetch("http://localhost:5000/api/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ insights: toRun })
+          body: JSON.stringify({ insights: [insightId] })
+        });
+        if (!genRes.ok) throw new Error("Generation failed");
+
+        const dataRes = await fetch(`http://localhost:5000/api/insight/${insightId}/data`);
+        if (!dataRes.ok) throw new Error("Data retrieval failed");
+
+        const dataJson = await dataRes.json();
+        const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
+
+        const successItem = {
+          id: insightId + "_" + Date.now(),
+          moduleId: insightId,
+          name: insightDef.label,
+          status: "Success",
+          reason: "",
+          missingFiles: [],
+          data: extractedData,
+          timestamp: new Date().toLocaleString()
+        };
+
+        // Update UI immediately for THIS insight
+        setActiveAnalysisResults(prev => {
+          const updated = [...prev.filter(p => p.moduleId !== insightId), successItem];
+          safelyPersistResults(updated);
+          return updated;
         });
 
-        if (!generateResponse.ok) throw new Error("Backend failed to generate insights");
+        setHistory(prev => prev.map(item =>
+          (item.moduleId === insightId && item.status === "In Progress") ? successItem : item
+        ));
 
-        const fetchPromises = toRun.map(id =>
-          fetch(`http://localhost:5000/api/insight/${id}/data`).then(res => ({ id, res }))
-        );
-
-        const results = await Promise.all(fetchPromises);
-
-        for (const resultObj of results) {
-          const insightDef = INSIGHT_OPTIONS.find(o => o.id === resultObj.id);
-          try {
-            const dataJson = await resultObj.res.json();
-            const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
-            currentReports.push({
-              id: resultObj.id + "_" + Date.now(),
-              moduleId: resultObj.id,
-              name: insightDef.label,
-              status: "Success",
-              reason: "",
-              missingFiles: [],
-              data: extractedData,
-              timestamp: new Date().toLocaleString()
-            });
-          } catch (err) {
-            currentReports.push({
-              id: resultObj.id + "_" + Date.now(),
-              moduleId: resultObj.id,
-              name: insightDef.label,
-              status: "Failed",
-              reason: "Data processing error.",
-              missingFiles: [],
-              data: [],
-              timestamp: new Date().toLocaleString()
-            });
-          }
-        }
-      } catch (e) {
-        toRun.forEach(id => {
-          const insightDef = INSIGHT_OPTIONS.find(o => o.id === id);
-          currentReports.push({
-            id: id + "_" + Date.now(),
-            moduleId: id,
-            name: insightDef.label,
-            status: "Failed",
-            reason: "Server execution failed.",
-            missingFiles: [],
-            data: [],
-            timestamp: new Date().toLocaleString()
-          });
-        });
+      } catch (err) {
+        const failItem = {
+          id: insightId + "_" + Date.now(),
+          moduleId: insightId,
+          name: insightDef.label,
+          status: "In-Active",
+          reason: "Processing error.",
+          missingFiles: [],
+          data: [],
+          timestamp: new Date().toLocaleString()
+        };
+        setHistory(prev => prev.map(item =>
+          (item.moduleId === insightId && item.status === "In Progress") ? failItem : item
+        ));
       }
     }
 
-    const successfulReports = currentReports.filter(r => r.status === "Success");
-    setActiveAnalysisResults(successfulReports);
-    setHistory(prev => [...currentReports, ...prev].slice(0, 50));
-
-    if (isNotifyEnabled && successfulReports.length > 0) alert("Audit session completed.");
-
-    // Send user directly to the new Report view to see what passed/failed
+    if (isNotifyEnabled && reportsToUpdate.some(r => r.status === "Success")) alert("Audit session completed.");
     setView("report");
   };
 
@@ -232,7 +334,8 @@ const Uploader = ({ logo, handleLogout }) => {
 
     try {
       if (file) {
-        setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: `Uploading ${FILE_TYPES.find(f => f.key === fileKey)?.label || fileKey}...` } : item));
+        // SET STATUS TO IN-PROGRESS (BLUE) IMMEDIATELY
+        setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, status: 'In Progress', reason: `Uploading ${FILE_TYPES.find(f => f.key === fileKey)?.label || fileKey}...` } : item));
 
         const formData = new FormData();
         formData.append(fileKey, file);
@@ -298,9 +401,9 @@ const Uploader = ({ logo, handleLogout }) => {
       return;
     }
 
-    // Mark all successful items as Refreshing... in the UI
+    // Mark all successful items as Reprocessing (Blue) in the UI
     setHistory(prev => prev.map(item =>
-      item.status === "Success" ? { ...item, status: "Refreshing..." } : item
+      item.status === "Success" ? { ...item, status: "Reprocessing", reason: "Refreshing data..." } : item
     ));
 
     // Process each insight individually so UI updates line-by-line
@@ -321,14 +424,21 @@ const Uploader = ({ logo, handleLogout }) => {
         const dataJson = await res.json();
         const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
 
+        const refreshedItem = { ...reportItem, status: "Success", data: extractedData, timestamp: new Date().toLocaleString() };
+
         setHistory(prev => prev.map(item =>
-          item.id === reportItem.id
-            ? { ...item, status: "Success", data: extractedData, timestamp: new Date().toLocaleString() }
-            : item
+          item.id === reportItem.id ? refreshedItem : item
         ));
+
+        setActiveAnalysisResults(prev => {
+          const updated = [...prev.filter(p => p.moduleId !== reportItem.moduleId), refreshedItem];
+          safelyPersistResults(updated);
+          return updated;
+        });
+
       } catch (err) {
         setHistory(prev => prev.map(item =>
-          item.id === reportItem.id ? { ...item, status: "Failed", reason: "Refresh failed." } : item
+          item.id === reportItem.id ? { ...item, status: "In-Active", reason: "Refresh failed." } : item
         ));
       }
     });
@@ -528,10 +638,31 @@ const Uploader = ({ logo, handleLogout }) => {
   );
 
   const renderProcessingView = () => (
-    <div style={{ textAlign: 'center', background: 'white', padding: '80px', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', width: '100%', maxWidth: '600px' }}>
-      <div className="spinner" style={{ width: '70px', height: '70px', border: '6px solid #f1f5f9', borderTop: '6px solid #00df81', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 30px' }}></div>
-      <h2 style={{ color: '#05192d', fontSize: '28px' }}>Auditing Data...</h2>
-      <p style={{ color: '#64748b', fontSize: '16px' }}>Executing {selectedInsights.length} control modules. This may take a moment.</p>
+    <div style={{ textAlign: 'center', background: 'white', padding: '60px 40px', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', width: '100%', maxWidth: '700px' }}>
+      <div className="spinner" style={{ width: '60px', height: '60px', border: '5px solid #f1f5f9', borderTop: '5px solid #00df81', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 30px' }}></div>
+      <h2 style={{ color: '#05192d', fontSize: '28px', marginBottom: '10px' }}>Auditing Data...</h2>
+      <p style={{ color: '#64748b', fontSize: '16px', marginBottom: '40px' }}>Executing control modules. This may take a moment for larger files.</p>
+
+      <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '16px', padding: '20px', border: '1px solid #edf2f7' }}>
+        <h4 style={{ margin: '0 0 15px 0', fontSize: '14px', color: '#05192d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Current Progress</h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {selectedInsights.map(id => {
+            const insight = INSIGHT_OPTIONS.find(o => o.id === id);
+            const isProcessing = history.find(h => h.moduleId === id && h.status === 'In Progress');
+            const isDone = history.find(h => h.moduleId === id && (h.status === 'Success' || h.status === 'Failed'));
+
+            return (
+              <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '14px', color: '#05192d', fontWeight: (isProcessing || isDone) ? '600' : '400' }}>{insight?.label}</span>
+                {isProcessing && <div className="spinner" style={{ width: '14px', height: '14px', border: '2px solid #f1f5f9', borderTop: '2px solid #3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>}
+                {isDone?.status === 'Success' && <span style={{ color: '#10b981', fontSize: '14px' }}>✔ Done</span>}
+                {isDone?.status === 'Failed' && <span style={{ color: '#ef4444', fontSize: '14px' }}>✘ Failed</span>}
+                {!isProcessing && !isDone && <span style={{ color: '#94a3b8', fontSize: '14px' }}>Waiting...</span>}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 
@@ -539,8 +670,21 @@ const Uploader = ({ logo, handleLogout }) => {
     <div className="animate-in" style={{ width: '100%', maxWidth: '1200px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <h2 style={{ color: '#05192d', fontSize: '32px', marginBottom: '5px' }}>Audit Insights</h2>
-          <p style={{ color: '#64748b' }}>Viewing results for specific control modules.</p>
+          {activeAnalysisResults.length === 1 ? (
+            <>
+              <h2 style={{ color: '#05192d', fontSize: '36px', fontWeight: '900', marginBottom: '4px', letterSpacing: '-0.5px' }}>
+                {activeAnalysisResults[0].name.split(" - ")[0]}
+              </h2>
+              <p style={{ color: '#64748b', fontSize: '18px', fontWeight: '500' }}>
+                {activeAnalysisResults[0].name.split(" - ")[1] || activeAnalysisResults[0].name}
+              </p>
+            </>
+          ) : (
+            <>
+              <h2 style={{ color: '#05192d', fontSize: '32px', marginBottom: '5px' }}>Audit Insights</h2>
+              <p style={{ color: '#64748b' }}>Viewing results for {activeAnalysisResults.length} control modules.</p>
+            </>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '12px' }}>
           <button onClick={() => setCurrentViewMode("table")} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #05192d', fontWeight: 'bold', background: currentViewMode === 'table' ? '#05192d' : 'white', color: currentViewMode === 'table' ? 'white' : '#05192d', cursor: 'pointer' }}>Table View</button>
@@ -553,7 +697,9 @@ const Uploader = ({ logo, handleLogout }) => {
         <div key={insight.id}>
           {currentViewMode === "table" ? (
             <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-              <h3 style={{ marginBottom: '20px', color: '#05192d', borderLeft: '4px solid #00df81', paddingLeft: '15px' }}>{insight.name}</h3>
+              {activeAnalysisResults.length > 1 && (
+                <h3 style={{ marginBottom: '20px', color: '#05192d', borderLeft: '4px solid #00df81', paddingLeft: '15px' }}>{insight.name}</h3>
+              )}
               <div style={{ overflowX: 'auto' }}>
                 {insight.data && insight.data.length > 0 ? (
                   <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -579,7 +725,7 @@ const Uploader = ({ logo, handleLogout }) => {
             insight.moduleId === "PJPA32_HOL" || insight.moduleId === "PJPA32_WE" ? (
               <PJPA32Dashboard data={insight.data} onBackToTable={() => setCurrentViewMode("table")} insightId={insight.moduleId} />
             ) : (
-              <Dashboard data={insight.data} onBackToTable={() => setCurrentViewMode("table")} />
+              <Dashboard data={insight.data} onBackToTable={() => setCurrentViewMode("table")} insightName={insight.name} />
             )
           )}
         </div>
@@ -587,6 +733,74 @@ const Uploader = ({ logo, handleLogout }) => {
     </div>
   );
 
+  const renderClearHistoryModal = () => {
+    if (!isClearModalOpen) return null;
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(5,25,45,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, backdropFilter: 'blur(4px)' }}>
+        <div className="animate-in" style={{ background: 'white', padding: '40px', borderRadius: '24px', maxWidth: '500px', width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+          <div style={{ fontSize: '50px', marginBottom: '20px' }}>🗑</div>
+          <h2 style={{ color: '#05192d', marginBottom: '10px' }}>Clear Execution Report</h2>
+          <p style={{ color: '#64748b', marginBottom: '30px', lineHeight: '1.5' }}>Would you like to save this session before clearing, or delete everything permanently?</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <button
+              onClick={async () => {
+                await handleSaveSession();
+                setHistory([]);
+                localStorage.removeItem("aja_audit_history");
+                setIsClearModalOpen(false);
+              }}
+              style={{ padding: '14px', background: '#05192d', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+              💾 Save Session & Clear
+            </button>
+            <button
+              onClick={() => {
+                setHistory([]);
+                localStorage.removeItem("aja_audit_history");
+                setIsClearModalOpen(false);
+              }}
+              style={{ padding: '14px', background: '#f8fafc', color: '#ef4444', border: '1px solid #fee2e2', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+              🔥 Permanently Delete
+            </button>
+            <button
+              onClick={() => setIsClearModalOpen(false)}
+              style={{ padding: '14px', background: 'none', color: '#64748b', border: 'none', fontWeight: 'bold', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  const renderNewSessionModal = () => {
+    if (!isNewSessionModalOpen) return null;
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(5,25,45,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(4px)' }}>
+        <div className="animate-in" style={{ background: 'white', padding: '40px', borderRadius: '24px', maxWidth: '450px', width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+          <div style={{ fontSize: '50px', marginBottom: '20px' }}>🔄</div>
+          <h2 style={{ color: '#05192d', marginBottom: '10px' }}>Start New Session?</h2>
+          <p style={{ color: '#64748b', marginBottom: '30px', lineHeight: '1.5' }}>
+            This will clear your current uploaded files and reset the analysis selection.
+            Your current results will be moved to the "Previous Session" history.
+          </p>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button
+              onClick={() => {
+                startNewSession();
+                setIsNewSessionModalOpen(false);
+              }}
+              style={{ flex: 1, padding: '14px', background: '#05192d', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+              Yes, Start Fresh
+            </button>
+            <button
+              onClick={() => setIsNewSessionModalOpen(false)}
+              style={{ flex: 1, padding: '14px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
   const renderReportView = () => (
     <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
@@ -600,9 +814,37 @@ const Uploader = ({ logo, handleLogout }) => {
             style={{ background: '#00df81', color: '#05192d', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>
             ↻ Refresh Successful Controls
           </button>
-          <button onClick={() => { setHistory([]); localStorage.removeItem("aja_audit_history"); }} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Clear Report History</button>
+          <button onClick={() => setIsClearModalOpen(true)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Clear Report History</button>
         </div>
       </div>
+
+      {renderClearHistoryModal()}
+
+      {/* ── Previous Session Banner ── */}
+      {lastSessionResults.length > 0 && activeAnalysisResults.length === 0 && (
+        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '16px', padding: '20px 24px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '20px' }}>📋</span>
+            <div>
+              <div style={{ fontWeight: '700', color: '#92400e', fontSize: '15px' }}>Previous Session Results Available</div>
+              <div style={{ color: '#b45309', fontSize: '13px' }}>{lastSessionResults.length} insight(s) from your last run are still accessible. Start a new analysis to replace them.</div>
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              onClick={() => { setActiveAnalysisResults(lastSessionResults); setView("results"); }}
+              style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '9px 18px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>
+              View Previous Results
+            </button>
+            <button
+              onClick={() => { setLastSessionResults([]); localStorage.removeItem("aja_last_session_results"); }}
+              style={{ background: 'none', color: '#b45309', border: '1px solid #fde68a', padding: '9px 18px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}>
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       <div style={{ background: 'white', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
         {history.length > 0 ? (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -621,13 +863,24 @@ const Uploader = ({ logo, handleLogout }) => {
                   <td style={{ padding: '20px', fontWeight: 'bold', color: '#05192d' }}>{item.name}</td>
                   <td style={{ padding: '20px' }}>
                     {item.status === 'Success' ? (
-                      <span style={{ background: '#e6fcf2', color: '#00df81', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>Success</span>
-                    ) : item.status === 'Refreshing...' ? (
-                      <span style={{ background: '#eff6ff', color: '#2563eb', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>Refreshing...</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ display: 'inline-block', width: 'fit-content', background: '#e6fcf2', color: '#00df81', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' }}>Success</span>
+                        {item.timestamp && <div style={{ fontSize: '10px', color: '#94a3b8' }}>{new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>}
+                      </div>
+                    ) : (item.status === 'In Progress' || item.status === 'Refreshing...' || item.status === 'Reprocessing') ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <span style={{ display: 'inline-block', width: 'fit-content', background: '#eff6ff', color: '#3b82f6', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' }}>{item.status}</span>
+                        <div style={{ fontSize: '10px', color: '#3b82f6', fontWeight: '500' }}>Processing...</div>
+                      </div>
+                    ) : item.status === 'In-Active' ? (
+                      <div>
+                        <span style={{ display: 'inline-block', width: 'fit-content', background: '#f1f5f9', color: '#64748b', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' }}>In-Active</span>
+                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '8px', fontWeight: '500' }}>{item.reason}</div>
+                      </div>
                     ) : (
                       <div>
-                        <span style={{ background: '#fef2f2', color: '#ef4444', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 'bold' }}>Failed</span>
-                        <div style={{ fontSize: '12px', color: '#ef4444', marginTop: '8px', fontWeight: '500' }}>{item.reason}</div>
+                        <span style={{ display: 'inline-block', width: 'fit-content', background: '#fef2f2', color: '#ef4444', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 'bold' }}>Failed</span>
+                        <div style={{ fontSize: '11px', color: '#ef4444', marginTop: '8px', fontWeight: '500' }}>{item.reason}</div>
                       </div>
                     )}
                   </td>
@@ -669,19 +922,53 @@ const Uploader = ({ logo, handleLogout }) => {
             </tbody>
           </table>
         ) : (
-          <div style={{ padding: '60px', textAlign: 'center', color: '#64748b' }}>No audit reports have been executed yet.</div>
+          <div style={{ padding: '80px', textAlign: 'center', color: '#94a3b8' }}>
+            <div style={{ fontSize: '40px', marginBottom: '15px' }}>📊</div>
+            <div style={{ fontWeight: 'bold', fontSize: '18px', color: '#05192d' }}>Report Empty</div>
+            <p>Ready for your first audit analysis.</p>
+          </div>
         )}
       </div>
+
+      {/* ── SAVED SESSIONS SECTION ── */}
+      {savedSessions.length > 0 && (
+        <div style={{ marginTop: '50px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+            <h3 style={{ color: '#05192d', margin: 0 }}>📁 Saved Session History</h3>
+            <span style={{ background: '#f1f5f9', color: '#64748b', fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '10px' }}>{savedSessions.length} sessions</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+            {savedSessions.map(session => (
+              <div key={session.id} style={{ background: 'white', padding: '24px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', transition: '0.2s' }}>
+                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>{new Date(session.timestamp).toLocaleDateString()}</span>
+                  <span>{new Date(session.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+                <h4 style={{ color: '#05192d', margin: '0 0 8px 0', fontSize: '16px' }}>{session.name}</h4>
+                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 20px 0' }}>{session.insights.length} insight modules analyzed.</p>
+                <button
+                  onClick={() => handleLoadSession(session.id)}
+                  style={{ width: '100%', padding: '10px', background: '#f8fafc', color: '#05192d', border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>
+                  📂 Restore Session
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
   return (
     <div className="up-page-wrapper">
+      {renderNewSessionModal()}
       <nav className="up-nav" style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '15px 0' }}>
         <div className="up-inner-nav" style={{ maxWidth: '1400px', margin: '0 auto', width: '90%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <img src={ajalabsblack} alt="AjaLabs" className="nav-logo-aja" style={{ height: '35px' }} />
           <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
-            <button onClick={startNewSession} style={{ background: '#e2e8f0', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', color: '#05192d' }}>New Session</button>
+            <button onClick={() => setIsNewSessionModalOpen(true)} style={{ background: '#e2e8f0', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', color: '#05192d' }}>
+              New Session
+            </button>
             <button onClick={handleReportToggle} style={{ background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer', color: view === 'report' ? '#00df81' : '#64748b' }}>{view === 'report' ? 'Close Report' : 'Report'}</button>
             <button onClick={handleLogout} style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}>Sign Out</button>
             <img src={logo} alt="JK Cement" className="nav-logo-jk" style={{ height: '40px' }} />

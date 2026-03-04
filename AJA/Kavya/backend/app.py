@@ -6,6 +6,9 @@ import zipfile
 import io
 import traceback
 from werkzeug.utils import secure_filename
+import shutil
+import json
+from datetime import datetime
 
 # Import the updated orchestrator function
 from main_orchestrator import run_selected_insights 
@@ -15,8 +18,10 @@ CORS(app)
 
 DATA_DIR = r"Data"
 OUTPUT_DIR = r"Output"
+SESSIONS_DIR = r"Sessions"
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+os.makedirs(SESSIONS_DIR, exist_ok=True)
 
 MOCK_USERS = [
     {"id": "1", "username": "admin", "password": "password123", "role": "admin", "status": "Active"},
@@ -97,7 +102,17 @@ def upload_files():
         # ==========================================
         # NEW: KPI GENERATION FOR UPLOAD SCREEN
         # ==========================================
-        kpis = {}
+        kpis = {
+            'total_transactions': 0,
+            'unique_employees': 0,
+            'total_amount': 0.0,
+            'average_claim': 0.0,
+            'unique_reports': 0,
+            'master_unique_employees': 0,
+            'master_separated_employees': 0,
+            'master_active_employees': 0,
+            'master_company_codes': 0
+        }
         
         # 1. Concur Header KPIs - ONLY run if Concur file was just uploaded!
         if 'concurFile' in request.files:
@@ -212,6 +227,76 @@ def get_insight_data(insight_id):
         
         return jsonify({"status": "success", "insight_id": insight_id, "data": df.to_dict(orient='records')})
 
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/save-session', methods=['POST'])
+def save_session():
+    try:
+        req_data = request.get_json()
+        data = req_data if req_data else {}
+        session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        session_path = os.path.join(SESSIONS_DIR, session_id)
+        os.makedirs(session_path, exist_ok=True)
+        
+        # Copy files from Output to Session folder
+        files_saved = []
+        for insight_id, filename in FILE_MAP.items():
+            src_path = os.path.join(OUTPUT_DIR, filename)
+            if os.path.exists(src_path):
+                shutil.copy(src_path, os.path.join(session_path, filename))
+                files_saved.append(insight_id)
+        
+        # Save metadata
+        metadata = {
+            "id": session_id,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "insights": files_saved,
+            "name": data.get("name", f"Audit Session {datetime.now().strftime('%d %b %Y %H:%M')}")
+        }
+        with open(os.path.join(session_path, "metadata.json"), "w") as f:
+            json.dump(metadata, f)
+            
+        return jsonify({"status": "success", "session": metadata}), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/sessions', methods=['GET'])
+def list_sessions():
+    try:
+        sessions = []
+        if os.path.exists(SESSIONS_DIR):
+            for folder in os.listdir(SESSIONS_DIR):
+                meta_path = os.path.join(SESSIONS_DIR, folder, "metadata.json")
+                if os.path.exists(meta_path):
+                    with open(meta_path, "r") as f:
+                        sessions.append(json.load(f))
+        
+        # Sort by timestamp descending
+        sessions.sort(key=lambda x: x['timestamp'], reverse=True)
+        return jsonify(sessions), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/sessions/<session_id>/<insight_id>/data', methods=['GET'])
+def get_session_data(session_id, insight_id):
+    try:
+        if insight_id not in FILE_MAP:
+            return jsonify({"status": "error", "message": "Insight not found"}), 404
+            
+        file_path = os.path.join(SESSIONS_DIR, session_id, FILE_MAP[insight_id])
+        if not os.path.exists(file_path):
+            return jsonify({"status": "error", "message": "Data not found in this session"}), 404
+
+        if insight_id == "PJPA28":
+            df = pd.read_excel(file_path, sheet_name='Anomalies (30-42)', skiprows=SKIP_ROWS_MAP[insight_id])
+        else:
+            df = pd.read_excel(file_path, skiprows=SKIP_ROWS_MAP[insight_id])
+            
+        df.columns = df.columns.astype(str)
+        df = df.fillna("N/A")
+        
+        return jsonify({"status": "success", "insight_id": insight_id, "data": df.to_dict(orient='records')})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
