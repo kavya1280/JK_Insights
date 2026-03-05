@@ -11,8 +11,7 @@ const INSIGHT_OPTIONS = [
   { id: "PJPA29", label: "PJPA29 - New Joiner Early Claims", req: ["empMasterFile", "lineItemFile"] },
   { id: "PJPA30", label: "PJPA30 - Short Trip Frequency Abuse", req: ["lineItemFile"] },
   { id: "PJPA31", label: "PJPA31 - Structural Splitting", req: ["lineItemFile"] },
-  { id: "PJPA32_HOL", label: "PJPA32 - Holiday Travel & Weekend Travel", req: ["lineItemFile"] },
-  { id: "PJPA32_WE", label: "PJPA32 - Weekend Travel", req: ["lineItemFile"] },
+  { id: "PJPA32", label: "PJPA32 - Holiday Travel & Weekend Travel", req: ["lineItemFile"] },
   { id: "PJPA33", label: "PJPA33 - Bulk Booking Reimbursements", req: ["lineItemFile"] },
   { id: "PJPA34", label: "PJPA34 - High-Frequency Low Value Claims", req: ["lineItemFile"] },
   { id: "PJPA35", label: "PJPA35 - Duplicate Report ID", req: ["concurFile"] },
@@ -48,6 +47,7 @@ const Uploader = ({ logo, handleLogout }) => {
   });
   const [analysisErrors, setAnalysisErrors] = useState([]);
   const [currentViewMode, setCurrentViewMode] = useState("table");
+  const [pjpa32SubView, setPjpa32SubView] = useState('holiday');
   const [uploadKPIs, setUploadKPIs] = useState({});
   const [savedSessions, setSavedSessions] = useState([]);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
@@ -107,10 +107,6 @@ const Uploader = ({ logo, handleLogout }) => {
     }
   }, [history]);
 
-  // Add this to securely wipe backend ghost files if the user hard-refreshes the page!
-  useEffect(() => {
-    fetch("http://localhost:5000/api/clear-session", { method: "POST" }).catch(() => { });
-  }, []);
 
   // --- Handlers ---
   const handleReportToggle = () => {
@@ -123,23 +119,15 @@ const Uploader = ({ logo, handleLogout }) => {
   };
 
   const startNewSession = async () => {
-    // 1. Tell the backend to physically delete the old files
-    try {
-      await fetch("http://localhost:5000/api/clear-session", { method: "POST" });
-    } catch (err) {
-      console.warn("Backend clear session failed:", err);
-    }
-
-    // 2. Preserve the current results as "last session" before clearing
+    // 1. Preserve the current results as "last session" before clearing the UI
     if (activeAnalysisResults.length > 0) {
       setLastSessionResults(activeAnalysisResults);
       safelyPersistResults(activeAnalysisResults);
     }
 
-    // 3. Clear the frontend memory for the new session
+    // 2. Clear the frontend memory for the new session
     setFiles({ concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null });
     setSelectedInsights([]);
-    // activeAnalysisResults stays visible until new ones replace them
     setUploadKPIs({});
     setView("upload");
   };
@@ -327,47 +315,36 @@ const Uploader = ({ logo, handleLogout }) => {
     setView("report");
   };
 
-  // --- Inline Reupload Logic for the Report Page ---
-  const handleInlineReupload = async (e, reportItem, fileKey) => {
+  // 1. Uploads a single missing file and updates the UI state
+  const handleInlineUploadOnly = async (e, reportItem, fileKey) => {
     const file = e.target.files ? e.target.files[0] : null;
-    if (fileKey && !file) return;
+    if (!file) return;
 
     try {
-      if (file) {
-        // SET STATUS TO IN-PROGRESS (BLUE) IMMEDIATELY
-        setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, status: 'In Progress', reason: `Uploading ${FILE_TYPES.find(f => f.key === fileKey)?.label || fileKey}...` } : item));
+      // Temporarily update reason to show upload progress
+      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: `Uploading ${FILE_TYPES.find(f => f.key === fileKey)?.label || fileKey}...` } : item));
 
-        const formData = new FormData();
-        formData.append(fileKey, file);
+      const formData = new FormData();
+      formData.append(fileKey, file);
 
-        // Update the React files state
-        setFiles(prev => ({ ...prev, [fileKey]: file }));
+      // Update global React files state so the UI registers it as uploaded
+      setFiles(prev => ({ ...prev, [fileKey]: file }));
 
-        const uploadRes = await fetch("http://localhost:5000/api/upload", { method: "POST", body: formData });
-        if (!uploadRes.ok) throw new Error("Upload failed");
-      }
+      const uploadRes = await fetch("http://localhost:5000/api/upload", { method: "POST", body: formData });
+      if (!uploadRes.ok) throw new Error("Upload failed");
 
-      // --- SMART CHECK: Are we still missing other files? ---
-      const insightDef = INSIGHT_OPTIONS.find(o => o.id === reportItem.moduleId);
-      const remainingMissingFiles = insightDef.req.filter(reqFile => {
-        if (reqFile === fileKey) return false; // We just uploaded this one!
-        if (files[reqFile]) return false;      // We already had this one!
-        return true;                           // Still missing!
-      });
+      // Reset reason to prompt the user for the next action
+      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Missing Data Pending" } : item));
 
-      if (remainingMissingFiles.length > 0) {
-        // Don't run the backend yet! Just update the UI to show what is still missing.
-        setHistory(prev => prev.map(item => item.id === reportItem.id ? {
-          ...item,
-          missingFiles: remainingMissingFiles,
-          reason: `Missing Data: ${remainingMissingFiles.map(f => FILE_TYPES.find(ft => ft.key === f)?.label || f).join(", ")}`
-        } : item));
-        return; // Exit out of the function early
-      }
-      // ------------------------------------------------------
+    } catch (err) {
+      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Upload failed. Try again." } : item));
+    }
+  };
 
-      // If we make it here, all required files are present! Time to generate.
-      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Processing Insight..." } : item));
+  // 2. Triggers the backend generation once all files are ready
+  const handleRetryProcessing = async (reportItem) => {
+    try {
+      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, status: 'In Progress', reason: "Processing Insight..." } : item));
 
       const genRes = await fetch("http://localhost:5000/api/generate", {
         method: "POST",
@@ -388,8 +365,7 @@ const Uploader = ({ logo, handleLogout }) => {
       setActiveAnalysisResults(prev => [...prev.filter(p => p.moduleId !== reportItem.moduleId), updatedItem]);
 
     } catch (err) {
-      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Retry failed. Check file format." } : item));
-      alert("Action failed. Ensure backend is running and file is valid.");
+      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, status: 'Failed', reason: "Retry failed. Check file format." } : item));
     }
   };
 
@@ -403,28 +379,20 @@ const Uploader = ({ logo, handleLogout }) => {
 
     // Mark all successful items as Reprocessing (Blue) in the UI
     setHistory(prev => prev.map(item =>
-      item.status === "Success" ? { ...item, status: "Reprocessing", reason: "Refreshing data..." } : item
+      item.status === "Success" ? { ...item, status: "Reprocessing", reason: "Fetching latest data..." } : item
     ));
 
     // Process each insight individually so UI updates line-by-line
     successfulItems.forEach(async (reportItem) => {
       try {
-        // Re-generate
-        const genRes = await fetch("http://localhost:5000/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ insights: [reportItem.moduleId] })
-        });
-        if (!genRes.ok) throw new Error();
-
-        // Re-fetch data
+        // We skip the /api/generate step entirely and just re-fetch the existing data
         const res = await fetch(`http://localhost:5000/api/insight/${reportItem.moduleId}/data`);
-        if (!res.ok) throw new Error();
+        if (!res.ok) throw new Error("Failed to fetch data.");
 
         const dataJson = await res.json();
         const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
 
-        const refreshedItem = { ...reportItem, status: "Success", data: extractedData, timestamp: new Date().toLocaleString() };
+        const refreshedItem = { ...reportItem, status: "Success", reason: "", data: extractedData, timestamp: new Date().toLocaleString() };
 
         setHistory(prev => prev.map(item =>
           item.id === reportItem.id ? refreshedItem : item
@@ -438,10 +406,44 @@ const Uploader = ({ logo, handleLogout }) => {
 
       } catch (err) {
         setHistory(prev => prev.map(item =>
-          item.id === reportItem.id ? { ...item, status: "In-Active", reason: "Refresh failed." } : item
+          item.id === reportItem.id ? { ...item, status: "In-Active", reason: "Refresh failed. File may be missing." } : item
         ));
       }
     });
+  };
+
+  const handleSignOutClick = () => {
+    // Check if any report in history is currently running or refreshing
+    const isProcessing = history.some(item =>
+      ['In Progress', 'Refreshing...', 'Reprocessing'].includes(item.status)
+    );
+
+    const message = isProcessing
+      ? "You have insights currently processing! Are you sure you want to sign out?"
+      : "Are you sure you want to sign out?";
+
+    if (window.confirm(message)) {
+      handleLogout(); // Only log out if they click 'OK'
+    }
+  };
+
+  // --- Selective Delete Handler ---
+  const deleteHistoryItem = (id) => {
+    if (window.confirm("Are you sure you want to remove this record from the report?")) {
+      setHistory((prev) => {
+        const updatedHistory = prev.filter((item) => item.id !== id);
+
+        // Update LocalStorage immediately so it stays deleted on refresh
+        try {
+          const historyMinimal = updatedHistory.map(({ data, ...rest }) => rest);
+          localStorage.setItem("aja_audit_history", JSON.stringify(historyMinimal));
+        } catch (e) {
+          console.error("Failed to update storage after deletion", e);
+        }
+
+        return updatedHistory;
+      });
+    }
   };
 
   const renderUploadView = () => (
@@ -655,7 +657,7 @@ const Uploader = ({ logo, handleLogout }) => {
               <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span style={{ fontSize: '14px', color: '#05192d', fontWeight: (isProcessing || isDone) ? '600' : '400' }}>{insight?.label}</span>
                 {isProcessing && <div className="spinner" style={{ width: '14px', height: '14px', border: '2px solid #f1f5f9', borderTop: '2px solid #3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>}
-                {isDone?.status === 'Success' && <span style={{ color: '#10b981', fontSize: '14px' }}>✔ Done</span>}
+                {isDone?.status === 'Success' && <span style={{ color: '#1059b9ff', fontSize: '14px' }}>✔ Processing</span>}
                 {isDone?.status === 'Failed' && <span style={{ color: '#ef4444', fontSize: '14px' }}>✘ Failed</span>}
                 {!isProcessing && !isDone && <span style={{ color: '#94a3b8', fontSize: '14px' }}>Waiting...</span>}
               </div>
@@ -686,10 +688,27 @@ const Uploader = ({ logo, handleLogout }) => {
             </>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '12px' }}>
-          <button onClick={() => setCurrentViewMode("table")} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #05192d', fontWeight: 'bold', background: currentViewMode === 'table' ? '#05192d' : 'white', color: currentViewMode === 'table' ? 'white' : '#05192d', cursor: 'pointer' }}>Table View</button>
-          <button onClick={() => setCurrentViewMode("dashboard")} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #05192d', fontWeight: 'bold', background: currentViewMode === 'dashboard' ? '#05192d' : 'white', color: currentViewMode === 'dashboard' ? 'white' : '#05192d', cursor: 'pointer' }}>Dashboard View</button>
-          <button onClick={() => setView("report")} style={{ padding: '10px 20px', background: '#f1f5f9', color: '#05192d', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Back to Report</button>
+
+        {/* NEW HEADER RIGHT SIDE */}
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          {activeAnalysisResults.some(r => r.moduleId === "PJPA32") && (
+            <div style={{ display: 'flex', gap: '8px', background: '#f1f5f9', padding: '4px', borderRadius: '10px' }}>
+              <button
+                onClick={() => setPjpa32SubView('holiday')}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', fontWeight: 'bold', background: pjpa32SubView === 'holiday' ? '#00df81' : 'transparent', color: pjpa32SubView === 'holiday' ? '#05192d' : '#64748b', cursor: 'pointer', transition: '0.2s' }}>
+                Holiday Travel
+              </button>
+              <button
+                onClick={() => setPjpa32SubView('weekend')}
+                style={{ padding: '8px 16px', borderRadius: '6px', border: 'none', fontWeight: 'bold', background: pjpa32SubView === 'weekend' ? '#00df81' : 'transparent', color: pjpa32SubView === 'weekend' ? '#05192d' : '#64748b', cursor: 'pointer', transition: '0.2s' }}>
+                Weekend Travel
+              </button>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button onClick={() => setCurrentViewMode("table")} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #05192d', fontWeight: 'bold', background: currentViewMode === 'table' ? '#05192d' : 'white', color: currentViewMode === 'table' ? 'white' : '#05192d', cursor: 'pointer' }}>Table View</button>
+            <button onClick={() => setCurrentViewMode("dashboard")} style={{ padding: '10px 20px', borderRadius: '8px', border: '1px solid #05192d', fontWeight: 'bold', background: currentViewMode === 'dashboard' ? '#05192d' : 'white', color: currentViewMode === 'dashboard' ? 'white' : '#05192d', cursor: 'pointer' }}>Dashboard View</button>
+          </div>
         </div>
       </div>
 
@@ -700,30 +719,47 @@ const Uploader = ({ logo, handleLogout }) => {
               {activeAnalysisResults.length > 1 && (
                 <h3 style={{ marginBottom: '20px', color: '#05192d', borderLeft: '4px solid #00df81', paddingLeft: '15px' }}>{insight.name}</h3>
               )}
-              <div style={{ overflowX: 'auto' }}>
-                {insight.data && insight.data.length > 0 ? (
-                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                    <thead>
-                      <tr style={{ background: '#05192d', color: 'white' }}>
-                        {Object.keys(insight.data[0]).map(k => <th key={k} style={{ padding: '12px', textAlign: 'left', fontSize: '12px' }}>{k}</th>)}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {insight.data.slice(0, 10).map((row, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          {Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155' }}>{String(v)}</td>)}
+              <div style={{
+                overflowX: 'auto',
+                maxHeight: '600px',
+                overflowY: 'auto',
+                border: '1px solid #f1f5f9',
+                borderRadius: '8px',
+              }}>
+                {(() => {
+                  // Determine which data to show based on the active tab if it's PJPA32
+                  const displayData = insight.moduleId === "PJPA32"
+                    ? (insight.data[pjpa32SubView] || [])
+                    : (insight.data || []);
+
+                  return displayData.length > 0 ? (
+                    <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
+                      <thead>
+                        <tr style={{ background: '#05192d', color: 'white' }}>
+                          {Object.keys(displayData[0]).map(k => <th key={k} style={{ padding: '16px 12px', textAlign: 'left', fontSize: '12px', background: '#05192d', position: 'sticky', top: '0', zIndex: '10', borderBottom: '2px solid #00df81', whiteSpace: 'nowrap' }}>{k}</th>)}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No records found for this module.</div>
-                )}
+                      </thead>
+                      <tbody>
+                        {displayData.map((row, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                            {Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155' }}>{String(v)}</td>)}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No records found for this module.</div>
+                  );
+                })()}
               </div>
             </div>
           ) : (
-            insight.moduleId === "PJPA32_HOL" || insight.moduleId === "PJPA32_WE" ? (
-              <PJPA32Dashboard data={insight.data} onBackToTable={() => setCurrentViewMode("table")} insightId={insight.moduleId} />
+            insight.moduleId === "PJPA32" ? (
+              <PJPA32Dashboard
+                data={insight.data[pjpa32SubView] || []}
+                onBackToTable={() => setCurrentViewMode("table")}
+                insightId={pjpa32SubView === 'holiday' ? 'PJPA32_HOL' : 'PJPA32_WE'}
+              />
             ) : (
               <Dashboard data={insight.data} onBackToTable={() => setCurrentViewMode("table")} insightName={insight.name} />
             )
@@ -845,15 +881,16 @@ const Uploader = ({ logo, handleLogout }) => {
         </div>
       )}
 
-      <div style={{ background: 'white', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+      <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', maxHeight: '600px', overflowY: 'auto', overflowX: 'auto' }}>
         {history.length > 0 ? (
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ background: '#f8fafc' }}>
+          <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
+            <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8fafc' }}>
               <tr>
-                <th style={{ padding: '20px', textAlign: 'left', color: '#64748b' }}>Timestamp</th>
-                <th style={{ padding: '20px', textAlign: 'left', color: '#64748b' }}>Insight Module</th>
-                <th style={{ padding: '20px', textAlign: 'left', color: '#64748b' }}>Status</th>
-                <th style={{ padding: '20px', textAlign: 'left', color: '#64748b' }}>Action</th>
+                <th style={{ padding: '20px', textAlign: 'left', color: '#64748b', background: '#f8fafc' }}>Timestamp</th>
+                <th style={{ padding: '20px', textAlign: 'left', color: '#64748b', background: '#f8fafc' }}>Insight Module</th>
+                <th style={{ padding: '20px', textAlign: 'left', color: '#64748b', background: '#f8fafc' }}>Status</th>
+                <th style={{ padding: '20px', textAlign: 'left', color: '#64748b', background: '#f8fafc' }}>Action</th>
+                <th style={{ padding: '20px', background: '#f8fafc' }}></th> {/* ADD THIS LINE */}
               </tr>
             </thead>
             <tbody>
@@ -899,23 +936,69 @@ const Uploader = ({ logo, handleLogout }) => {
                       <div className="spinner" style={{ width: '18px', height: '18px', border: '2px solid #f1f5f9', borderTop: '2px solid #2563eb', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {item.missingFiles && item.missingFiles.length > 0 ? (
-                          item.missingFiles.map(reqFile => {
-                            const fileLabel = FILE_TYPES.find(f => f.key === reqFile)?.label || reqFile;
+                        {(() => {
+                          // Calculate which files are STILL missing from the global files state
+                          const stillMissing = item.missingFiles?.filter(reqFile => !files[reqFile]) || [];
+
+                          if (item.missingFiles && item.missingFiles.length > 0) {
+                            if (stillMissing.length === 0) {
+                              // All required files are uploaded! Show the Retry Processing button.
+                              return (
+                                <button onClick={() => handleRetryProcessing(item)} style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', color: '#05192d' }}>
+                                  Retry Processing
+                                </button>
+                              );
+                            } else {
+                              // Still missing some files. Render upload buttons or "Ready" badges.
+                              return item.missingFiles.map(reqFile => {
+                                const isUploadedNow = !!files[reqFile];
+                                const fileLabel = FILE_TYPES.find(f => f.key === reqFile)?.label || reqFile;
+
+                                if (isUploadedNow) {
+                                  return (
+                                    <div key={reqFile} style={{ fontSize: '12px', background: '#f0fff4', color: '#166534', padding: '8px 12px', borderRadius: '6px', border: '1px solid #bbf7d0', textAlign: 'center', fontWeight: 'bold' }}>
+                                      ✅ {fileLabel} Ready
+                                    </div>
+                                  );
+                                } else {
+                                  return (
+                                    <label key={reqFile} style={{ fontSize: '12px', background: '#f1f5f9', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'inline-block', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
+                                      <input type="file" accept=".csv, .xls, .xlsx, .zip" style={{ display: 'none' }} onChange={(e) => handleInlineUploadOnly(e, item, reqFile)} />
+                                      <span style={{ color: '#2563eb', fontWeight: 'bold' }}>Upload {fileLabel}</span>
+                                    </label>
+                                  );
+                                }
+                              });
+                            }
+                          } else {
+                            // No missing files tracked, just a general failure. Show retry.
                             return (
-                              <label key={reqFile} style={{ fontSize: '12px', background: '#f1f5f9', padding: '8px 12px', borderRadius: '6px', cursor: 'pointer', display: 'inline-block', border: '1px dashed #cbd5e1', textAlign: 'center' }}>
-                                <input type="file" accept=".csv, .xls, .xlsx, .zip" style={{ display: 'none' }} onChange={(e) => handleInlineReupload(e, item, reqFile)} />
-                                <span style={{ color: '#2563eb', fontWeight: 'bold' }}>Upload {fileLabel}</span>
-                              </label>
+                              <button onClick={() => handleRetryProcessing(item)} style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', color: '#05192d' }}>
+                                Retry Processing
+                              </button>
                             );
-                          })
-                        ) : (
-                          <button onClick={() => handleInlineReupload({ target: {} }, item, null)} style={{ padding: '8px 16px', background: '#f1f5f9', border: '1px solid #cbd5e1', borderRadius: '8px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold', color: '#05192d' }}>
-                            Retry Processing
-                          </button>
-                        )}
+                          }
+                        })()}
                       </div>
                     )}
+                  </td>
+                  <td style={{ padding: '20px', textAlign: 'center' }}>
+                    <button
+                      onClick={() => deleteHistoryItem(item.id)}
+                      title="Delete Record"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#000000ff',
+                        cursor: 'pointer',
+                        fontSize: '20px',
+                        transition: 'color 0.2s'
+                      }}
+                      onMouseOver={(e) => e.target.style.color = '#ef4444'}
+                      onMouseOut={(e) => e.target.style.color = '#080808ff'}
+                    >
+                      🗑
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -970,7 +1053,7 @@ const Uploader = ({ logo, handleLogout }) => {
               New Session
             </button>
             <button onClick={handleReportToggle} style={{ background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer', color: view === 'report' ? '#00df81' : '#64748b' }}>{view === 'report' ? 'Close Report' : 'Report'}</button>
-            <button onClick={handleLogout} style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}>Sign Out</button>
+            <button onClick={handleSignOutClick} style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}>Sign Out</button>
             <img src={logo} alt="JK Cement" className="nav-logo-jk" style={{ height: '40px' }} />
           </div>
         </div>
@@ -982,6 +1065,9 @@ const Uploader = ({ logo, handleLogout }) => {
         {view === 'results' && renderResultsView()}
         {view === 'report' && renderReportView()}
       </div>
+      <footer className="login-page-footer">
+        <p>Copyright @ 2026 | Powered by Ajalabs | Data Privacy</p>
+      </footer>
     </div>
   );
 };

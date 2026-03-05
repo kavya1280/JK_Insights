@@ -57,8 +57,8 @@ def run_selected_insights(selected_insights):
             generate_structural_splitting_insight(concur_file, line_item_file, out_31)
         except Exception as e: print(f"Error PJPA31: {e}")
 
-    # UI treats Holiday and Weekend as separate toggles, but they run from the same file
-    if "PJPA32_HOL" in selected_insights or "PJPA32_WE" in selected_insights:
+    # UI treats Holiday and Weekend as a single toggle
+    if "PJPA32" in selected_insights:
         try:
             out_32_hol = os.path.join(output_dir, "PJPA32_Holiday_Generated.xlsx")
             out_32_week = os.path.join(output_dir, "PJPA32_Weekend_Generated.xlsx")

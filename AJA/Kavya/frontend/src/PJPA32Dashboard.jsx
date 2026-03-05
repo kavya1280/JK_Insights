@@ -117,7 +117,7 @@ function mercatorXY(lon, lat, scale = 150, containerW = 800, containerH = 400) {
 // SUB-COMPONENTS
 // =============================================================================
 
-const Header = ({ insightId, onBackToTable }) => (
+const Header = ({ insightId }) => (
     <header className="header" style={{ position: 'relative', zIndex: 1000 }}>
         <div className="header-left">
             <img src={ajalabsblack} alt="Aja Labs" className="header-logo" />
@@ -132,9 +132,6 @@ const Header = ({ insightId, onBackToTable }) => (
             </div>
         </div>
         <div className="header-right">
-            <button onClick={onBackToTable} className="back-button" style={{ marginRight: '20px', padding: '10px 20px', background: '#05192d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>
-                ← Back
-            </button>
             <div className="jk-logo-badge">
                 <img src={logo} alt="JK Cement" className="jk-logo-img" />
             </div>
@@ -153,7 +150,7 @@ const KPICards = ({ kpis }) => {
         { label: 'Avg Spend per Person', value: kpis.avg_spend_per_person, type: 'currency', icon: Icons.chart, color: '#0B4F94' },
     ];
     return (
-        <div className="kpi-grid">
+        <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(6, 1fr)' }}>
             {cards.map((card, i) => (
                 <div key={card.label} className="kpi-card kpi-card-animate" style={{ animationDelay: `${i * 80}ms` }}>
                     <div className="kpi-icon-svg" style={{ color: card.color }}>{card.icon}</div>
@@ -494,7 +491,7 @@ const ApprovalStatusChart = ({ data, keys }) => {
     );
 };
 
-const PJPA32Dashboard = ({ data, onBackToTable, insightId }) => {
+const PJPA32Dashboard = ({ data, insightId }) => {
     const [filters, setFilters] = useState({ employeeId: '', employee: '', reportId: '', expenseType: '', search: '' });
     const [pageSize, setPageSize] = useState(15);
     const [currentPage, setCurrentPage] = useState(1);
@@ -619,6 +616,33 @@ const PJPA32Dashboard = ({ data, onBackToTable, insightId }) => {
         { key: 'Transaction Date', label: 'Date' },
     ];
 
+    // 5. Export to CSV Function
+    const exportToCSV = () => {
+        if (!filteredData || filteredData.length === 0) return;
+
+        // Build the headers
+        const headers = cols.map(c => `"${c.label}"`).join(',');
+
+        // Build the rows and escape quotes
+        const csvRows = filteredData.map(row => {
+            return cols.map(c => {
+                let val = row[c.key] !== undefined && row[c.key] !== null ? String(row[c.key]) : '';
+                val = val.replace(/"/g, '""'); // Escape inner quotes
+                return `"${val}"`; // Wrap in quotes to handle commas safely
+            }).join(',');
+        });
+
+        // Combine and trigger download
+        const csvContent = [headers, ...csvRows].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute('download', `${insightId}_Export_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     return (
         <div className="dashboard">
             <div className="abstract-background">
@@ -628,11 +652,13 @@ const PJPA32Dashboard = ({ data, onBackToTable, insightId }) => {
                     <path d="M1500 800C1100 1100 900 600 500 800C100 1000 -50 900 -200 850V1200H1500V800Z" fill="#0B4F94" opacity="0.06" />
                 </svg>
             </div>
-            <Header insightId={insightId} onBackToTable={onBackToTable} />
+            <Header insightId={insightId} />
             <div className="dashboard-content">
                 <KPICards kpis={stats.kpis} />
                 <Filters options={filterOptions} filters={filters} onFilterChange={setFilters} onReset={() => setFilters({ employeeId: '', employee: '', reportId: '', expenseType: '', search: '' })} />
-                <div className="charts-grid">
+
+                {/* Charts Layout: 3 sections with 2 charts per section */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     <div className="chart-row">
                         <EmployeeBarChart data={stats.employeeData} />
                         <ColumnChart data={stats.weekendData} />
@@ -649,15 +675,25 @@ const PJPA32Dashboard = ({ data, onBackToTable, insightId }) => {
 
                 {/* Data Table */}
                 <div className="data-table-card">
-                    <div className="table-header-row">
-                        <h3 className="chart-title">Travel Claims Data</h3>
-                        <span className="table-count-badge">{filteredData.length.toLocaleString()} records</span>
+                    {/* Added the CSV Export button to the table header row */}
+                    <div className="table-header-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', paddingBottom: '14px', borderBottom: '1.5px solid #edf7d7' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                            <h3 className="chart-title">Travel Claims Data</h3>
+                            <span className="table-count-badge">{filteredData.length.toLocaleString()} records</span>
+                        </div>
+                        <button onClick={exportToCSV} className="reset-button" style={{ background: '#05192d', color: 'white', padding: '8px 16px' }}>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ marginRight: 8 }}>
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Export to CSV
+                        </button>
                     </div>
+
                     <div style={{ display: 'flex', gap: 10, marginBottom: 15 }}>
                         <div style={{ flex: 1, display: 'flex', alignItems: 'center', background: '#fff', border: '1.5px solid #E0E0E0', borderRadius: 8, padding: '0 12px' }}>
                             {Icons.search}
                             <input type="text" placeholder="Search..." value={filters.search} onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                                style={{ border: 'none', outline: 'none', width: '100%', padding: '10px', fontSize: '14px' }} />
+                                style={{ border: 'none', outline: 'none', width: '100%', padding: '10px', fontSize: '14px', background: 'white', color: '#000000' }} />
                         </div>
                         <select value={pageSize} onChange={e => setPageSize(Number(e.target.value))} className="pg-btn">
                             {[10, 15, 25, 50].map(n => <option key={n} value={n}>{n} rows</option>)}

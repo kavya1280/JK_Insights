@@ -474,13 +474,13 @@
     border-radius: 12px;
     font-weight: bold;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(5,25,45,0.2);
+    box-shadow: 0 4px 14px rgba(5, 25, 45, 0.2);
     transition: 0.2s;
 }
 
 .continue-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(5,25,45,0.3);
+    box-shadow: 0 6px 20px rgba(5, 25, 45, 0.3);
 }
 
 .continue-btn:disabled {
@@ -498,16 +498,53 @@
 
 .status-pill.processing {
     background: #e0f2fe;
-    color: #0369a1; /* Blue */
+    color: #0369a1;
+    /* Blue */
 }
 
 .status-pill.completed {
     background: #f0fff4;
-    color: #166534; /* Green */
+    color: #166534;
+    /* Green */
 }
 
-.status-pill.failed, .status-pill.error {
+.status-pill.failed,
+.status-pill.error {
     background: #fee2e2;
-    color: #991b1b; /* Red */
+    color: #991b1b;
+    /* Red */
 }
 
+/* .login-page-container {
+    position: relative;
+    min-height: 100vh;
+} */
+
+.login-page-footer {
+    position: relative;
+    bottom: 25px;
+    width: 100%;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* Custom Scrollbar for the table container */
+div[style*="overflow-y: auto"]::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+div[style*="overflow-y: auto"]::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 4px;
+}
+
+div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+div[style*="overflow-y: auto"]::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
