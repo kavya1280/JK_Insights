@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
 import "./uploader.css";
 import Dashboard from "./Dashboard";
 import PJPA32Dashboard from "./PJPA32Dashboard";
@@ -28,9 +29,23 @@ const FILE_TYPES = [
   { key: "leftEmpFile", label: "Left Employees", sub: "Required for Notice Period Analysis", sample: "/src/assets/Sampledata/LeftEmployee.csv" },
 ];
 
-const Uploader = ({ logo, handleLogout }) => {
-  const [view, setView] = useState("upload");
-  const [previousView, setPreviousView] = useState("upload");
+const Uploader = ({ user, logo, handleLogout }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const basePath = `/login/${user?.username || 'uploader'}`;
+
+  // Helper to get current view from URL
+  const getViewFromPath = (path) => {
+    if (path.includes('/new-session')) return 'upload';
+    if (path.includes('/insight-selection')) return 'kpi_overview';
+    if (path.includes('/processing')) return 'processing';
+    if (path.includes('/results')) return 'results';
+    if (path.includes('/report')) return 'report';
+    return 'upload'; // Default
+  };
+
+  const view = getViewFromPath(location.pathname);
+
   const [selectedInsights, setSelectedInsights] = useState([]);
   const [isNotifyEnabled, setIsNotifyEnabled] = useState(false);
   const [files, setFiles] = useState({
@@ -111,10 +126,15 @@ const Uploader = ({ logo, handleLogout }) => {
   // --- Handlers ---
   const handleReportToggle = () => {
     if (view === "report") {
-      setView(previousView);
+      // Go back - we could use -1 but better to have explicit logic or just go to previous known state
+      // For now, let's just go to new-session or results if results exist
+      if (activeAnalysisResults.length > 0) {
+        navigate(`${basePath}/results`);
+      } else {
+        navigate(`${basePath}/new-session`);
+      }
     } else {
-      setPreviousView(view);
-      setView("report");
+      navigate(`${basePath}/report`);
     }
   };
 
@@ -129,7 +149,7 @@ const Uploader = ({ logo, handleLogout }) => {
     setFiles({ concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null });
     setSelectedInsights([]);
     setUploadKPIs({});
-    setView("upload");
+    navigate(`${basePath}/new-session`);
   };
 
   const handleSaveSession = async (name = "") => {
@@ -152,7 +172,7 @@ const Uploader = ({ logo, handleLogout }) => {
 
   const handleLoadSession = async (sessionId) => {
     try {
-      setView("processing");
+      navigate(`${basePath}/processing`);
       const session = savedSessions.find(s => s.id === sessionId);
       if (!session) return;
 
@@ -175,8 +195,8 @@ const Uploader = ({ logo, handleLogout }) => {
       }
       setActiveAnalysisResults(loadedResults);
       setHistory(prev => [...loadedResults, ...prev].slice(0, 50));
-      setView("results");
-    } catch (e) { alert("Failed to load session data"); setView("report"); }
+      navigate(`${basePath}/results`);
+    } catch (e) { alert("Failed to load session data"); navigate(`${basePath}/report`); }
   };
 
   const handleFileChange = (e, fileKey) => {
@@ -200,7 +220,7 @@ const Uploader = ({ logo, handleLogout }) => {
 
       if (response.ok) {
         setUploadKPIs(resData.kpis || {}); // Save the KPIs from Python
-        setView("kpi_overview");
+        navigate(`${basePath}/insight-selection`);
       } else {
         alert(`Upload error: ${resData.message}`);
       }
@@ -213,7 +233,7 @@ const Uploader = ({ logo, handleLogout }) => {
 
   const startAnalysis = async () => {
     setAnalysisErrors([]);
-    setView("processing");
+    navigate(`${basePath}/processing`);
 
     const currentReports = [];
     const toRun = [];
@@ -252,7 +272,7 @@ const Uploader = ({ logo, handleLogout }) => {
 
     const reportsToUpdate = [...currentReports];
     setHistory(prev => [...reportsToUpdate, ...prev].slice(0, 50));
-    setView("processing");
+    navigate(`${basePath}/processing`);
 
     // Process EACH insight individually for real-time updates
     for (const insightId of toRun) {
@@ -312,7 +332,7 @@ const Uploader = ({ logo, handleLogout }) => {
     }
 
     if (isNotifyEnabled && reportsToUpdate.some(r => r.status === "Success")) alert("Audit session completed.");
-    setView("report");
+    navigate(`${basePath}/report`);
   };
 
   // 1. Uploads a single missing file and updates the UI state
@@ -497,7 +517,7 @@ const Uploader = ({ logo, handleLogout }) => {
     <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <h2 style={{ color: '#05192d', fontSize: '28px' }}>Data Validation Successful</h2>
-        <button onClick={() => setView("upload")} style={{ padding: '8px 15px', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', cursor: 'pointer', color: '#000000' }}>← Change Files</button>
+        <button onClick={() => navigate(`${basePath}/new-session`)} style={{ padding: '8px 15px', borderRadius: '8px', border: '1px solid #cbd5e1', background: 'white', cursor: 'pointer', color: '#000000' }}>← Change Files</button>
       </div>
 
       {/* --- CONCUR HEADER DATA KPIs --- */}
@@ -781,8 +801,17 @@ const Uploader = ({ logo, handleLogout }) => {
             <button
               onClick={async () => {
                 await handleSaveSession();
-                setHistory([]);
-                localStorage.removeItem("aja_audit_history");
+                setHistory((prev) => {
+                  const processingItems = prev.filter(item =>
+                    ['In Progress', 'Refreshing...', 'Reprocessing'].includes(item.status)
+                  );
+                  // Update LocalStorage with only the processing items
+                  try {
+                    const historyMinimal = processingItems.map(({ data, ...rest }) => rest);
+                    localStorage.setItem("aja_audit_history", JSON.stringify(historyMinimal));
+                  } catch (e) { console.warn("Failed to update history storage", e); }
+                  return processingItems;
+                });
                 setIsClearModalOpen(false);
               }}
               style={{ padding: '14px', background: '#05192d', color: 'white', border: 'none', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
@@ -790,8 +819,20 @@ const Uploader = ({ logo, handleLogout }) => {
             </button>
             <button
               onClick={() => {
-                setHistory([]);
-                localStorage.removeItem("aja_audit_history");
+                setHistory((prev) => {
+                  const processingItems = prev.filter(item =>
+                    ['In Progress', 'Refreshing...', 'Reprocessing'].includes(item.status)
+                  );
+                  // Update LocalStorage with only the processing items
+                  try {
+                    const historyMinimal = processingItems.map(({ data, ...rest }) => rest);
+                    localStorage.setItem("aja_audit_history", JSON.stringify(historyMinimal));
+                  } catch (e) {
+                    console.warn("Failed to update history storage", e);
+                    localStorage.removeItem("aja_audit_history");
+                  }
+                  return processingItems;
+                });
                 setIsClearModalOpen(false);
               }}
               style={{ padding: '14px', background: '#f8fafc', color: '#ef4444', border: '1px solid #fee2e2', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer' }}>
@@ -841,7 +882,7 @@ const Uploader = ({ logo, handleLogout }) => {
     <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button onClick={() => setView("kpi_overview")} style={{ border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>← Control Selection</button>
+          <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>← Control Selection</button>
           <h2 style={{ color: '#05192d', fontSize: '28px' }}>Execution Report</h2>
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
@@ -868,7 +909,7 @@ const Uploader = ({ logo, handleLogout }) => {
           </div>
           <div style={{ display: 'flex', gap: '10px' }}>
             <button
-              onClick={() => { setActiveAnalysisResults(lastSessionResults); setView("results"); }}
+              onClick={() => { setActiveAnalysisResults(lastSessionResults); navigate(`${basePath}/results`); }}
               style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '9px 18px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>
               View Previous Results
             </button>
@@ -927,7 +968,7 @@ const Uploader = ({ logo, handleLogout }) => {
                         onClick={() => {
                           setActiveAnalysisResults([item]);
                           setCurrentViewMode('table');
-                          setView('results');
+                          navigate(`${basePath}/results`);
                         }}
                         style={{ padding: '8px 16px', background: '#05192d', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
                         View Insights
@@ -1059,13 +1100,17 @@ const Uploader = ({ logo, handleLogout }) => {
         </div>
       </nav>
       <div className="up-main-area" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '40px' }}>
-        {view === 'upload' && renderUploadView()}
-        {view === 'kpi_overview' && renderKPIView()}
-        {view === 'processing' && renderProcessingView()}
-        {view === 'results' && renderResultsView()}
-        {view === 'report' && renderReportView()}
+        <Routes>
+          <Route path="new-session" element={renderUploadView()} />
+          <Route path="insight-selection" element={renderKPIView()} />
+          <Route path="processing" element={renderProcessingView()} />
+          <Route path="results" element={renderResultsView()} />
+          <Route path="report" element={renderReportView()} />
+          <Route path="/" element={<Navigate to="new-session" replace />} />
+          <Route path="*" element={<Navigate to="new-session" replace />} />
+        </Routes>
       </div>
-      <footer className="login-page-footer">
+      <footer className="uploader-page-footer">
         <p>Copyright @ 2026 | Powered by Ajalabs | Data Privacy</p>
       </footer>
     </div>
