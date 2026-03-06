@@ -1,0 +1,26 @@
+.viewer-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 60px;
+    background: #05192d;
+    /* Dark theme for viewer */
+}
+
+.viewer-logo-left {
+    height: 55px;
+    width: auto;
+    filter: brightness(0) invert(1);
+}
+
+/* Make logo white for dark theme */
+
+.viewer-logo-right-animate {
+    height: 75px;
+    animation: flyInFromLogin 1s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+
+.viewer-reports {
+    color: white;
+    padding: 40px;
+}

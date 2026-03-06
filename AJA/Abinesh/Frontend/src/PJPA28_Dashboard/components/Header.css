@@ -1,0 +1,89 @@
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 32px;
+    background: white;
+    border-bottom: 2px solid #edf7d7;
+    position: relative;
+    z-index: 10;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-back-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f1f7e6;
+    border: 1px solid #DCF0B2;
+    color: #6FAE2C;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.header-back-button:hover {
+    background: #6FAE2C;
+    color: white;
+    transform: translateX(-3px);
+}
+
+.header-logo {
+    height: 36px;
+}
+
+.header-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.header-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.header-title-accent {
+    width: 4px;
+    height: 40px;
+    background: linear-gradient(180deg, #6FAE2C, #B5D97A);
+    border-radius: 4px;
+}
+
+.header-subtitle {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #6FAE2C;
+    margin-bottom: 2px;
+}
+
+.header-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #05192d;
+    letter-spacing: -0.3px;
+}
+
+.header-right {
+    flex: 0 0 auto;
+}
+
+.jk-logo-badge {
+    display: flex;
+    align-items: center;
+}
+
+.jk-logo-img {
+    height: 40px;
+}
