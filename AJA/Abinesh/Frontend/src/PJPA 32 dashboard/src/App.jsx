@@ -34,7 +34,7 @@ function App({ onBack }) {
 
   // Fetch filter options once
   useEffect(() => {
-    fetch('http://localhost:8000/api/filters')
+    fetch('http://localhost:8000/api/pjpa32/filters')
       .then(res => res.json())
       .then(data => setFilterOptions(data))
       .catch(err => console.error("Filter options fetch error:", err));
@@ -65,11 +65,11 @@ function App({ onBack }) {
 
 
         const [kpis, weekend, expense, employee, location] = await Promise.all([
-          fetch(`http://localhost:8000/api/kpis?${queryParams}`).then(r => r.json()),
-          fetch(`http://localhost:8000/api/weekend-data?${queryParams}`).then(r => r.json()),
-          fetch(`http://localhost:8000/api/expense-distribution?${queryParams}`).then(r => r.json()),
-          fetch(`http://localhost:8000/api/employee-data?${queryParams}`).then(r => r.json()),
-          fetch(`http://localhost:8000/api/location-data?${queryParams}`).then(r => r.json())
+          fetch(`http://localhost:8000/api/pjpa32/kpis?${queryParams}`).then(r => r.json()),
+          fetch(`http://localhost:8000/api/pjpa32/weekend-data?${queryParams}`).then(r => r.json()),
+          fetch(`http://localhost:8000/api/pjpa32/expense-distribution?${queryParams}`).then(r => r.json()),
+          fetch(`http://localhost:8000/api/pjpa32/employee-data?${queryParams}`).then(r => r.json()),
+          fetch(`http://localhost:8000/api/pjpa32/location-data?${queryParams}`).then(r => r.json())
         ]);
 
         setStats({

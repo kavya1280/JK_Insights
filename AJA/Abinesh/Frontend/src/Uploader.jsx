@@ -7,6 +7,13 @@ import PJPA28_Dashboard from "./PJPA28_Dashboard/App";
 import PJPA29_Dashboard from "./PJPA29_Dashboard/App";
 import PJPA30_Dashboard from "./PJPA30_Dashboard/App";
 import PJPA31_Dashboard from "./PJPA31_Dashboard/App";
+import PJPA33_Dashboard from "./PJPA33_Dashboard/App";
+import PJPA34_Dashboard from "./PJPA34_Dashboard/App";
+import PJPA35_Dashboard from "./PJPA35_Dashboard/App";
+import PJPA37_Dashboard from "./PJPA37_Dashboard/App";
+import PJPA38_Dashboard from "./PJPA38_Dashboard/App";
+import PJPA39_Dashboard from "./PJPA39_Dashboard/App";
+import PJPA40_Dashboard from "./PJPA40_Dashboard/App";
 import uploaderImg from "./assets/images/upload.png";
 import ajalabsblack from "./assets/images/ajalabs-black.png";
 
@@ -398,6 +405,20 @@ const Uploader = ({ logo, handleLogout }) => {
               <PJPA27_Dashboard onBack={handleReportToggle} />
             ) : insight.moduleId === "PJPA28" ? (
               <PJPA28_Dashboard onBack={handleReportToggle} />
+            ) : insight.moduleId === "PJPA33" ? (
+              <PJPA33_Dashboard onBack={handleReportToggle} />
+            ) : insight.moduleId === "PJPA34" ? (
+              <PJPA34_Dashboard onBack={handleReportToggle} />
+            ) : insight.moduleId === "PJPA35" ? (
+              <PJPA35_Dashboard onBack={handleReportToggle} />
+            ) : insight.moduleId === "PJPA37" ? (
+              <PJPA37_Dashboard onBack={handleReportToggle} />
+            ) : insight.moduleId === "PJPA38" ? (
+              <PJPA38_Dashboard onBack={handleReportToggle} />
+            ) : insight.moduleId === "PJPA39" ? (
+              <PJPA39_Dashboard onBack={handleReportToggle} />
+            ) : insight.moduleId === "PJPA40" ? (
+              <PJPA40_Dashboard onBack={handleReportToggle} />
             ) : (
               <Dashboard data={insight.data} moduleId={insight.moduleId} onBackToTable={() => setCurrentViewMode("table")} />
             )

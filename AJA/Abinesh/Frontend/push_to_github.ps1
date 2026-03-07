@@ -6,8 +6,8 @@ $targetDir = Join-Path $tempDir "AJA\Abinesh\Frontend"
 Write-Host "Cleaning up old temp directory..." -ForegroundColor Cyan
 if (Test-Path $tempDir) { Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue }
 
-Write-Host "Cloning JK_Insights repository..." -ForegroundColor Cyan
-git clone $repoUrl $tempDir
+Write-Host "Cloning JK_Insights repository (Shallow)..." -ForegroundColor Cyan
+git clone --depth 1 $repoUrl $tempDir
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Failed to clone the repository. Check your network or permissions." -ForegroundColor Red
@@ -29,7 +29,8 @@ git push origin HEAD:main
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "Successfully pushed to GitHub!" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "Failed to push to GitHub. You might not have the correct permissions." -ForegroundColor Red
 }
 
