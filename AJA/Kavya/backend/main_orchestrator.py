@@ -1,5 +1,20 @@
 import os
 
+# New Modules
+from Modules.PJPA10 import generate_junior_senior_insight
+from Modules.PJPA13 import generate_policy_validation_insight
+from Modules.PJPA14 import generate_duplicate_claims_insight
+from Modules.PJPA16 import generate_duplicate_employee_insight
+from Modules.PJPA18 import generate_multiple_submits_insight
+from Modules.PJPA19 import generate_multiple_travel_modes_insight
+from Modules.PJPA20 import generate_odd_time_submission_insight
+from Modules.PJPA21 import generate_overlapping_travel_dates_insight
+from Modules.PJPA22 import generate_cross_employee_duplicate_insight
+from Modules.PJPA23 import generate_submit_before_start_insight
+
+# Existing Modules
+from Modules.PJPA24 import generate_zscore_insights
+import Modules.PJPA26 as PJPA26
 from Modules.PJPA27 import generate_notice_period_insight_updated
 from Modules.PJPA28 import generate_benfords_law_insight
 from Modules.PJPA29 import generate_new_joiner_insight
@@ -21,12 +36,84 @@ def run_selected_insights(selected_insights):
     output_dir = r"Output"
     os.makedirs(output_dir, exist_ok=True)
     
-    # We simplified the filenames so Pandas always knows they are Excel files!
+    # Master File Paths
     concur_file = os.path.join(data_dir, "Concur_Header_Data.xlsx")
     left_emp_file = os.path.join(data_dir, "Left_Employees.xlsx")
     emp_master_file = os.path.join(data_dir, "Employee_Master.xlsx")
     line_item_file = os.path.join(data_dir, "Line_Item_Data.xlsx")
+    
+    # ==========================================
+    # NEW MODULES (PJPA10 - PJPA23)
+    # ==========================================
+    if "PJPA10" in selected_insights:
+        try:
+            out_10 = os.path.join(output_dir, "PJPA10_Generated.xlsx")
+            generate_junior_senior_insight(concur_file, line_item_file, emp_master_file, out_10)
+        except Exception as e: print(f"Error PJPA10: {e}")
 
+    if "PJPA13" in selected_insights:
+        try:
+            out_13 = os.path.join(output_dir, "PJPA13_Generated.xlsx")
+            generate_policy_validation_insight(concur_file, line_item_file, emp_master_file, out_13)
+        except Exception as e: print(f"Error PJPA13: {e}")
+
+    if "PJPA14" in selected_insights:
+        try:
+            out_14 = os.path.join(output_dir, "PJPA14_Generated.xlsx")
+            generate_duplicate_claims_insight(line_item_file, out_14)
+        except Exception as e: print(f"Error PJPA14: {e}")
+
+    if "PJPA16" in selected_insights:
+        try:
+            out_16 = os.path.join(output_dir, "PJPA16_Generated.xlsx")
+            generate_duplicate_employee_insight(emp_master_file, out_16)
+        except Exception as e: print(f"Error PJPA16: {e}")
+
+    if "PJPA18" in selected_insights:
+        try:
+            out_18 = os.path.join(output_dir, "PJPA18_Generated.xlsx")
+            generate_multiple_submits_insight(concur_file, line_item_file, out_18)
+        except Exception as e: print(f"Error PJPA18: {e}")
+
+    if "PJPA19" in selected_insights:
+        try:
+            out_19 = os.path.join(output_dir, "PJPA19_Generated.xlsx")
+            generate_multiple_travel_modes_insight(line_item_file, out_19) # Only pass line_item_file
+        except Exception as e: print(f"Error PJPA19: {e}")
+
+    if "PJPA20" in selected_insights:
+        try:
+            out_20 = os.path.join(output_dir, "PJPA20_Generated.xlsx")
+            generate_odd_time_submission_insight(concur_file, out_20)
+        except Exception as e: print(f"Error PJPA20: {e}")
+
+    if "PJPA21" in selected_insights:
+        try:
+            out_21 = os.path.join(output_dir, "PJPA21_Generated.xlsx")
+            generate_overlapping_travel_dates_insight(concur_file, out_21)
+        except Exception as e: print(f"Error PJPA21: {e}")
+
+    if "PJPA22" in selected_insights:
+        try:
+            out_22 = os.path.join(output_dir, "PJPA22_Generated.xlsx")
+            generate_cross_employee_duplicate_insight(line_item_file, out_22)
+        except Exception as e: print(f"Error PJPA22: {e}")
+
+    if "PJPA23" in selected_insights:
+        try:
+            out_23 = os.path.join(output_dir, "PJPA23_Generated.xlsx")
+            generate_submit_before_start_insight(concur_file, out_23)
+        except Exception as e: print(f"Error PJPA23: {e}")
+
+    if "PJPA24" in selected_insights:
+        try:
+            out_24 = os.path.join(output_dir, "PJPA24_Generated.xlsx")
+            generate_zscore_insights(concur_file, line_item_file, out_24)
+        except Exception as e: print(f"Error PJPA24: {e}")
+
+    # ==========================================
+    # EXISTING MODULES (PJPA27 - PJPA40)
+    # ==========================================
     if "PJPA27" in selected_insights:
         try:
             out_27 = os.path.join(output_dir, "PJPA27_Generated.xlsx")
@@ -57,7 +144,6 @@ def run_selected_insights(selected_insights):
             generate_structural_splitting_insight(concur_file, line_item_file, out_31)
         except Exception as e: print(f"Error PJPA31: {e}")
 
-    # UI treats Holiday and Weekend as a single toggle
     if "PJPA32" in selected_insights:
         try:
             out_32_hol = os.path.join(output_dir, "PJPA32_Holiday_Generated.xlsx")
@@ -82,6 +168,7 @@ def run_selected_insights(selected_insights):
             out_35 = os.path.join(output_dir, "PJPA35_Generated.xlsx")
             generate_duplicate_report_id_insight(concur_file, out_35)
         except Exception as e: print(f"Error PJPA35: {e}")
+
     if "PJPA36" in selected_insights:
         try:
             out_36 = os.path.join(output_dir, "PJPA36_Generated.xlsx")
@@ -97,7 +184,6 @@ def run_selected_insights(selected_insights):
     if "PJPA39" in selected_insights:
         try:
             out_39 = os.path.join(output_dir, "PJPA39_Generated.xlsx")
-            # Notice this one ONLY requires the Employee Master file!
             generate_active_with_sep_date_insight(emp_master_file, out_39)
         except Exception as e: print(f"Error PJPA39: {e}")
         

@@ -1,112 +1,74 @@
 import pandas as pd
+import numpy as np
 
-
-def generate_pjpa36_missing_days(
-    input_excel_path,
-    output_excel_path
-):
-    print("Running PJPA36 – Missing Days Analysis (Submit Date)...")
+def generate_pjpa36_missing_days(input_excel_path, output_excel_path):
+    print("🚀 Running PJPA36: Missing Days Analysis (Submit Date)...")
 
     # =====================================================
-    # 1. Load data
+    # 1. LOAD DATA
     # =====================================================
-    df = pd.read_excel(input_excel_path)
+    print("📂 Reading File...")
+    df = pd.read_excel(input_excel_path) if input_excel_path.endswith(('.xls', '.xlsx')) else pd.read_csv(input_excel_path, encoding="latin1", low_memory=False)
     df.rename(columns=lambda x: str(x).strip(), inplace=True)
 
     if 'Submit Date' not in df.columns:
-        raise ValueError("Submit Date column not found.")
+        print("❌ 'Submit Date' column not found.")
+        return
 
     # =====================================================
-    # 2. Clean Submit Date (remove time after T)
+    # 2. CLEAN SUBMIT DATE
     # =====================================================
-    df['Submit Date'] = (
-        df['Submit Date']
-        .astype(str)
-        .str.split('T')
-        .str[0]
-    )
-
-    df['Submit Date'] = pd.to_datetime(
-        df['Submit Date'], errors='coerce'
-    ).dt.date
-
+    # Remove time after T and convert to date
+    df['Submit Date'] = df['Submit Date'].astype(str).str.split('T').str[0]
+    df['Submit Date'] = pd.to_datetime(df['Submit Date'], errors='coerce').dt.date
     df = df[df['Submit Date'].notna()].copy()
 
     # =====================================================
-    # 3. Find min & max dates
+    # 3. FIND MISSING DATES
     # =====================================================
-    min_date = df['Submit Date'].min()
-    max_date = df['Submit Date'].max()
+    print("📅 Calculating Date Gaps...")
+    if df.empty:
+        missing_dates = []
+    else:
+        min_date = df['Submit Date'].min()
+        max_date = df['Submit Date'].max()
+        print(f"   -> Date range: {min_date} to {max_date}")
 
-    print(f"Date range: {min_date} → {max_date}")
-
-    # =====================================================
-    # 4. Generate full date range
-    # =====================================================
-    full_dates = pd.date_range(
-        start=min_date,
-        end=max_date,
-        freq='D'
-    ).date
+        full_dates = pd.date_range(start=min_date, end=max_date, freq='D').date
+        present_dates = set(df['Submit Date'].unique())
+        missing_dates = sorted(set(full_dates) - present_dates)
 
     # =====================================================
-    # 5. Find missing days
+    # 4. CREATE DATAFRAME (WITH 2 COLUMNS TO FIX UI BUG)
     # =====================================================
-    present_dates = set(df['Submit Date'].unique())
-    missing_dates = sorted(set(full_dates) - present_dates)
-
-    if not missing_dates:
-        print("No missing days found.")
-        return None
-
+    # We add an empty 'Notes' column so the table is 2 columns wide. 
+    # This prevents Pandas from naming the empty metadata column "Unnamed: 1"
     missing_df = pd.DataFrame({
-        'Missing Submit Date': missing_dates
+        'Missing Submit Date': [str(d) for d in missing_dates],
+        'Notes': ['' for _ in missing_dates] 
     })
 
     # =====================================================
-    # 6. Metadata header
+    # 5. EXPORT WITH HEADERS
     # =====================================================
-    header_rows = [
-        ['Insight ID', 'PJPA36'],
-        ['Exception No', '1'],
-        ['Exception Type', 'EDA Check - Missing Submit Date (Date Gaps)'],
-        [],
-        [],
-        ['Missing Submit Date']
-    ]
+    def _export_sheet(out_df, writer, insight_id, exception_no, exception_type, sheet_name):
+        cols = out_df.columns.tolist()
+        header_rows = [
+            ['Insight ID ', insight_id] + [''] * max(0, len(cols) - 2),
+            ['Exception No', exception_no] + [''] * max(0, len(cols) - 2),
+            ['Exception Type', exception_type] + [''] * max(0, len(cols) - 2),
+            [''] * max(2, len(cols)),
+            [''] * max(2, len(cols)),
+            cols
+        ]
+        pd.DataFrame(header_rows).to_excel(writer, index=False, header=False, sheet_name=sheet_name)
+        out_df.to_excel(writer, index=False, header=False, startrow=6, sheet_name=sheet_name)
 
-    header_df = pd.DataFrame(header_rows)
-
-    # =====================================================
-    # 7. Write output
-    # =====================================================
+    print("💾 Saving Output...")
     with pd.ExcelWriter(output_excel_path, engine='xlsxwriter') as writer:
-        header_df.to_excel(
-            writer,
-            index=False,
-            header=False,
-            sheet_name='PJPA36'
-        )
-        missing_df.to_excel(
-            writer,
-            index=False,
-            header=False,
-            startrow=6,
-            sheet_name='PJPA36'
-        )
+        _export_sheet(missing_df, writer, "PJPA36", "1", "Missing Submit Date (Date Gaps)", "Missing_Dates")
 
-    print(f"PJPA36 complete. Missing days found: {len(missing_df)}")
-    return output_excel_path
+    print(f"✅ PJPA36 Workflow Completed! Found {len(missing_dates)} missing days.")
 
-
-# =====================================================
-# RUN
-# =====================================================
-if __name__ == "__main__":
-    input_file = "Combined SAP Concor Data - Copy.xlsx"
-    output_file = "PJPA36_Missing_Submit_Days.xlsx"
-
-    generate_pjpa36_missing_days(
-        input_excel_path=input_file,
-        output_excel_path=output_file
-    )
+# Example to trigger it in orchestrator:
+# generate_pjpa36_missing_days(concur_file, "Output/PJPA36_Generated.xlsx")

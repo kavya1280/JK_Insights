@@ -5,7 +5,6 @@ import os
 import zipfile
 import io
 import traceback
-from werkzeug.utils import secure_filename
 import shutil
 import json
 from datetime import datetime
@@ -13,8 +12,21 @@ from datetime import datetime
 # Import the updated orchestrator function
 from main_orchestrator import run_selected_insights 
 
+from routes.upload import upload_bp
+from routes.dashboard import dashboard_bp
+from routes.pjpa27 import pjpa27_bp
+from routes.pjpa28 import pjpa28_bp
+from routes.pjpa32 import pjpa32_bp
+from routes.pjpa33 import pjpa33_bp
+from routes.pjpa34 import pjpa34_bp
+from routes.pjpa35 import pjpa35_bp
+from routes.pjpa37 import pjpa37_bp
+from routes.pjpa38 import pjpa38_bp
+from routes.pjpa39 import pjpa39_bp
+from routes.pjpa40 import pjpa40_bp
+
 app = Flask(__name__)
-CORS(app) 
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True) 
 
 DATA_DIR = r"Data"
 OUTPUT_DIR = r"Output"
@@ -23,12 +35,49 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(SESSIONS_DIR, exist_ok=True)
 
+SKIP_ROWS_MAP = {
+    "PJPA10": 5, "PJPA13": 5, "PJPA14": 5, "PJPA16": 5, "PJPA18": 5, 
+    "PJPA19": 5, "PJPA20": 5, "PJPA21": 5, "PJPA22": 5, "PJPA23": 5, "PJPA24": 5,
+    "PJPA27": 5, "PJPA28": 5, "PJPA29": 5, "PJPA30": 4, "PJPA31": 4,
+    "PJPA32": 5, "PJPA33": 4, "PJPA34": 5, "PJPA35": 4, "PJPA36": 5, "PJPA38": 5, "PJPA39": 4, "PJPA40": 4
+}
+
+FILE_MAP = {
+    "PJPA10": "PJPA10_Generated.xlsx", "PJPA13": "PJPA13_Generated.xlsx",
+    "PJPA14": "PJPA14_Generated.xlsx", "PJPA16": "PJPA16_Generated.xlsx",
+    "PJPA18": "PJPA18_Generated.xlsx", "PJPA19": "PJPA19_Generated.xlsx",
+    "PJPA20": "PJPA20_Generated.xlsx", "PJPA21": "PJPA21_Generated.xlsx",
+    "PJPA22": "PJPA22_Generated.xlsx", "PJPA23": "PJPA23_Generated.xlsx",
+    "PJPA24": "PJPA24_Generated.xlsx",
+    "PJPA27": "PJPA27_Generated.xlsx", "PJPA28": "PJPA28_Generated.xlsx",
+    "PJPA29": "PJPA29_Generated.xlsx", "PJPA30": "PJPA30_Generated.xlsx",
+    "PJPA31": "PJPA31_Generated.xlsx", 
+    "PJPA32": {"holiday": "PJPA32_Holiday_Generated.xlsx", "weekend": "PJPA32_Weekend_Generated.xlsx"},
+    "PJPA33": "PJPA33_Generated.xlsx", "PJPA34": "PJPA34_Generated.xlsx", 
+    "PJPA35": "PJPA35_Generated.xlsx", "PJPA36": "PJPA36_Generated.xlsx",
+    "PJPA38": "PJPA38_Generated.xlsx", "PJPA39": "PJPA39_Generated.xlsx", "PJPA40": "PJPA40_Generated.xlsx"
+}
+
 MOCK_USERS = [
     {"id": "1", "username": "admin", "password": "password123", "role": "admin", "status": "Active"},
     {"id": "2", "username": "uploader", "password": "password123", "role": "uploader", "status": "Active"},
     {"id": "3", "username": "reviewer", "password": "password123", "role": "reviewer", "status": "Active"},
     {"id": "4", "username": "viewer", "password": "password123", "role": "viewer", "status": "Active"}
 ]
+
+# Register Blueprints
+app.register_blueprint(upload_bp, url_prefix='/api/upload')
+app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
+app.register_blueprint(pjpa27_bp, url_prefix='/api/pjpa27')
+app.register_blueprint(pjpa28_bp, url_prefix='/api/pjpa28')
+app.register_blueprint(pjpa32_bp, url_prefix='/api/pjpa32')
+app.register_blueprint(pjpa33_bp, url_prefix='/api/pjpa33')
+app.register_blueprint(pjpa34_bp, url_prefix='/api/pjpa34')
+app.register_blueprint(pjpa35_bp, url_prefix='/api/pjpa35')
+app.register_blueprint(pjpa37_bp, url_prefix='/api/pjpa37')
+app.register_blueprint(pjpa38_bp, url_prefix='/api/pjpa38')
+app.register_blueprint(pjpa39_bp, url_prefix='/api/pjpa39')
+app.register_blueprint(pjpa40_bp, url_prefix='/api/pjpa40')
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -55,12 +104,11 @@ def delete_user(user_id):
     MOCK_USERS = [u for u in MOCK_USERS if u['id'] != user_id]
     return jsonify({"message": "User deleted successfully"}), 200
 
-# CLEANED FILENAMES: Now Pandas knows they are definitely Excel files!
 EXPECTED_FILENAMES = {
     "concurFile": "Concur_Header_Data.xlsx",
     "leftEmpFile": "Left_Employees.xlsx",
     "empMasterFile": "Employee_Master.xlsx",
-    "lineItemFile": "Line_Item_Data.xlsx"
+    "lineItemFile": "Line_Item_Data.xlsx",
 }
 
 
@@ -100,21 +148,14 @@ def upload_files():
                         file.save(save_path)
 
         # ==========================================
-        # NEW: KPI GENERATION FOR UPLOAD SCREEN
+        # KPI GENERATION FOR UPLOAD SCREEN
         # ==========================================
         kpis = {
-            'total_transactions': 0,
-            'unique_employees': 0,
-            'total_amount': 0.0,
-            'average_claim': 0.0,
-            'unique_reports': 0,
-            'master_unique_employees': 0,
-            'master_separated_employees': 0,
-            'master_active_employees': 0,
-            'master_company_codes': 0
+            'total_transactions': 0, 'unique_employees': 0, 'total_amount': 0.0,
+            'average_claim': 0.0, 'unique_reports': 0, 'master_unique_employees': 0,
+            'master_separated_employees': 0, 'master_active_employees': 0, 'master_company_codes': 0
         }
         
-        # 1. Concur Header KPIs - ONLY run if Concur file was just uploaded!
         if 'concurFile' in request.files:
             concur_path = os.path.join(DATA_DIR, EXPECTED_FILENAMES["concurFile"])
             if os.path.exists(concur_path):
@@ -136,7 +177,6 @@ def upload_files():
                 except Exception as e:
                     print(f"Error calculating Concur KPIs: {e}")
 
-        # 2. Employee Master KPIs - ONLY run if Emp Master file was just uploaded!
         if 'empMasterFile' in request.files:
             emp_path = os.path.join(DATA_DIR, EXPECTED_FILENAMES["empMasterFile"])
             if os.path.exists(emp_path):
@@ -169,7 +209,6 @@ def upload_files():
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# --- NEW ENDPOINT: Trigger specific insights ---
 @app.route('/api/generate', methods=['POST'])
 def generate_insights():
     try:
@@ -179,21 +218,28 @@ def generate_insights():
         if not selected_insights:
             return jsonify({"status": "error", "message": "No insights selected."}), 400
         
-        # Pass the list of requested modules to the orchestrator
         run_selected_insights(selected_insights)
-        
         return jsonify({"status": "success", "message": "Generation complete."}), 200
         
     except Exception as e:
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# Updated with all new modules (6 rows of meta-headers means skiprows=6)
 SKIP_ROWS_MAP = {
+    "PJPA10": 5, "PJPA13": 5, "PJPA14": 5, "PJPA16": 5, "PJPA18": 5, 
+    "PJPA19": 5, "PJPA20": 5, "PJPA21": 5, "PJPA22": 5, "PJPA23": 5, "PJPA24": 5,
     "PJPA27": 5, "PJPA28": 5, "PJPA29": 5, "PJPA30": 4, "PJPA31": 4,
     "PJPA32": 5, "PJPA33": 4, "PJPA34": 5, "PJPA35": 4, "PJPA36": 5, "PJPA38": 5, "PJPA39": 4, "PJPA40": 4
 }
 
 FILE_MAP = {
+    "PJPA10": "PJPA10_Generated.xlsx", "PJPA13": "PJPA13_Generated.xlsx",
+    "PJPA14": "PJPA14_Generated.xlsx", "PJPA16": "PJPA16_Generated.xlsx",
+    "PJPA18": "PJPA18_Generated.xlsx", "PJPA19": "PJPA19_Generated.xlsx",
+    "PJPA20": "PJPA20_Generated.xlsx", "PJPA21": "PJPA21_Generated.xlsx",
+    "PJPA22": "PJPA22_Generated.xlsx", "PJPA23": "PJPA23_Generated.xlsx",
+    "PJPA24": "PJPA24_Generated.xlsx",
     "PJPA27": "PJPA27_Generated.xlsx", "PJPA28": "PJPA28_Generated.xlsx",
     "PJPA29": "PJPA29_Generated.xlsx", "PJPA30": "PJPA30_Generated.xlsx",
     "PJPA31": "PJPA31_Generated.xlsx", 
@@ -216,7 +262,7 @@ def get_insight_data(insight_id):
 
         filename = FILE_MAP[insight_id]
         
-        # Handle dual-file insights like PJPA32
+        # Handle explicitly dual-file insights (like PJPA32)
         if isinstance(filename, dict):
             combined_data = {}
             for key, f in filename.items():
@@ -228,20 +274,31 @@ def get_insight_data(insight_id):
                 combined_data[key] = df.fillna("N/A").to_dict(orient='records')
             return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
 
-        # Handle single-file insights
+        # Handle standard single files
         file_path = os.path.join(OUTPUT_DIR, filename)
         if not os.path.exists(file_path):
             return jsonify({"status": "error", "message": "Data not generated yet. Please upload master data first."}), 404
 
+        # Specific logic for Benford's Law which uses a specific sheet
         if insight_id == "PJPA28":
-            df = pd.read_excel(file_path, sheet_name='Anomalies (30-42)', skiprows=SKIP_ROWS_MAP[insight_id])
+            df = pd.read_excel(file_path, sheet_name='Anomalies', skiprows=SKIP_ROWS_MAP[insight_id])
+            df.columns = df.columns.astype(str)
+            return jsonify({"status": "success", "insight_id": insight_id, "data": df.fillna("N/A").to_dict(orient='records')})
+
+        # MULTI-SHEET DYNAMIC READER (Perfect for PJPA10, 13, 14, 16, 18)
+        excel_file = pd.ExcelFile(file_path)
+        if len(excel_file.sheet_names) > 1:
+            combined_data = {}
+            for sheet in excel_file.sheet_names:
+                df = pd.read_excel(file_path, sheet_name=sheet, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
+                df.columns = df.columns.astype(str)
+                combined_data[sheet] = df.fillna("N/A").to_dict(orient='records')
+            return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
         else:
-            df = pd.read_excel(file_path, skiprows=SKIP_ROWS_MAP[insight_id])
-            
-        df.columns = df.columns.astype(str)
-        df = df.fillna("N/A")
-        
-        return jsonify({"status": "success", "insight_id": insight_id, "data": df.to_dict(orient='records')})
+            # Single sheet fallback
+            df = pd.read_excel(file_path, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
+            df.columns = df.columns.astype(str)
+            return jsonify({"status": "success", "insight_id": insight_id, "data": df.fillna("N/A").to_dict(orient='records')})
 
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -310,32 +367,42 @@ def get_session_data(session_id, insight_id):
             
         filename = FILE_MAP[insight_id]
         
-        # Handle dual-file insights like PJPA32
+        # Handle dual-file insights
         if isinstance(filename, dict):
             combined_data = {}
             for key, f in filename.items():
                 file_path = os.path.join(SESSIONS_DIR, session_id, f)
                 if not os.path.exists(file_path):
                     return jsonify({"status": "error", "message": "Data not found in this session"}), 404
-                df = pd.read_excel(file_path, skiprows=SKIP_ROWS_MAP[insight_id])
+                df = pd.read_excel(file_path, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
                 df.columns = df.columns.astype(str)
                 combined_data[key] = df.fillna("N/A").to_dict(orient='records')
             return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
 
-        # Handle single-file insights
+        # Handle standard single files
         file_path = os.path.join(SESSIONS_DIR, session_id, filename)
         if not os.path.exists(file_path):
             return jsonify({"status": "error", "message": "Data not found in this session"}), 404
 
         if insight_id == "PJPA28":
             df = pd.read_excel(file_path, sheet_name='Anomalies (30-42)', skiprows=SKIP_ROWS_MAP[insight_id])
+            df.columns = df.columns.astype(str)
+            return jsonify({"status": "success", "insight_id": insight_id, "data": df.fillna("N/A").to_dict(orient='records')})
+
+        # MULTI-SHEET DYNAMIC READER
+        excel_file = pd.ExcelFile(file_path)
+        if len(excel_file.sheet_names) > 1:
+            combined_data = {}
+            for sheet in excel_file.sheet_names:
+                df = pd.read_excel(file_path, sheet_name=sheet, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
+                df.columns = df.columns.astype(str)
+                combined_data[sheet] = df.fillna("N/A").to_dict(orient='records')
+            return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
         else:
-            df = pd.read_excel(file_path, skiprows=SKIP_ROWS_MAP[insight_id])
+            df = pd.read_excel(file_path, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
+            df.columns = df.columns.astype(str)
+            return jsonify({"status": "success", "insight_id": insight_id, "data": df.fillna("N/A").to_dict(orient='records')})
             
-        df.columns = df.columns.astype(str)
-        df = df.fillna("N/A")
-        
-        return jsonify({"status": "success", "insight_id": insight_id, "data": df.to_dict(orient='records')})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
