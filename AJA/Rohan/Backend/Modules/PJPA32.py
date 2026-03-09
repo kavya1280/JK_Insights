@@ -25,7 +25,7 @@ def generate_holiday_weekend_travel_insight(line_item_data_path, output_holiday_
     }
     
     # 2. Load Data
-    df = pd.read_csv(line_item_data_path, low_memory=False)
+    df = pd.read_excel(line_item_data_path)
     df.rename(columns=lambda x: str(x).strip(), inplace=True)
     
     # Ensure standard schema mapping

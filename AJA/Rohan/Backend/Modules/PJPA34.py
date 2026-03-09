@@ -11,7 +11,7 @@ def generate_low_value_claims_insight(concur_data_path, output_excel_path, amoun
     print("Running High-Frequency Low Value Claims Analysis (PJPA34)...")
     
     # 1. Load Data
-    df = pd.read_csv(concur_data_path, low_memory=False)
+    df = df = pd.read_excel(concur_data_path)
     
     # Clean column names
     df.rename(columns=lambda x: str(x).strip(), inplace=True)

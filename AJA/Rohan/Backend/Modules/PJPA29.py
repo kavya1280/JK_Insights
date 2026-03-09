@@ -5,8 +5,8 @@ def generate_new_joiner_insight(concur_data_path, emp_master_path, output_excel_
     print("Running New Joiner Early Claims Analysis (PJPA29)...")
     
     # 1. Load Data
-    concur_df = pd.read_csv(concur_data_path, low_memory=False)
-    emp_df = pd.read_csv(emp_master_path, low_memory=False)
+    concur_df = pd.read_excel(concur_data_path)
+    emp_df = pd.read_excel(emp_master_path)
     
     # Clean up column names 
     concur_df.rename(columns=lambda x: str(x).strip(), inplace=True)

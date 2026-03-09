@@ -10,7 +10,7 @@ def generate_bulk_booker_insight(concur_data_path, output_excel_path, bulk_thres
     print("Running Bulk Booker Analysis (PJPA33)...")
     
     # 1. Load Data
-    concur_df = pd.read_csv(concur_data_path, low_memory=False)
+    concur_df = df = pd.read_excel(concur_data_path)
     
     # Clean column names
     concur_df.rename(columns=lambda x: str(x).strip(), inplace=True)

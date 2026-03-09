@@ -5,8 +5,8 @@ def generate_structural_splitting_insight(concur_data_path, line_item_data_path,
     print("Running Structural Splitting Analysis (PJPA31)...")
     
     # 1. Load Data
-    concur_df = pd.read_csv(concur_data_path, low_memory=False)
-    line_item_df = pd.read_csv(line_item_data_path, low_memory=False)
+    concur_df = pd.read_excel(concur_data_path)
+    line_item_df = pd.read_excel(line_item_data_path)
     
     # Clean column names
     concur_df.rename(columns=lambda x: str(x).strip(), inplace=True)

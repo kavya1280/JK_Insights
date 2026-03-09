@@ -5,7 +5,7 @@ def generate_short_trip_abuse_insight(concur_data_path, output_excel_path):
     print("Running Short Trip Frequency Abuse Analysis (PJPA30)...")
     
     # 1. Load Data
-    df = pd.read_csv(concur_data_path, low_memory=False)
+    df = pd.read_excel(concur_data_path)
     
     # Clean column names
     df.rename(columns=lambda x: str(x).strip(), inplace=True)
