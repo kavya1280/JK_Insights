@@ -57,11 +57,15 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const [selectedInsights, setSelectedInsights] = useState([]);
   const [isNotifyEnabled, setIsNotifyEnabled] = useState(false);
-  const [files, setFiles] = useState({
-    concurFile: null,
-    leftEmpFile: null,
-    empMasterFile: null,
-    lineItemFile: null
+  
+  // 1. Restore mock files from local storage
+  const [files, setFiles] = useState(() => {
+    try {
+      const saved = localStorage.getItem("aja_session_files");
+      return saved ? JSON.parse(saved) : { concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null };
+    } catch {
+      return { concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null };
+    }
   });
 
   const [isUploading, setIsUploading] = useState(false);
@@ -78,7 +82,14 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const [pjpa24Category, setPjpa24Category] = useState('Overall');
   const [activeTabs, setActiveTabs] = useState({});
 
-  const [uploadKPIs, setUploadKPIs] = useState({});
+  // 2. Restore KPIs from local storage
+  const [uploadKPIs, setUploadKPIs] = useState(() => {
+    try {
+      const saved = localStorage.getItem("aja_session_kpis");
+      return saved ? JSON.parse(saved) : {};
+    } catch { return {}; }
+  });
+
   const [savedSessions, setSavedSessions] = useState([]);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
@@ -152,6 +163,11 @@ const Uploader = ({ user, logo, handleLogout }) => {
     setSelectedInsights([]);
     setUploadKPIs({});
     setActiveTabs({});
+    
+    // Clear persistence
+    localStorage.removeItem("aja_session_files");
+    localStorage.removeItem("aja_session_kpis");
+    
     navigate(`${basePath}/new-session`);
   };
 
@@ -204,18 +220,39 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const handleFileChange = (e, fileKey) => {
     if (e.target.files && e.target.files[0]) {
-      setFiles((prev) => ({ ...prev, [fileKey]: e.target.files[0] }));
+      const newFile = e.target.files[0];
+      setFiles((prev) => {
+        const updated = { ...prev, [fileKey]: newFile };
+        const mockFiles = {};
+        Object.keys(updated).forEach(k => {
+          mockFiles[k] = updated[k] ? { name: updated[k].name } : null;
+        });
+        localStorage.setItem("aja_session_files", JSON.stringify(mockFiles));
+        return updated;
+      });
     }
   };
 
   const removeFile = (fileKey) => {
-    setFiles((prev) => ({ ...prev, [fileKey]: null }));
+    setFiles((prev) => {
+      const updated = { ...prev, [fileKey]: null };
+      const mockFiles = {};
+      Object.keys(updated).forEach(k => {
+        mockFiles[k] = updated[k] ? { name: updated[k].name } : null;
+      });
+      localStorage.setItem("aja_session_files", JSON.stringify(mockFiles));
+      return updated;
+    });
   };
 
   const handleUploadSubmit = async () => {
     setIsUploading(true);
     const formData = new FormData();
-    Object.keys(files).forEach(key => { if (files[key]) formData.append(key, files[key]); });
+    Object.keys(files).forEach(key => { 
+        if (files[key] && files[key] instanceof File) {
+            formData.append(key, files[key]); 
+        }
+    });
 
     try {
       const response = await fetch("http://localhost:5000/api/upload", { method: "POST", body: formData });
@@ -223,6 +260,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
       if (response.ok) {
         setUploadKPIs(resData.kpis || {});
+        localStorage.setItem("aja_session_kpis", JSON.stringify(resData.kpis || {}));
         navigate(`${basePath}/insight-selection`);
       } else {
         alert(`Upload error: ${resData.message}`);
@@ -339,7 +377,16 @@ const Uploader = ({ user, logo, handleLogout }) => {
       const formData = new FormData();
       formData.append(fileKey, file);
 
-      setFiles(prev => ({ ...prev, [fileKey]: file }));
+      setFiles((prev) => {
+        const updated = { ...prev, [fileKey]: file };
+        const mockFiles = {};
+        Object.keys(updated).forEach(k => {
+          mockFiles[k] = updated[k] ? { name: updated[k].name } : null;
+        });
+        localStorage.setItem("aja_session_files", JSON.stringify(mockFiles));
+        return updated;
+      });
+
       const uploadRes = await fetch("http://localhost:5000/api/upload", { method: "POST", body: formData });
       if (!uploadRes.ok) throw new Error("Upload failed");
 
