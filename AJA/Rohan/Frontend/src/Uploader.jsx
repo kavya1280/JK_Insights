@@ -57,8 +57,16 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const [selectedInsights, setSelectedInsights] = useState([]);
   const [isNotifyEnabled, setIsNotifyEnabled] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false); // NEW: Tracks restore vs processing state
   
-  // 1. Restore mock files from local storage
+  // Controls which single insight is currently displayed in the Results view
+  const [viewingInsightId, setViewingInsightId] = useState(() => localStorage.getItem("aja_viewing_insight") || null);
+
+  useEffect(() => {
+    if (viewingInsightId) localStorage.setItem("aja_viewing_insight", viewingInsightId);
+    else localStorage.removeItem("aja_viewing_insight");
+  }, [viewingInsightId]);
+
   const [files, setFiles] = useState(() => {
     try {
       const saved = localStorage.getItem("aja_session_files");
@@ -82,7 +90,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const [pjpa24Category, setPjpa24Category] = useState('Overall');
   const [activeTabs, setActiveTabs] = useState({});
 
-  // 2. Restore KPIs from local storage
   const [uploadKPIs, setUploadKPIs] = useState(() => {
     try {
       const saved = localStorage.getItem("aja_session_kpis");
@@ -144,7 +151,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const handleReportToggle = () => {
     if (view === "report") {
-      if (activeAnalysisResults.length > 0) {
+      if (activeAnalysisResults.length > 0 && viewingInsightId) {
         navigate(`${basePath}/results`);
       } else {
         navigate(`${basePath}/new-session`);
@@ -163,10 +170,11 @@ const Uploader = ({ user, logo, handleLogout }) => {
     setSelectedInsights([]);
     setUploadKPIs({});
     setActiveTabs({});
+    setViewingInsightId(null);
     
-    // Clear persistence
     localStorage.removeItem("aja_session_files");
     localStorage.removeItem("aja_session_kpis");
+    localStorage.removeItem("aja_viewing_insight");
     
     navigate(`${basePath}/new-session`);
   };
@@ -191,6 +199,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const handleLoadSession = async (sessionId) => {
     try {
+      setIsRestoring(true); // Updates the UI to say "Restoring..."
       navigate(`${basePath}/processing`);
       const session = savedSessions.find(s => s.id === sessionId);
       if (!session) return;
@@ -205,17 +214,34 @@ const Uploader = ({ user, logo, handleLogout }) => {
             moduleId: insightId,
             name: INSIGHT_OPTIONS.find(o => o.id === insightId)?.label || insightId,
             status: "Success",
-            reason: "",
+            reason: `Restored from: ${session.name}`,
             missingFiles: [],
             data: dataJson.data || [],
-            timestamp: session.timestamp
+            timestamp: session.timestamp,
+            isRestored: true, // Tagged strictly as restored data
+            sessionId: sessionId
           });
         }
       }
-      setActiveAnalysisResults(loadedResults);
+      
+      // Append to active results safely
+      setActiveAnalysisResults(prev => {
+        const newResults = [...prev.filter(p => !loadedResults.find(l => l.moduleId === p.moduleId)), ...loadedResults];
+        safelyPersistResults(newResults);
+        return newResults;
+      });
+      
+      // Append to history table
       setHistory(prev => [...loadedResults, ...prev].slice(0, 50));
-      navigate(`${basePath}/results`);
-    } catch (e) { alert("Failed to load session data"); navigate(`${basePath}/report`); }
+      
+      // Go back to the report page, NOT the results page
+      navigate(`${basePath}/report`);
+    } catch (e) { 
+      alert("Failed to load session data"); 
+      navigate(`${basePath}/report`); 
+    } finally {
+      setIsRestoring(false);
+    }
   };
 
   const handleFileChange = (e, fileKey) => {
@@ -424,10 +450,14 @@ const Uploader = ({ user, logo, handleLogout }) => {
   };
 
   const handleRefreshReport = async () => {
-    const successfulItems = history.filter(item => item.status === "Success");
-    if (successfulItems.length === 0) { alert("No successful reports to refresh."); return; }
+    // Only refresh items that are NOT restored from a previous session
+    const successfulItems = history.filter(item => item.status === "Success" && !item.isRestored);
+    if (successfulItems.length === 0) { 
+      alert("No current session controls to refresh. (Restored historical data is locked and will not be overwritten)."); 
+      return; 
+    }
 
-    setHistory(prev => prev.map(item => item.status === "Success" ? { ...item, status: "Reprocessing", reason: "Fetching latest data..." } : item));
+    setHistory(prev => prev.map(item => (item.status === "Success" && !item.isRestored) ? { ...item, status: "Reprocessing", reason: "Fetching latest data..." } : item));
 
     successfulItems.forEach(async (reportItem) => {
       try {
@@ -662,168 +692,175 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const renderProcessingView = () => (
     <div style={{ textAlign: 'center', background: 'white', padding: '60px 40px', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', width: '100%', maxWidth: '700px' }}>
       <div className="spinner" style={{ width: '60px', height: '60px', border: '5px solid #f1f5f9', borderTop: '5px solid #00df81', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 30px' }}></div>
-      <h2 style={{ color: '#05192d', fontSize: '28px', marginBottom: '10px' }}>Auditing Data...</h2>
-      <p style={{ color: '#64748b', fontSize: '16px', marginBottom: '40px' }}>Executing control modules. This may take a moment for larger files.</p>
+      <h2 style={{ color: '#05192d', fontSize: '28px', marginBottom: '10px' }}>
+        {isRestoring ? "Restoring Data..." : "Auditing Data..."}
+      </h2>
+      <p style={{ color: '#64748b', fontSize: '16px', marginBottom: '40px' }}>
+        {isRestoring ? "Fetching historical session data from archives." : "Executing control modules. This may take a moment for larger files."}
+      </p>
 
-      <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '16px', padding: '20px', border: '1px solid #edf2f7' }}>
-        <h4 style={{ margin: '0 0 15px 0', fontSize: '14px', color: '#05192d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Current Progress</h4>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {selectedInsights.map(id => {
-            const insight = INSIGHT_OPTIONS.find(o => o.id === id);
-            const isProcessing = history.find(h => h.moduleId === id && h.status === 'In Progress');
-            const isDone = history.find(h => h.moduleId === id && (h.status === 'Success' || h.status === 'Failed'));
+      {!isRestoring && (
+        <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '16px', padding: '20px', border: '1px solid #edf2f7' }}>
+          <h4 style={{ margin: '0 0 15px 0', fontSize: '14px', color: '#05192d', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Current Progress</h4>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {selectedInsights.map(id => {
+              const insight = INSIGHT_OPTIONS.find(o => o.id === id);
+              const isProcessing = history.find(h => h.moduleId === id && h.status === 'In Progress');
+              const isDone = history.find(h => h.moduleId === id && (h.status === 'Success' || h.status === 'Failed'));
 
-            return (
-              <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '14px', color: '#05192d', fontWeight: (isProcessing || isDone) ? '600' : '400' }}>{insight?.label}</span>
-                {isProcessing && <div className="spinner" style={{ width: '14px', height: '14px', border: '2px solid #f1f5f9', borderTop: '2px solid #3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>}
-                {isDone?.status === 'Success' && <span style={{ color: '#1059b9ff', fontSize: '14px' }}>{"✔ Processing"}</span>}
-                {isDone?.status === 'Failed' && <span style={{ color: '#ef4444', fontSize: '14px' }}>{"✘ Failed"}</span>}
-                {!isProcessing && !isDone && <span style={{ color: '#94a3b8', fontSize: '14px' }}>Waiting...</span>}
-              </div>
-            );
-          })}
+              return (
+                <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: '14px', color: '#05192d', fontWeight: (isProcessing || isDone) ? '600' : '400' }}>{insight?.label}</span>
+                  {isProcessing && <div className="spinner" style={{ width: '14px', height: '14px', border: '2px solid #f1f5f9', borderTop: '2px solid #3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>}
+                  {isDone?.status === 'Success' && <span style={{ color: '#1059b9ff', fontSize: '14px' }}>{"✔ Processing"}</span>}
+                  {isDone?.status === 'Failed' && <span style={{ color: '#ef4444', fontSize: '14px' }}>{"✘ Failed"}</span>}
+                  {!isProcessing && !isDone && <span style={{ color: '#94a3b8', fontSize: '14px' }}>Waiting...</span>}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
-  const renderResultsView = () => (
-    <div className="animate-in" style={{ width: '100%', maxWidth: '1200px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-        <div>
-          {activeAnalysisResults.length === 1 ? (
-            <>
-              <h2 style={{ color: '#05192d', fontSize: '36px', fontWeight: '900', marginBottom: '4px', letterSpacing: '-0.5px' }}>
-                {activeAnalysisResults[0].name.split(" - ")[0]}
-              </h2>
-              <p style={{ color: '#64748b', fontSize: '18px', fontWeight: '500' }}>
-                {activeAnalysisResults[0].name.split(" - ")[1] || activeAnalysisResults[0].name}
-              </p>
-            </>
-          ) : (
-            <>
-              <h2 style={{ color: '#05192d', fontSize: '32px', marginBottom: '5px' }}>Audit Insights</h2>
-              <p style={{ color: '#64748b' }}>Viewing results for {activeAnalysisResults.length} control modules.</p>
-            </>
-          )}
-        </div>
+  const renderResultsView = () => {
+    // Filter down to ONLY the insight that was clicked on
+    const insightsToRender = viewingInsightId ? activeAnalysisResults.filter(r => r.moduleId === viewingInsightId) : activeAnalysisResults;
 
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <button onClick={() => setCurrentViewMode("table")} style={getPremiumButtonStyle(currentViewMode === 'table')}>Table View</button>
-            <button onClick={() => setCurrentViewMode("dashboard")} style={getPremiumButtonStyle(currentViewMode === 'dashboard')}>Dashboard View</button>
-          </div>
-        </div>
-      </div>
-
-      {activeAnalysisResults.map((insight) => {
-        // --- GENERIC MULTI-SHEET LOGIC ---
-        const isMultiSheet = insight.data && typeof insight.data === 'object' && !Array.isArray(insight.data);
-        const sheets = isMultiSheet ? Object.keys(insight.data) : [];
-        const currentSheet = activeTabs[insight.id] || (sheets.length > 0 ? sheets[0] : null);
-
-        let displayData = [];
-        let currentExceptionName = "";
-
-        if (insight.moduleId === "PJPA32") {
-          displayData = insight.data[pjpa32SubView] || [];
-          currentExceptionName = pjpa32SubView === 'holiday' ? 'Holiday Travel' : 'Weekend Travel';
-        } else if (insight.moduleId === "PJPA24") {
-          const sheetName = `${pjpa24Type}_${pjpa24Category}`;
-          displayData = insight.data[sheetName] || [];
-          currentExceptionName = `${pjpa24Type === 'Mod_Z' ? 'Modified Z-Score' : 'Standard Z-Score'} - ${pjpa24Category}`;
-        } else if (isMultiSheet) {
-          displayData = insight.data[currentSheet] || [];
-          currentExceptionName = currentSheet ? currentSheet.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "";
-        } else {
-          displayData = insight.data || [];
-        }
-
-        return (
-          <div key={insight.id} style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-            {activeAnalysisResults.length > 1 && (
-              <h3 style={{ marginBottom: '20px', color: '#05192d', borderLeft: '4px solid #00df81', paddingLeft: '15px' }}>{insight.name}</h3>
-            )}
-
-            {/* TABS FOR PJPA24 */}
-            {insight.moduleId === "PJPA24" && (
+    return (
+      <div className="animate-in" style={{ width: '100%', maxWidth: '1200px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+          <div>
+            {insightsToRender.length === 1 ? (
               <>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                  <button onClick={() => setPjpa24Type('Mod_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Mod_Z')}>Modified Z-Score</button>
-                  <button onClick={() => setPjpa24Type('Std_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Std_Z')}>Standard Z-Score</button>
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                  <button onClick={() => setPjpa24Category('Overall')} style={getPremiumButtonStyle(pjpa24Category === 'Overall')}>Overall Context</button>
-                  <button onClick={() => setPjpa24Category('Emp')} style={getPremiumButtonStyle(pjpa24Category === 'Emp')}>By Employee</button>
-                  <button onClick={() => setPjpa24Category('Loc')} style={getPremiumButtonStyle(pjpa24Category === 'Loc')}>By Location</button>
-                  <button onClick={() => setPjpa24Category('RepDate')} style={getPremiumButtonStyle(pjpa24Category === 'RepDate')}>By Report Date</button>
-                  <button onClick={() => setPjpa24Category('TransDate')} style={getPremiumButtonStyle(pjpa24Category === 'TransDate')}>By Transaction Date</button>
-                </div>
+                <h2 style={{ color: '#05192d', fontSize: '36px', fontWeight: '900', marginBottom: '4px', letterSpacing: '-0.5px' }}>
+                  {insightsToRender[0].name.split(" - ")[0]}
+                </h2>
+                <p style={{ color: '#64748b', fontSize: '18px', fontWeight: '500' }}>
+                  {insightsToRender[0].name.split(" - ")[1] || insightsToRender[0].name}
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 style={{ color: '#05192d', fontSize: '32px', marginBottom: '5px' }}>Audit Insights</h2>
+                <p style={{ color: '#64748b' }}>Viewing results for {insightsToRender.length} control modules.</p>
               </>
             )}
-
-            {/* TABS FOR PJPA32 (Holiday / Weekend) */}
-            {insight.moduleId === "PJPA32" && (
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                <button onClick={() => setPjpa32SubView('holiday')} style={getPremiumButtonStyle(pjpa32SubView === 'holiday')}>Holiday Travel</button>
-                <button onClick={() => setPjpa32SubView('weekend')} style={getPremiumButtonStyle(pjpa32SubView === 'weekend')}>Weekend Travel</button>
-              </div>
-            )}
-
-            {/* TABS FOR OTHER MULTI-SHEET INSIGHTS (PJPA10, 13, 16, etc.) */}
-            {insight.moduleId !== "PJPA24" && insight.moduleId !== "PJPA32" && isMultiSheet && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                {sheets.map(sheet => {
-                  const formattedName = sheet.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                  return (
-                    <button
-                      key={sheet}
-                      onClick={() => setActiveTabs(prev => ({ ...prev, [insight.id]: sheet }))}
-                      style={getPremiumButtonStyle(currentSheet === sheet)}
-                    >
-                      {formattedName}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* DATA RENDERER */}
-            {currentViewMode === "table" ? (
-              <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
-                {displayData.length > 0 ? (
-                  <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
-                    <thead>
-                      <tr style={{ background: '#05192d', color: 'white' }}>
-                        {Object.keys(displayData[0]).map(k => <th key={k} style={{ padding: '16px 12px', textAlign: 'left', fontSize: '12px', background: '#05192d', position: 'sticky', top: '0', zIndex: '10', borderBottom: '2px solid #00df81', whiteSpace: 'nowrap' }}>{k}</th>)}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {displayData.map((row, i) => (
-                        <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                          {Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155', whiteSpace: 'nowrap' }}>{String(v)}</td>)}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No records found for this module or tab.</div>
-                )}
-              </div>
-            ) : (
-              <Dashboard
-                data={displayData}
-                onBackToTable={() => setCurrentViewMode("table")}
-                insightName={insight.name}
-                exceptionName={currentExceptionName}
-              />
-            )}
           </div>
-        );
-      })}
-    </div>
-  );
+
+          <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button onClick={() => setCurrentViewMode("table")} style={getPremiumButtonStyle(currentViewMode === 'table')}>Table View</button>
+              <button onClick={() => setCurrentViewMode("dashboard")} style={getPremiumButtonStyle(currentViewMode === 'dashboard')}>Dashboard View</button>
+            </div>
+          </div>
+        </div>
+
+        {insightsToRender.map((insight) => {
+          // --- GENERIC MULTI-SHEET LOGIC ---
+          const isMultiSheet = insight.data && typeof insight.data === 'object' && !Array.isArray(insight.data);
+          const sheets = isMultiSheet ? Object.keys(insight.data) : [];
+          const currentSheet = activeTabs[insight.id] || (sheets.length > 0 ? sheets[0] : null);
+
+          let displayData = [];
+          let currentExceptionName = "";
+
+          if (insight.moduleId === "PJPA32") {
+            displayData = insight.data[pjpa32SubView] || [];
+            currentExceptionName = pjpa32SubView === 'holiday' ? 'Holiday Travel' : 'Weekend Travel';
+          } else if (insight.moduleId === "PJPA24") {
+            const sheetName = `${pjpa24Type}_${pjpa24Category}`;
+            displayData = insight.data[sheetName] || [];
+            currentExceptionName = `${pjpa24Type === 'Mod_Z' ? 'Modified Z-Score' : 'Standard Z-Score'} - ${pjpa24Category}`;
+          } else if (isMultiSheet) {
+            displayData = insight.data[currentSheet] || [];
+            currentExceptionName = currentSheet ? currentSheet.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "";
+          } else {
+            displayData = insight.data || [];
+          }
+
+          return (
+            <div key={insight.id} style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+              {/* TABS FOR PJPA24 */}
+              {insight.moduleId === "PJPA24" && (
+                <>
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                    <button onClick={() => setPjpa24Type('Mod_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Mod_Z')}>Modified Z-Score</button>
+                    <button onClick={() => setPjpa24Type('Std_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Std_Z')}>Standard Z-Score</button>
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                    <button onClick={() => setPjpa24Category('Overall')} style={getPremiumButtonStyle(pjpa24Category === 'Overall')}>Overall Context</button>
+                    <button onClick={() => setPjpa24Category('Emp')} style={getPremiumButtonStyle(pjpa24Category === 'Emp')}>By Employee</button>
+                    <button onClick={() => setPjpa24Category('Loc')} style={getPremiumButtonStyle(pjpa24Category === 'Loc')}>By Location</button>
+                    <button onClick={() => setPjpa24Category('RepDate')} style={getPremiumButtonStyle(pjpa24Category === 'RepDate')}>By Report Date</button>
+                    <button onClick={() => setPjpa24Category('TransDate')} style={getPremiumButtonStyle(pjpa24Category === 'TransDate')}>By Transaction Date</button>
+                  </div>
+                </>
+              )}
+
+              {/* TABS FOR PJPA32 (Holiday / Weekend) */}
+              {insight.moduleId === "PJPA32" && (
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                  <button onClick={() => setPjpa32SubView('holiday')} style={getPremiumButtonStyle(pjpa32SubView === 'holiday')}>Holiday Travel</button>
+                  <button onClick={() => setPjpa32SubView('weekend')} style={getPremiumButtonStyle(pjpa32SubView === 'weekend')}>Weekend Travel</button>
+                </div>
+              )}
+
+              {/* TABS FOR OTHER MULTI-SHEET INSIGHTS (PJPA10, 13, 16, etc.) */}
+              {insight.moduleId !== "PJPA24" && insight.moduleId !== "PJPA32" && isMultiSheet && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                  {sheets.map(sheet => {
+                    const formattedName = sheet.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    return (
+                      <button
+                        key={sheet}
+                        onClick={() => setActiveTabs(prev => ({ ...prev, [insight.id]: sheet }))}
+                        style={getPremiumButtonStyle(currentSheet === sheet)}
+                      >
+                        {formattedName}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* DATA RENDERER */}
+              {currentViewMode === "table" ? (
+                <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
+                  {displayData.length > 0 ? (
+                    <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
+                      <thead>
+                        <tr style={{ background: '#05192d', color: 'white' }}>
+                          {Object.keys(displayData[0]).map(k => <th key={k} style={{ padding: '16px 12px', textAlign: 'left', fontSize: '12px', background: '#05192d', position: 'sticky', top: '0', zIndex: '10', borderBottom: '2px solid #00df81', whiteSpace: 'nowrap' }}>{k}</th>)}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {displayData.map((row, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
+                            {Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155', whiteSpace: 'nowrap' }}>{String(v)}</td>)}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No records found for this module or tab.</div>
+                  )}
+                </div>
+              ) : (
+                <Dashboard
+                  data={displayData}
+                  onBackToTable={() => setCurrentViewMode("table")}
+                  insightName={insight.name}
+                  exceptionName={currentExceptionName}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const renderClearHistoryModal = () => {
     if (!isClearModalOpen) return null;
@@ -910,39 +947,13 @@ const Uploader = ({ user, logo, handleLogout }) => {
     );
   };
 
-  const renderReportView = () => (
-    <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>← Control Selection</button>
-          <h2 style={{ color: '#05192d', fontSize: '28px' }}>Execution Report</h2>
-        </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button onClick={handleRefreshReport} style={{ background: '#00df81', color: '#05192d', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{"↻ Refresh Successful Controls"}</button>
-          <button onClick={() => setIsClearModalOpen(true)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Clear Report History</button>
-        </div>
-      </div>
-
-      {renderClearHistoryModal()}
-
-      {lastSessionResults.length > 0 && activeAnalysisResults.length === 0 && (
-        <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '16px', padding: '20px 24px', marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '20px' }}>{"📋"}</span>
-            <div>
-              <div style={{ fontWeight: '700', color: '#92400e', fontSize: '15px' }}>Previous Session Results Available</div>
-              <div style={{ color: '#b45309', fontSize: '13px' }}>{lastSessionResults.length} insight(s) from your last run are still accessible. Start a new analysis to replace them.</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={() => { setActiveAnalysisResults(lastSessionResults); navigate(`${basePath}/results`); }} style={{ background: '#f59e0b', color: 'white', border: 'none', padding: '9px 18px', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px' }}>View Previous Results</button>
-            <button onClick={() => { setLastSessionResults([]); localStorage.removeItem("aja_last_session_results"); }} style={{ background: 'none', color: '#b45309', border: '1px solid #fde68a', padding: '9px 18px', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '13px' }}>Dismiss</button>
-          </div>
-        </div>
-      )}
-
-      <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', maxHeight: '600px', overflowY: 'auto', overflowX: 'auto' }}>
-        {history.length > 0 ? (
+  // Helper component to render the beautiful table views for history
+  const renderHistoryTable = (historyData, title) => {
+    if (historyData.length === 0) return null;
+    return (
+      <div style={{ marginBottom: '40px' }}>
+        <h3 style={{ color: '#05192d', marginBottom: '15px', fontSize: '18px', borderLeft: '4px solid #00df81', paddingLeft: '10px' }}>{title}</h3>
+        <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', maxHeight: '600px', overflowY: 'auto', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
             <thead style={{ position: 'sticky', top: 0, zIndex: 10, background: '#f8fafc' }}>
               <tr>
@@ -954,7 +965,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
               </tr>
             </thead>
             <tbody>
-              {history.map((item) => (
+              {historyData.map((item) => (
                 <tr key={item.id} style={{ borderTop: '1px solid #f1f5f9' }}>
                   <td style={{ padding: '20px', fontSize: '13px', color: '#64748b', whiteSpace: 'nowrap' }}>{item.timestamp}</td>
                   <td style={{ padding: '20px', fontWeight: 'bold', color: '#05192d' }}>{item.name}</td>
@@ -985,7 +996,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
                     {item.status === 'Success' ? (
                       <button
                         onClick={() => {
-                          setActiveAnalysisResults([item]);
+                          setViewingInsightId(item.moduleId);
                           setCurrentViewMode('table');
                           navigate(`${basePath}/results`);
                         }}
@@ -1053,42 +1064,72 @@ const Uploader = ({ user, logo, handleLogout }) => {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+    );
+  };
+
+  const renderReportView = () => {
+    // Split history into current execution vs restored sessions
+    const currentSessionHistory = history.filter(h => !h.isRestored);
+    const restoredHistory = history.filter(h => h.isRestored);
+
+    return (
+      <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>← Control Selection</button>
+            <h2 style={{ color: '#05192d', fontSize: '28px' }}>Execution Report</h2>
+          </div>
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button onClick={handleRefreshReport} style={{ background: '#00df81', color: '#05192d', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{"↻ Refresh Successful Controls"}</button>
+            <button onClick={() => setIsClearModalOpen(true)} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Clear Report History</button>
+          </div>
+        </div>
+
+        {renderClearHistoryModal()}
+
+        {history.length > 0 ? (
+          <>
+            {renderHistoryTable(currentSessionHistory, "Current Session Execution")}
+            {renderHistoryTable(restoredHistory, "Restored Historical Insights")}
+          </>
         ) : (
-          <div style={{ padding: '80px', textAlign: 'center', color: '#94a3b8' }}>
+          <div style={{ padding: '80px', textAlign: 'center', color: '#94a3b8', background: 'white', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
             <div style={{ fontSize: '40px', marginBottom: '15px' }}>{"📊"}</div>
             <div style={{ fontWeight: 'bold', fontSize: '18px', color: '#05192d' }}>Report Empty</div>
             <p>Ready for your first audit analysis.</p>
           </div>
         )}
-      </div>
 
-      {savedSessions.length > 0 && (
-        <div style={{ marginTop: '50px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-            <h3 style={{ color: '#05192d', margin: 0 }}>{"📁"} Saved Session History</h3>
-            <span style={{ background: '#f1f5f9', color: '#64748b', fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '10px' }}>{savedSessions.length} sessions</span>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
-            {savedSessions.map(session => (
-              <div key={session.id} style={{ background: 'white', padding: '24px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', transition: '0.2s' }}>
-                <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '12px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>{new Date(session.timestamp).toLocaleDateString()}</span>
-                  <span>{new Date(session.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        {savedSessions.length > 0 && (
+          <div style={{ marginTop: '50px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+              <h3 style={{ color: '#05192d', margin: 0 }}>{"📁"} Saved Session History</h3>
+              <span style={{ background: '#f1f5f9', color: '#64748b', fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '10px' }}>{savedSessions.length} sessions</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '20px' }}>
+              {savedSessions.map(session => (
+                <div key={session.id} style={{ background: 'white', padding: '24px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', transition: '0.2s' }}>
+                  <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '12px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>{new Date(session.timestamp).toLocaleDateString()}</span>
+                    <span>{new Date(session.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                  <h4 style={{ color: '#05192d', margin: '0 0 8px 0', fontSize: '16px' }}>{session.name}</h4>
+                  <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 20px 0' }}>{session.insights.length} insight modules analyzed.</p>
+                  <button
+                    onClick={() => handleLoadSession(session.id)}
+                    style={{ width: '100%', padding: '10px', background: '#f8fafc', color: '#05192d', border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>
+                    {"📂 Restore Session"}
+                  </button>
                 </div>
-                <h4 style={{ color: '#05192d', margin: '0 0 8px 0', fontSize: '16px' }}>{session.name}</h4>
-                <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 20px 0' }}>{session.insights.length} insight modules analyzed.</p>
-                <button
-                  onClick={() => handleLoadSession(session.id)}
-                  style={{ width: '100%', padding: '10px', background: '#f8fafc', color: '#05192d', border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>
-                  {"📂 Restore Session"}
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="up-page-wrapper">
