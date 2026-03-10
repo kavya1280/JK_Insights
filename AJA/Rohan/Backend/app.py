@@ -112,6 +112,20 @@ EXPECTED_FILENAMES = {
 }
 
 
+# ==========================================
+# HELPER: SMART DATA READER
+# ==========================================
+def load_smart_dataframe(file_bytes, filename):
+    file_lower = filename.lower()
+    if file_lower.endswith('.csv'):
+        try:
+            return pd.read_csv(io.BytesIO(file_bytes), low_memory=False, encoding='utf-8')
+        except UnicodeDecodeError:
+            return pd.read_csv(io.BytesIO(file_bytes), low_memory=False, encoding='latin1')
+    else:
+        return pd.read_excel(io.BytesIO(file_bytes))
+
+
 @app.route('/api/upload', methods=['POST'])
 def upload_files():
     try:
@@ -131,21 +145,18 @@ def upload_files():
                                 if not file_info.filename.startswith('__MACOSX') and file_info.filename.lower().endswith(('.csv', '.xlsx', '.xls')):
                                     with z.open(file_info) as f:
                                         file_bytes = f.read()
-                                        if file_info.filename.lower().endswith('.csv'):
-                                            try:
-                                                df = pd.read_csv(io.BytesIO(file_bytes), low_memory=False)
-                                            except UnicodeDecodeError:
-                                                df = pd.read_csv(io.BytesIO(file_bytes), encoding='latin1', low_memory=False)
-                                        else:
-                                            df = pd.read_excel(io.BytesIO(file_bytes))
+                                        df = load_smart_dataframe(file_bytes, file_info.filename)
                                         dfs.append(df)
                         if dfs:
+                            print(f"📦 Concatenating {len(dfs)} files for {key}...")
                             combined_df = pd.concat(dfs, ignore_index=True)
                             combined_df.to_excel(save_path, index=False)
                         else:
                             return jsonify({"status": "error", "message": f"No valid data files found inside the ZIP for {key}."}), 400
                     else:
-                        file.save(save_path)
+                        file_bytes = file.read()
+                        df = load_smart_dataframe(file_bytes, file.filename)
+                        df.to_excel(save_path, index=False)
 
         # ==========================================
         # KPI GENERATION FOR UPLOAD SCREEN
@@ -224,30 +235,6 @@ def generate_insights():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
-
-# Updated with all new modules (6 rows of meta-headers means skiprows=6)
-SKIP_ROWS_MAP = {
-    "PJPA10": 5, "PJPA13": 5, "PJPA14": 5, "PJPA16": 5, "PJPA18": 5, 
-    "PJPA19": 5, "PJPA20": 5, "PJPA21": 5, "PJPA22": 5, "PJPA23": 5, "PJPA24": 5,
-    "PJPA27": 5, "PJPA28": 5, "PJPA29": 5, "PJPA30": 4, "PJPA31": 4,
-    "PJPA32": 5, "PJPA33": 4, "PJPA34": 5, "PJPA35": 4, "PJPA36": 5, "PJPA38": 5, "PJPA39": 4, "PJPA40": 4
-}
-
-FILE_MAP = {
-    "PJPA10": "PJPA10_Generated.xlsx", "PJPA13": "PJPA13_Generated.xlsx",
-    "PJPA14": "PJPA14_Generated.xlsx", "PJPA16": "PJPA16_Generated.xlsx",
-    "PJPA18": "PJPA18_Generated.xlsx", "PJPA19": "PJPA19_Generated.xlsx",
-    "PJPA20": "PJPA20_Generated.xlsx", "PJPA21": "PJPA21_Generated.xlsx",
-    "PJPA22": "PJPA22_Generated.xlsx", "PJPA23": "PJPA23_Generated.xlsx",
-    "PJPA24": "PJPA24_Generated.xlsx",
-    "PJPA27": "PJPA27_Generated.xlsx", "PJPA28": "PJPA28_Generated.xlsx",
-    "PJPA29": "PJPA29_Generated.xlsx", "PJPA30": "PJPA30_Generated.xlsx",
-    "PJPA31": "PJPA31_Generated.xlsx", 
-    "PJPA32": {"holiday": "PJPA32_Holiday_Generated.xlsx", "weekend": "PJPA32_Weekend_Generated.xlsx"},
-    "PJPA33": "PJPA33_Generated.xlsx", "PJPA34": "PJPA34_Generated.xlsx", 
-    "PJPA35": "PJPA35_Generated.xlsx", "PJPA36": "PJPA36_Generated.xlsx",
-    "PJPA38": "PJPA38_Generated.xlsx", "PJPA39": "PJPA39_Generated.xlsx", "PJPA40": "PJPA40_Generated.xlsx"
-}
 
 @app.route('/api/insights', methods=['GET'])
 def get_insights_list():
