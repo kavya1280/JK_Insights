@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, Routes, Route, Navigate } from "react-router-dom";
 import "./uploader.css";
 import Dashboard from "./Dashboard";
-import PJPA32Dashboard from "./PJPA32Dashboard";
 import uploaderImg from "./assets/images/upload.png";
 import ajalabsblack from "./assets/images/ajalabs-black.png";
 
@@ -51,7 +50,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
     if (path.includes('/processing')) return 'processing';
     if (path.includes('/results')) return 'results';
     if (path.includes('/report')) return 'report';
-    return 'upload'; 
+    return 'upload';
   };
 
   const view = getViewFromPath(location.pathname);
@@ -70,15 +69,15 @@ const Uploader = ({ user, logo, handleLogout }) => {
     try { return JSON.parse(localStorage.getItem("aja_last_session_results")) || []; }
     catch { return []; }
   });
-  
+
   const [currentViewMode, setCurrentViewMode] = useState("table");
-  
+
   // Custom states for Nested Menus
   const [pjpa32SubView, setPjpa32SubView] = useState('holiday');
-  const [pjpa24Type, setPjpa24Type] = useState('Mod_Z'); 
-  const [pjpa24Category, setPjpa24Category] = useState('Overall'); 
-  const [activeTabs, setActiveTabs] = useState({}); 
-  
+  const [pjpa24Type, setPjpa24Type] = useState('Mod_Z');
+  const [pjpa24Category, setPjpa24Category] = useState('Overall');
+  const [activeTabs, setActiveTabs] = useState({});
+
   const [uploadKPIs, setUploadKPIs] = useState({});
   const [savedSessions, setSavedSessions] = useState([]);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
@@ -408,7 +407,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const handleSignOutClick = () => {
     const isProcessing = history.some(item => ['In Progress', 'Refreshing...', 'Reprocessing'].includes(item.status));
     if (window.confirm(isProcessing ? "You have insights currently processing! Are you sure you want to sign out?" : "Are you sure you want to sign out?")) {
-      handleLogout(); 
+      handleLogout();
     }
   };
 
@@ -425,7 +424,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
     }
   };
 
-  // Centralized button styling helper for dynamic tabs
   const getPremiumButtonStyle = (isActive) => ({
     padding: '12px 26px',
     borderRadius: '8px',
@@ -573,9 +571,9 @@ const Uploader = ({ user, logo, handleLogout }) => {
           <button
             onClick={() => {
               if (selectedInsights.length === INSIGHT_OPTIONS.length) {
-                setSelectedInsights([]); 
+                setSelectedInsights([]);
               } else {
-                setSelectedInsights(INSIGHT_OPTIONS.map(opt => opt.id)); 
+                setSelectedInsights(INSIGHT_OPTIONS.map(opt => opt.id));
               }
             }}
             style={{
@@ -665,16 +663,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
         </div>
 
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-          {activeAnalysisResults.some(r => r.moduleId === "PJPA32") && currentViewMode === "dashboard" && (
-            <div style={{ display: 'flex', gap: '8px', background: '#f8fafc', padding: '6px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
-              <button onClick={() => setPjpa32SubView('holiday')} style={getPremiumButtonStyle(pjpa32SubView === 'holiday')}>
-                Holiday Travel
-              </button>
-              <button onClick={() => setPjpa32SubView('weekend')} style={getPremiumButtonStyle(pjpa32SubView === 'weekend')}>
-                Weekend Travel
-              </button>
-            </div>
-          )}
           <div style={{ display: 'flex', gap: '12px' }}>
             <button onClick={() => setCurrentViewMode("table")} style={getPremiumButtonStyle(currentViewMode === 'table')}>Table View</button>
             <button onClick={() => setCurrentViewMode("dashboard")} style={getPremiumButtonStyle(currentViewMode === 'dashboard')}>Dashboard View</button>
@@ -683,33 +671,79 @@ const Uploader = ({ user, logo, handleLogout }) => {
       </div>
 
       {activeAnalysisResults.map((insight) => {
-        // --- CUSTOM TWO-TIER RENDERER FOR PJPA24 ---
-        if (insight.moduleId === "PJPA24") {
+        // --- GENERIC MULTI-SHEET LOGIC ---
+        const isMultiSheet = insight.data && typeof insight.data === 'object' && !Array.isArray(insight.data);
+        const sheets = isMultiSheet ? Object.keys(insight.data) : [];
+        const currentSheet = activeTabs[insight.id] || (sheets.length > 0 ? sheets[0] : null);
+
+        let displayData = [];
+        let currentExceptionName = "";
+
+        if (insight.moduleId === "PJPA32") {
+          displayData = insight.data[pjpa32SubView] || [];
+          currentExceptionName = pjpa32SubView === 'holiday' ? 'Holiday Travel' : 'Weekend Travel';
+        } else if (insight.moduleId === "PJPA24") {
           const sheetName = `${pjpa24Type}_${pjpa24Category}`;
-          const displayData = insight.data[sheetName] || [];
+          displayData = insight.data[sheetName] || [];
+          currentExceptionName = `${pjpa24Type === 'Mod_Z' ? 'Modified Z-Score' : 'Standard Z-Score'} - ${pjpa24Category}`;
+        } else if (isMultiSheet) {
+          displayData = insight.data[currentSheet] || [];
+          currentExceptionName = currentSheet ? currentSheet.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : "";
+        } else {
+          displayData = insight.data || [];
+        }
 
-          return (
-            <div key={insight.id} style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-              {activeAnalysisResults.length > 1 && (
-                <h3 style={{ marginBottom: '20px', color: '#05192d', borderLeft: '4px solid #00df81', paddingLeft: '15px' }}>{insight.name}</h3>
-              )}
-              
-              {/* Tier 1: Algorithm Selection */}
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                <button onClick={() => setPjpa24Type('Mod_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Mod_Z')}>Modified Z-Score</button>
-                <button onClick={() => setPjpa24Type('Std_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Std_Z')}>Standard Z-Score</button>
+        return (
+          <div key={insight.id} style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
+            {activeAnalysisResults.length > 1 && (
+              <h3 style={{ marginBottom: '20px', color: '#05192d', borderLeft: '4px solid #00df81', paddingLeft: '15px' }}>{insight.name}</h3>
+            )}
+
+            {/* TABS FOR PJPA24 */}
+            {insight.moduleId === "PJPA24" && (
+              <>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                  <button onClick={() => setPjpa24Type('Mod_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Mod_Z')}>Modified Z-Score</button>
+                  <button onClick={() => setPjpa24Type('Std_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Std_Z')}>Standard Z-Score</button>
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                  <button onClick={() => setPjpa24Category('Overall')} style={getPremiumButtonStyle(pjpa24Category === 'Overall')}>Overall Context</button>
+                  <button onClick={() => setPjpa24Category('Emp')} style={getPremiumButtonStyle(pjpa24Category === 'Emp')}>By Employee</button>
+                  <button onClick={() => setPjpa24Category('Loc')} style={getPremiumButtonStyle(pjpa24Category === 'Loc')}>By Location</button>
+                  <button onClick={() => setPjpa24Category('RepDate')} style={getPremiumButtonStyle(pjpa24Category === 'RepDate')}>By Report Date</button>
+                  <button onClick={() => setPjpa24Category('TransDate')} style={getPremiumButtonStyle(pjpa24Category === 'TransDate')}>By Transaction Date</button>
+                </div>
+              </>
+            )}
+
+            {/* TABS FOR PJPA32 (Holiday / Weekend) */}
+            {insight.moduleId === "PJPA32" && (
+              <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
+                <button onClick={() => setPjpa32SubView('holiday')} style={getPremiumButtonStyle(pjpa32SubView === 'holiday')}>Holiday Travel</button>
+                <button onClick={() => setPjpa32SubView('weekend')} style={getPremiumButtonStyle(pjpa32SubView === 'weekend')}>Weekend Travel</button>
               </div>
+            )}
 
-              {/* Tier 2: Dimension Selection */}
+            {/* TABS FOR OTHER MULTI-SHEET INSIGHTS (PJPA10, 13, 16, etc.) */}
+            {insight.moduleId !== "PJPA24" && insight.moduleId !== "PJPA32" && isMultiSheet && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                <button onClick={() => setPjpa24Category('Overall')} style={getPremiumButtonStyle(pjpa24Category === 'Overall')}>Overall Context</button>
-                <button onClick={() => setPjpa24Category('Emp')} style={getPremiumButtonStyle(pjpa24Category === 'Emp')}>By Employee</button>
-                <button onClick={() => setPjpa24Category('Loc')} style={getPremiumButtonStyle(pjpa24Category === 'Loc')}>By Location</button>
-                <button onClick={() => setPjpa24Category('RepDate')} style={getPremiumButtonStyle(pjpa24Category === 'RepDate')}>By Report Date</button>
-                <button onClick={() => setPjpa24Category('TransDate')} style={getPremiumButtonStyle(pjpa24Category === 'TransDate')}>By Transaction Date</button>
+                {sheets.map(sheet => {
+                  const formattedName = sheet.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                  return (
+                    <button
+                      key={sheet}
+                      onClick={() => setActiveTabs(prev => ({ ...prev, [insight.id]: sheet }))}
+                      style={getPremiumButtonStyle(currentSheet === sheet)}
+                    >
+                      {formattedName}
+                    </button>
+                  );
+                })}
               </div>
+            )}
 
-              {/* Data Table rendering */}
+            {/* DATA RENDERER */}
+            {currentViewMode === "table" ? (
               <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
                 {displayData.length > 0 ? (
                   <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
@@ -730,80 +764,13 @@ const Uploader = ({ user, logo, handleLogout }) => {
                   <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No records found for this module or tab.</div>
                 )}
               </div>
-            </div>
-          );
-        }
-
-        // --- GENERIC MULTI-SHEET LOGIC (For PJPA10, 13, 16 etc) ---
-        const isMultiSheet = insight.data && typeof insight.data === 'object' && !Array.isArray(insight.data);
-        const sheets = isMultiSheet ? Object.keys(insight.data) : [];
-        const currentSheet = activeTabs[insight.id] || (sheets.length > 0 ? sheets[0] : null);
-        
-        let displayData = [];
-        if (insight.moduleId === "PJPA32" && currentViewMode === "dashboard") {
-            displayData = insight.data[pjpa32SubView] || [];
-        } else if (isMultiSheet) {
-            displayData = insight.data[currentSheet] || [];
-        } else {
-            displayData = insight.data || [];
-        }
-
-        return (
-          <div key={insight.id}>
-            {currentViewMode === "table" ? (
-              <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-                {activeAnalysisResults.length > 1 && (
-                  <h3 style={{ marginBottom: '20px', color: '#05192d', borderLeft: '4px solid #00df81', paddingLeft: '15px' }}>{insight.name}</h3>
-                )}
-                
-                {isMultiSheet && (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                    {sheets.map(sheet => {
-                      const formattedName = sheet.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                      return (
-                        <button
-                          key={sheet}
-                          onClick={() => setActiveTabs(prev => ({...prev, [insight.id]: sheet}))}
-                          style={getPremiumButtonStyle(currentSheet === sheet)}
-                        >
-                          {formattedName}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
-                  {displayData.length > 0 ? (
-                    <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
-                      <thead>
-                        <tr style={{ background: '#05192d', color: 'white' }}>
-                          {Object.keys(displayData[0]).map(k => <th key={k} style={{ padding: '16px 12px', textAlign: 'left', fontSize: '12px', background: '#05192d', position: 'sticky', top: '0', zIndex: '10', borderBottom: '2px solid #00df81', whiteSpace: 'nowrap' }}>{k}</th>)}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {displayData.map((row, i) => (
-                          <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                            {Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155', whiteSpace: 'nowrap' }}>{String(v)}</td>)}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8' }}>No records found for this module or tab.</div>
-                  )}
-                </div>
-              </div>
             ) : (
-              insight.moduleId === "PJPA32" ? (
-                <PJPA32Dashboard
-                  data={displayData}
-                  onBackToTable={() => setCurrentViewMode("table")}
-                  insightId={pjpa32SubView === 'holiday' ? 'PJPA32_HOL' : 'PJPA32_WE'}
-                />
-              ) : (
-                <Dashboard data={displayData} onBackToTable={() => setCurrentViewMode("table")} insightName={insight.name} />
-              )
+              <Dashboard
+                data={displayData}
+                onBackToTable={() => setCurrentViewMode("table")}
+                insightName={insight.name}
+                exceptionName={currentExceptionName}
+              />
             )}
           </div>
         );
@@ -936,7 +903,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
                 <th style={{ padding: '20px', textAlign: 'left', color: '#64748b', background: '#f8fafc' }}>Insight Module</th>
                 <th style={{ padding: '20px', textAlign: 'left', color: '#64748b', background: '#f8fafc' }}>Status</th>
                 <th style={{ padding: '20px', textAlign: 'left', color: '#64748b', background: '#f8fafc' }}>Action</th>
-                <th style={{ padding: '20px', background: '#f8fafc' }}></th> 
+                <th style={{ padding: '20px', background: '#f8fafc' }}></th>
               </tr>
             </thead>
             <tbody>

@@ -5,7 +5,6 @@ import os
 import zipfile
 import io
 import traceback
-from werkzeug.utils import secure_filename
 import shutil
 import json
 from datetime import datetime
@@ -13,8 +12,21 @@ from datetime import datetime
 # Import the updated orchestrator function
 from main_orchestrator import run_selected_insights 
 
+from routes.upload import upload_bp
+from routes.dashboard import dashboard_bp
+from routes.pjpa27 import pjpa27_bp
+from routes.pjpa28 import pjpa28_bp
+from routes.pjpa32 import pjpa32_bp
+from routes.pjpa33 import pjpa33_bp
+from routes.pjpa34 import pjpa34_bp
+from routes.pjpa35 import pjpa35_bp
+from routes.pjpa37 import pjpa37_bp
+from routes.pjpa38 import pjpa38_bp
+from routes.pjpa39 import pjpa39_bp
+from routes.pjpa40 import pjpa40_bp
+
 app = Flask(__name__)
-CORS(app) 
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True) 
 
 DATA_DIR = r"Data"
 OUTPUT_DIR = r"Output"
@@ -23,12 +35,49 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(SESSIONS_DIR, exist_ok=True)
 
+SKIP_ROWS_MAP = {
+    "PJPA10": 5, "PJPA13": 5, "PJPA14": 5, "PJPA16": 5, "PJPA18": 5, 
+    "PJPA19": 5, "PJPA20": 5, "PJPA21": 5, "PJPA22": 5, "PJPA23": 5, "PJPA24": 5,
+    "PJPA27": 5, "PJPA28": 5, "PJPA29": 5, "PJPA30": 4, "PJPA31": 4,
+    "PJPA32": 5, "PJPA33": 4, "PJPA34": 5, "PJPA35": 4, "PJPA36": 5, "PJPA38": 5, "PJPA39": 4, "PJPA40": 4
+}
+
+FILE_MAP = {
+    "PJPA10": "PJPA10_Generated.xlsx", "PJPA13": "PJPA13_Generated.xlsx",
+    "PJPA14": "PJPA14_Generated.xlsx", "PJPA16": "PJPA16_Generated.xlsx",
+    "PJPA18": "PJPA18_Generated.xlsx", "PJPA19": "PJPA19_Generated.xlsx",
+    "PJPA20": "PJPA20_Generated.xlsx", "PJPA21": "PJPA21_Generated.xlsx",
+    "PJPA22": "PJPA22_Generated.xlsx", "PJPA23": "PJPA23_Generated.xlsx",
+    "PJPA24": "PJPA24_Generated.xlsx",
+    "PJPA27": "PJPA27_Generated.xlsx", "PJPA28": "PJPA28_Generated.xlsx",
+    "PJPA29": "PJPA29_Generated.xlsx", "PJPA30": "PJPA30_Generated.xlsx",
+    "PJPA31": "PJPA31_Generated.xlsx", 
+    "PJPA32": {"holiday": "PJPA32_Holiday_Generated.xlsx", "weekend": "PJPA32_Weekend_Generated.xlsx"},
+    "PJPA33": "PJPA33_Generated.xlsx", "PJPA34": "PJPA34_Generated.xlsx", 
+    "PJPA35": "PJPA35_Generated.xlsx", "PJPA36": "PJPA36_Generated.xlsx",
+    "PJPA38": "PJPA38_Generated.xlsx", "PJPA39": "PJPA39_Generated.xlsx", "PJPA40": "PJPA40_Generated.xlsx"
+}
+
 MOCK_USERS = [
     {"id": "1", "username": "admin", "password": "password123", "role": "admin", "status": "Active"},
     {"id": "2", "username": "uploader", "password": "password123", "role": "uploader", "status": "Active"},
     {"id": "3", "username": "reviewer", "password": "password123", "role": "reviewer", "status": "Active"},
     {"id": "4", "username": "viewer", "password": "password123", "role": "viewer", "status": "Active"}
 ]
+
+# Register Blueprints
+app.register_blueprint(upload_bp, url_prefix='/api/upload')
+app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
+app.register_blueprint(pjpa27_bp, url_prefix='/api/pjpa27')
+app.register_blueprint(pjpa28_bp, url_prefix='/api/pjpa28')
+app.register_blueprint(pjpa32_bp, url_prefix='/api/pjpa32')
+app.register_blueprint(pjpa33_bp, url_prefix='/api/pjpa33')
+app.register_blueprint(pjpa34_bp, url_prefix='/api/pjpa34')
+app.register_blueprint(pjpa35_bp, url_prefix='/api/pjpa35')
+app.register_blueprint(pjpa37_bp, url_prefix='/api/pjpa37')
+app.register_blueprint(pjpa38_bp, url_prefix='/api/pjpa38')
+app.register_blueprint(pjpa39_bp, url_prefix='/api/pjpa39')
+app.register_blueprint(pjpa40_bp, url_prefix='/api/pjpa40')
 
 @app.route('/login', methods=['POST'])
 def login():
