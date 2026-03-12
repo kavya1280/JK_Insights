@@ -105,7 +105,7 @@ const Login = ({
       </div>
 
       <footer className="login-page-footer">
-        <p>Copyright @ 2026 | Powered by Ajalabs | Data Privacy</p>
+        <p>Copyright @ 2026 | Powered by Ajalabs.ai | <a href="https://www.ajalabs.ai/data-privacy.html" target="_blank" rel="noopener noreferrer" style={{ color: '#00df81' }}>Data Privacy</a></p>
       </footer>
     </div>
   );
