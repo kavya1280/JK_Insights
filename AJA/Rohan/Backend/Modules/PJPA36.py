@@ -28,22 +28,39 @@ def generate_pjpa36_missing_days(input_excel_path, output_excel_path):
     # =====================================================
     print("📅 Calculating Date Gaps...")
     if df.empty:
+        total_dates_count = 0
         missing_dates = []
+        daily_status_df = pd.DataFrame(columns=['Date', 'Status', 'Available_Count', 'Missing_Count'])
     else:
         min_date = df['Submit Date'].min()
         max_date = df['Submit Date'].max()
         print(f"   -> Date range: {min_date} to {max_date}")
 
         full_dates = pd.date_range(start=min_date, end=max_date, freq='D').date
+        total_dates_count = len(full_dates)
         present_dates = set(df['Submit Date'].unique())
         missing_dates = sorted(set(full_dates) - present_dates)
 
-    # =====================================================
-    # 4. CREATE DATAFRAME (WITH 2 COLUMNS TO FIX UI BUG)
-    # =====================================================
-    # We add an empty 'Notes' column so the table is 2 columns wide. 
-    # This prevents Pandas from naming the empty metadata column "Unnamed: 1"
-    missing_df = pd.DataFrame({
+        # Create Daily Status DataFrame for Charts
+        daily_status_data = []
+        for d in full_dates:
+            is_present = d in present_dates
+            daily_status_data.append({
+                'Date': str(d),
+                'Status': 'Available' if is_present else 'Missing',
+                'Available_Count': 1 if is_present else 0,
+                'Missing_Count': 0 if is_present else 1
+            })
+        daily_status_df = pd.DataFrame(daily_status_data)
+
+    # Summary DataFrame
+    summary_df = pd.DataFrame({
+        'Metric': ['Total Dates', 'Missing Dates'],
+        'Value': [total_dates_count, len(missing_dates)]
+    })
+
+    # Missing Dates List DataFrame
+    missing_list_df = pd.DataFrame({
         'Missing Submit Date': [str(d) for d in missing_dates],
         'Notes': ['' for _ in missing_dates] 
     })
@@ -66,7 +83,9 @@ def generate_pjpa36_missing_days(input_excel_path, output_excel_path):
 
     print("💾 Saving Output...")
     with pd.ExcelWriter(output_excel_path, engine='xlsxwriter') as writer:
-        _export_sheet(missing_df, writer, "PJPA36", "1", "Missing Submit Date (Date Gaps)", "Missing_Dates")
+        _export_sheet(summary_df, writer, "PJPA36", "1", "Missing Submit Date - Summary", "Summary")
+        _export_sheet(daily_status_df, writer, "PJPA36", "2", "Date Presence Analysis", "Daily_Status")
+        _export_sheet(missing_list_df, writer, "PJPA36", "3", "Missing Submit Date (Date Gaps)", "Missing_Dates_List")
 
     print(f"✅ PJPA36 Workflow Completed! Found {len(missing_dates)} missing days.")
 

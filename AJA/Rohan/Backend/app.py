@@ -39,7 +39,7 @@ SKIP_ROWS_MAP = {
     "PJPA10": 5, "PJPA13": 5, "PJPA14": 5, "PJPA16": 5, "PJPA18": 5, 
     "PJPA19": 5, "PJPA20": 5, "PJPA21": 5, "PJPA22": 5, "PJPA23": 5, "PJPA24": 5,
     "PJPA27": 5, "PJPA28": 5, "PJPA29": 5, "PJPA30": 4, "PJPA31": 4,
-    "PJPA32": 5, "PJPA33": 4, "PJPA34": 5, "PJPA35": 4, "PJPA36": 5, "PJPA38": 5, "PJPA39": 4, "PJPA40": 4
+    "PJPA32": 5, "PJPA33": 4, "PJPA34": 5, "PJPA35": 4, "PJPA36": 5, "PJPA38": 4, "PJPA39": 4, "PJPA40": 4
 }
 
 FILE_MAP = {
@@ -122,8 +122,12 @@ def load_smart_dataframe(file_bytes, filename):
             return pd.read_csv(io.BytesIO(file_bytes), low_memory=False, encoding='utf-8')
         except UnicodeDecodeError:
             return pd.read_csv(io.BytesIO(file_bytes), low_memory=False, encoding='latin1')
+    elif file_lower.endswith('.xls'):
+        # For older Excel files (.xls) -> Use xlrd
+        return pd.read_excel(io.BytesIO(file_bytes), engine='xlrd')
     else:
-        return pd.read_excel(io.BytesIO(file_bytes))
+        # For standard Excel files (.xlsx) -> Use openpyxl
+        return pd.read_excel(io.BytesIO(file_bytes), engine='openpyxl')
 
 
 @app.route('/api/upload', methods=['POST'])
@@ -145,6 +149,7 @@ def upload_files():
                                 if not file_info.filename.startswith('__MACOSX') and file_info.filename.lower().endswith(('.csv', '.xlsx', '.xls')):
                                     with z.open(file_info) as f:
                                         file_bytes = f.read()
+                                        # Use the smart helper to handle engines and encodings!
                                         df = load_smart_dataframe(file_bytes, file_info.filename)
                                         dfs.append(df)
                         if dfs:
@@ -293,14 +298,28 @@ def get_insight_data(insight_id):
 @app.route('/api/save-session', methods=['POST'])
 def save_session():
     try:
+        from datetime import datetime, timezone
         req_data = request.get_json()
         data = req_data if req_data else {}
-        session_id = f"session_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        # EXACT FIX: Get the strict list of insights the frontend wants to save
+        requested_insights = data.get('insights', [])
+        
+        now_utc = datetime.now(timezone.utc)
+        session_id = f"session_{now_utc.strftime('%Y%m%d_%H%M%S')}"
         session_path = os.path.join(SESSIONS_DIR, session_id)
         os.makedirs(session_path, exist_ok=True)
         
         files_saved = []
-        for insight_id, filename in FILE_MAP.items():
+        
+        # ONLY loop through the requested insights, ignore other ghost files in the Output folder
+        insights_to_check = requested_insights if requested_insights else FILE_MAP.keys()
+
+        for insight_id in insights_to_check:
+            if insight_id not in FILE_MAP:
+                continue
+                
+            filename = FILE_MAP[insight_id]
             if isinstance(filename, dict):
                 saved_all = True
                 for key, f in filename.items():
@@ -309,7 +328,8 @@ def save_session():
                         shutil.copy(src_path, os.path.join(session_path, f))
                     else:
                         saved_all = False
-                if saved_all: files_saved.append(insight_id)
+                if saved_all: 
+                    files_saved.append(insight_id)
             else:
                 src_path = os.path.join(OUTPUT_DIR, filename)
                 if os.path.exists(src_path):
@@ -318,15 +338,17 @@ def save_session():
         
         metadata = {
             "id": session_id,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "timestamp": now_utc.isoformat(),
             "insights": files_saved,
-            "name": data.get("name", f"Audit Session {datetime.now().strftime('%d %b %Y %H:%M')}")
+            "name": data.get("name", f"Audit Session {now_utc.strftime('%d %b %Y %H:%M')} (UTC)")
         }
         with open(os.path.join(session_path, "metadata.json"), "w") as f:
             json.dump(metadata, f)
             
         return jsonify({"status": "success", "session": metadata}), 200
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/api/sessions', methods=['GET'])
