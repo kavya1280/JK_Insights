@@ -13,7 +13,7 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8000/get_users");
+      const response = await fetch("http://localhost:5000/get_users");
       const data = await response.json();
       setUsersList(data);
     } catch (err) {
@@ -30,7 +30,7 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
   const handleDelete = async (userId) => {
     if (window.confirm("Are you sure you want to delete this user?")) {
       try {
-        const response = await fetch(`http://localhost:8000/delete_user/${userId}`, {
+        const response = await fetch(`http://localhost:5000/delete_user/${userId}`, {
           method: "DELETE",
         });
         if (response.ok) {
@@ -47,8 +47,8 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
     const isEditing = !!currentUser.id;
     const method = isEditing ? "PUT" : "POST";
     const endpoint = isEditing
-      ? `http://localhost:8000/update_user/${currentUser.id}`
-      : "http://localhost:8000/add_user";
+      ? `http://localhost:5000/update_user/${currentUser.id}`
+      : "http://localhost:5000/add_user";
 
     const { id, ...payload } = currentUser;
 

@@ -11,24 +11,34 @@ import ajalabsblack from "./assets/images/ajalabs-black.png";
 import leftImg from "./assets/images/homedesign1.png";
 import rightImg from "./assets/images/homedesign2.png";
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "http://localhost:5000";
+
+// Helper function to render the correct component based on role
+// Moved OUTSIDE App to avoid re-creation on every render
+const RoleBasedContainer = ({ user, logo, ajalabsblack, handleLogout }) => {
+  if (!user) return <Navigate to="/login" />;
+
+  const props = { user, logo, ajalabsblack, handleLogout };
+  const role = user.role.toLowerCase();
+
+  if (role === "admin") return <Admin {...props} />;
+  if (role === "uploader") return <Uploader {...props} />;
+  if (role === "reviewer") return <Reviewer {...props} />;
+  if (role === "viewer") return <Viewer {...props} />;
+  return <div>Role not recognized.</div>;
+};
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const savedUser = localStorage.getItem("app_user");
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // Check for session on load
-  useEffect(() => {
-    const savedUser = localStorage.getItem("app_user");
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
-      // If user is already logged in, take them to their dynamic URL
-      navigate(`/login/${parsedUser.username}`);
-    }
-  }, []);
+  // No longer need to navigate on mount if we are already on a valid path
+  // The Route definitions handle the redirection if user is present/absent
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -67,20 +77,6 @@ function App() {
     navigate("/login"); // Go back to base login URL
   };
 
-  // Helper function to render the correct component based on role
-  const RoleBasedContainer = () => {
-    if (!user) return <Navigate to="/login" />;
-
-    const props = { user, logo, ajalabsblack, handleLogout };
-    const role = user.role.toLowerCase();
-
-    if (role === "admin") return <Admin {...props} />;
-    if (role === "uploader") return <Uploader {...props} />;
-    if (role === "reviewer") return <Reviewer {...props} />;
-    if (role === "viewer") return <Viewer {...props} />;
-    return <div>Role not recognized.</div>;
-  };
-
   return (
     <Routes>
       {/* Route for the Login Page */}
@@ -104,7 +100,10 @@ function App() {
       />
 
       {/* Dynamic Route: Changes URL to /login/username */}
-      <Route path="/login/:username" element={<RoleBasedContainer />} />
+      <Route
+        path="/login/:username/*"
+        element={<RoleBasedContainer user={user} logo={logo} ajalabsblack={ajalabsblack} handleLogout={handleLogout} />}
+      />
 
       {/* Redirect any other path to /login */}
       <Route path="*" element={<Navigate to="/login" />} />

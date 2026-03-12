@@ -17,7 +17,7 @@
   justify-content: center;
   font-family: 'Inter', sans-serif;
   position: relative;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .top-nav {
@@ -143,8 +143,8 @@
 }
 
 .login-page-footer {
-  margin-top: auto;
-  padding: 20px 0;
+  position: absolute;
+  bottom: 25px;
   color: var(--text-muted);
   font-size: 12px;
 }

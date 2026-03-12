@@ -105,7 +105,7 @@ const Login = ({
       </div>
 
       <footer className="login-page-footer">
-        <p>Copyright @ 2024 | Powered by Ajalabs | Data Privacy</p>
+        <p>Copyright @ 2026 | Powered by Ajalabs | Data Privacy</p>
       </footer>
     </div>
   );
