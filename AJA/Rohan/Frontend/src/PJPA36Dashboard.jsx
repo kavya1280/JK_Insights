@@ -517,7 +517,7 @@ const PJPA36Dashboard = ({ data, insightName }) => {
                 <PieChart>
                   <Pie data={pieData} cx="50%" cy="50%" innerRadius="45%" outerRadius="80%" paddingAngle={2} dataKey="value">
                     <Cell fill="#6FAE2C" stroke="white" strokeWidth={2} />
-                    <Cell fill="#ef4444" stroke="white" strokeWidth={2} />
+                    <Cell fill="#0B4F94" stroke="white" strokeWidth={2} />
                   </Pie>
                   <Tooltip content={<CustomTooltip />} />
                 </PieChart>
@@ -531,7 +531,7 @@ const PJPA36Dashboard = ({ data, insightName }) => {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '200px', overflowY: 'auto' }}>
                 {pieData.map((item, i) => (
                   <li key={item.name} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', fontSize: '11px', color: '#334155' }}>
-                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: i === 0 ? '#6FAE2C' : '#ef4444', marginRight: '8px', flexShrink: 0 }} />
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: i === 0 ? '#6FAE2C' : '#0B4F94', marginRight: '8px', flexShrink: 0 }} />
                     <span>{item.name}</span>
                     <span style={{ marginLeft: 'auto', fontWeight: '700', color: '#05192d' }}>{item.value.toLocaleString()}</span>
                   </li>
@@ -554,7 +554,7 @@ const PJPA36Dashboard = ({ data, insightName }) => {
             <XAxis dataKey="Date" stroke="#94a3b8" tick={{ fontSize: 10 }} angle={-35} textAnchor="end" minTickGap={20} />
             <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-            <Bar dataKey="Missing_Count" name="Missing" fill="#ef4444" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Missing_Count" name="Missing" fill="#0B4F94" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
