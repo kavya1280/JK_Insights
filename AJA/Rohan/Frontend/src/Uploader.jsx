@@ -521,6 +521,18 @@ const Uploader = ({ user, logo, handleLogout }) => {
     return false;
   };
 
+  const handleDeleteSession = async (sessionId) => {
+  // Optimistically remove from local state so UI responds instantly
+  setSavedSessions(prev => prev.filter(s => s.id !== sessionId));
+  setHiddenSessionIds(prev => prev.filter(id => id !== sessionId));
+  try {
+    await fetch(`http://localhost:5000/api/sessions/${sessionId}`, { method: "DELETE" });
+  } catch (e) {
+    console.error("Failed to delete session from backend", e);
+    fetchSavedSessions(); // Re-fetch to restore accurate state if call failed
+  }
+};
+
   const handleLoadSession = async (sessionId) => {
     try {
       setIsRestoring(true);
@@ -1743,7 +1755,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
                   session={session}
                   formatDateTime={formatDateTime}
                   onLoad={() => handleLoadSession(session.id)}
-                  onHide={(id) => setHiddenSessionIds(prev => [...prev, id])}
+                  onHide={(id) => handleDeleteSession(id)}
                 />
               ))}
             </div>
