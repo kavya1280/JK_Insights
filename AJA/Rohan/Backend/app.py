@@ -368,6 +368,19 @@ def list_sessions():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/api/sessions/<session_id>', methods=['DELETE'])
+def delete_session(session_id):
+    try:
+        session_path = os.path.join(SESSIONS_DIR, session_id)
+        if os.path.exists(session_path):
+            shutil.rmtree(session_path)
+            return jsonify({"status": "success", "message": "Session deleted."}), 200
+        else:
+            return jsonify({"status": "error", "message": "Session not found."}), 404
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
 @app.route('/api/sessions/<session_id>/<insight_id>/data', methods=['GET'])
 def get_session_data(session_id, insight_id):
     try:
