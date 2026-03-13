@@ -123,10 +123,10 @@ def load_smart_dataframe(file_bytes, filename):
         except UnicodeDecodeError:
             return pd.read_csv(io.BytesIO(file_bytes), low_memory=False, encoding='latin1')
     elif file_lower.endswith('.xls'):
-        # For older Excel files (.xls) -> Use xlrd
+        # Explicitly tell Pandas to use xlrd for older Excel files
         return pd.read_excel(io.BytesIO(file_bytes), engine='xlrd')
     else:
-        # For standard Excel files (.xlsx) -> Use openpyxl
+        # Explicitly tell Pandas to use openpyxl for .xlsx files
         return pd.read_excel(io.BytesIO(file_bytes), engine='openpyxl')
 
 
@@ -379,7 +379,6 @@ def delete_session(session_id):
             return jsonify({"status": "error", "message": "Session not found."}), 404
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
 
 @app.route('/api/sessions/<session_id>/<insight_id>/data', methods=['GET'])
 def get_session_data(session_id, insight_id):
