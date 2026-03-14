@@ -7,9 +7,8 @@ import io
 import traceback
 import shutil
 import json
-from datetime import datetime
-
-# Import the updated orchestrator function
+from datetime import datetime, timezone, timedelta
+import time as _time
 from main_orchestrator import run_selected_insights 
 
 from routes.upload import upload_bp
@@ -34,6 +33,69 @@ SESSIONS_DIR = r"Sessions"
 os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(SESSIONS_DIR, exist_ok=True)
+
+# ==========================================
+# USER SESSION LOGGING
+# ==========================================
+USER_SESSIONS_FILE = "user_sessions.json"
+SESSION_EXPIRY_HOURS = 24
+
+def load_user_sessions():
+    """Load all session records from user_sessions.json."""
+    if not os.path.exists(USER_SESSIONS_FILE):
+        return []
+    try:
+        with open(USER_SESSIONS_FILE, "r") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, IOError):
+        return []
+
+def save_user_sessions(sessions):
+    """Persist all session records to user_sessions.json."""
+    with open(USER_SESSIONS_FILE, "w") as f:
+        json.dump(sessions, f, indent=2)
+
+def record_login(username, role):
+    """Append a new login entry and return the session token (ISO timestamp in local system time)."""
+    sessions = load_user_sessions()
+    now_local = datetime.now().astimezone()  # local system time with timezone offset
+    session_token = now_local.isoformat()
+    sessions.append({
+        "username": username,
+        "role": role,
+        "login_time": session_token,
+        "logout_time": None,
+        "logout_reason": None,   # "manual" or "expired"
+        "expired": False
+    })
+    save_user_sessions(sessions)
+    return session_token
+
+def record_logout(username, session_token, reason="manual"):
+    """Find the matching open session and mark it as logged out."""
+    sessions = load_user_sessions()
+    now_local = datetime.now().astimezone().isoformat()
+    for s in reversed(sessions):
+        if s["username"] == username and s["login_time"] == session_token and s["logout_time"] is None:
+            s["logout_time"] = now_local
+            s["logout_reason"] = reason
+            s["expired"] = (reason == "expired")
+            break
+    save_user_sessions(sessions)
+
+def is_session_valid(username, session_token):
+    """Return True if session exists, is open, and is within the 24-hour window."""
+    sessions = load_user_sessions()
+    for s in sessions:
+        if s["username"] == username and s["login_time"] == session_token:
+            if s["logout_time"] is not None:
+                return False
+            login_dt = datetime.fromisoformat(s["login_time"])
+            if datetime.now().astimezone() - login_dt > timedelta(hours=SESSION_EXPIRY_HOURS):
+                record_logout(username, session_token, reason="expired")
+                return False
+            return True
+    return False
 
 SKIP_ROWS_MAP = {
     "PJPA10": 5, "PJPA13": 5, "PJPA14": 5, "PJPA16": 5, "PJPA18": 5, 
@@ -88,10 +150,43 @@ def login():
     if user:
         if user['status'] == 'Inactive':
             return jsonify({"message": "Account is inactive."}), 403
+        session_token = record_login(username, user['role'])   # NEW: log login to JSON
         safe_user = {k: v for k, v in user.items() if k != 'password'}
+        safe_user['session_token'] = session_token             # NEW: send token to frontend
+        safe_user['login_time'] = session_token                # NEW: ISO timestamp for 24h calc
         return jsonify(safe_user), 200
     else:
         return jsonify({"message": "Invalid username or password"}), 401
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    """
+    Called by the frontend on manual logout or 24-hour expiry.
+    Body: { "username": "...", "session_token": "...", "reason": "manual"|"expired" }
+    """
+    data = request.get_json() or {}
+    username = data.get('username')
+    session_token = data.get('session_token')
+    reason = data.get('reason', 'manual')
+    if not username or not session_token:
+        return jsonify({"message": "Missing username or session_token."}), 400
+    record_logout(username, session_token, reason=reason)
+    return jsonify({"message": "Logged out successfully.", "reason": reason}), 200
+
+@app.route('/validate_session', methods=['POST'])
+def validate_session():
+    """
+    Checks whether a stored session token is still within the 24-hour window.
+    Body: { "username": "...", "session_token": "..." }
+    """
+    data = request.get_json() or {}
+    username = data.get('username')
+    session_token = data.get('session_token')
+    if not username or not session_token:
+        return jsonify({"valid": False, "message": "Missing fields."}), 400
+    if is_session_valid(username, session_token):
+        return jsonify({"valid": True}), 200
+    return jsonify({"valid": False, "message": "Session expired or invalid."}), 401
 
 @app.route('/get_users', methods=['GET'])
 def get_users():
@@ -305,8 +400,8 @@ def save_session():
         # EXACT FIX: Get the strict list of insights the frontend wants to save
         requested_insights = data.get('insights', [])
         
-        now_utc = datetime.now(timezone.utc)
-        session_id = f"session_{now_utc.strftime('%Y%m%d_%H%M%S')}"
+        now_local = datetime.now().astimezone()
+        session_id = f"session_{now_local.strftime('%Y%m%d_%H%M%S')}"
         session_path = os.path.join(SESSIONS_DIR, session_id)
         os.makedirs(session_path, exist_ok=True)
         
@@ -338,9 +433,9 @@ def save_session():
         
         metadata = {
             "id": session_id,
-            "timestamp": now_utc.isoformat(),
+            "timestamp": now_local.isoformat(),
             "insights": files_saved,
-            "name": data.get("name", f"Audit Session {now_utc.strftime('%d %b %Y %H:%M')} (UTC)")
+            "name": data.get("name", f"Audit Session {now_local.strftime('%d %b %Y %H:%M')}")
         }
         with open(os.path.join(session_path, "metadata.json"), "w") as f:
             json.dump(metadata, f)

@@ -27,7 +27,16 @@ const IconFilter = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="n
 const IconCamera = ({ isCapturing }) => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transition: 'transform 0.3s ease', transform: isCapturing ? 'scale(0.85)' : 'scale(1)' }}><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" /><circle cx="12" cy="13" r="4" /></svg>;
 const IconDownload = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>;
 const IconMap = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
-const IconTag = () => <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>;
+
+// ─── Component: Chart Empty State ────────────────────────────────
+const ChartEmptyState = () => (
+  <div style={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: '260px', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '13px', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #e2e8f0', marginTop: '10px' }}>
+    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: '8px', opacity: 0.5 }}>
+      <line x1="18" y1="20" x2="18" y2="10" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+    <span style={{ fontWeight: '600' }}>Insufficient data for this breakdown</span>
+  </div>
+);
 
 // ─── Styles ──────────────────────────────────────────────────────
 const styles = {
@@ -68,27 +77,37 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
   const dashboardRef = useRef(null);
 
   // ==========================================
-  // SMART SCHEMA INFERENCE (Aggressive Hunt for 6 Charts)
+  // THE ULTIMATE SCHEMA INFERENCE (V5 - All Batches Covered)
   // ==========================================
   const schema = useMemo(() => {
     if (!data || data.length === 0) return {};
     const keys = Object.keys(data[0] || {});
-    
-    // STRICT Amount: Prevents "Cost Center" bug
-    const amountCol = keys.find(k => /(amount|value|price)/i.test(k) && !/(center|code|count|name)/i.test(k));
-    
-    const empCol = keys.find(k => /(employee|emp id|emp name|personnel|full name)/i.test(k));
-    
-    // Primary Category
-    const catCol = keys.find(k => /(expense type|policy|exception type|department|category)/i.test(k)) || keys[1];
-    
-    // Secondary Categories (To fill out 6 charts when amount is missing)
-    const secCatCol = keys.find(k => k !== catCol && /(location|branch|state|status|gender|blood group)/i.test(k));
-    const entityCol = keys.find(k => k !== catCol && k !== secCatCol && k !== empCol && /(title|position|role|designation|report|bank|phone|email)/i.test(k));
-                
-    // Dates
-    const dateCol = keys.find(k => /(transaction date|report date|submit date|change date|joining date)/i.test(k)) 
-                 || keys.find(k => /date/i.test(k) && !/birth/i.test(k));
+
+    // 1. AMOUNT (Strictly reject IDs, Codes, Scores, Limits, PCTs)
+    const amountCol = keys.find(k => /(approved amount|amount approved|report total|total approved amount)/i.test(k))
+      || keys.find(k => /(amount|value|price)/i.test(k) && !/(center|code|count|name|difference|limit|_manager|pct|%|z_score|notice period)/i.test(k));
+
+    // 2. EMPLOYEE (Must avoid picking "Employee ID", "Rep. Manager")
+    const empCol = keys.find(k => /(employee name|full name|emp name)/i.test(k) && !/(manager|hod|count|id)/i.test(k))
+      || keys.find(k => /^employee$/i.test(k))
+      || keys.find(k => /(employee|personnel)/i.test(k) && !/(id|no|number|count|manager|hod|location)/i.test(k));
+
+    // 3. CATEGORY (Primary X-Axis: Departments, Policies, Digits)
+    const catCol = keys.find(k => /(expense type|policy|exception type|shift_type|travel combination|holiday name|risk category|department|digit)/i.test(k))
+      || keys.find(k => /(category|type)/i.test(k))
+      || keys[0];
+
+    // 4. SECONDARY CATEGORY (Locations, Roles, Status)
+    let secCatCol = keys.find(k => k !== catCol && /(city\/location|to location|location|branch|state|status|gender|blood group|payment type|metro)/i.test(k));
+    if (!secCatCol) secCatCol = keys.find(k => k !== catCol && k !== empCol && k !== amountCol && !/(id|number|date|time)/i.test(k));
+
+    // 5. ENTITY (Reports, Phones, Accounts)
+    let entityCol = keys.find(k => k !== catCol && k !== secCatCol && k !== empCol && /(report id|report number|claim|invoice|transaction id|title|position|role|designation|bank|phone|email)/i.test(k));
+    if (!entityCol) entityCol = keys.reverse().find(k => k !== catCol && k !== secCatCol && k !== empCol && k !== amountCol);
+
+    // 6. DATES (Strictly ignore DOB, Separation Dates, Overlap compares)
+    const dateCol = keys.find(k => /(transaction date|report date|submit date|change date|joining date)/i.test(k))
+      || keys.find(k => /date/i.test(k) && !/(birth|overlap|_1|_2|separation|resignation)/i.test(k));
 
     return {
       hasAmount: !!amountCol, amountCol,
@@ -105,14 +124,14 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
     if (!data || data.length === 0) return [];
     return data.map(row => {
       const amount = schema.hasAmount ? (parseFloat(row[schema.amountCol]) || 0) : 0;
-      const employee = schema.hasEmployee ? String(row[schema.empCol] || 'Unknown') : 'N/A';
-      
+      const employee = schema.hasEmployee ? String(row[schema.empCol] || 'Unspecified') : 'Unspecified';
+
       let category = schema.hasCategory ? String(row[schema.catCol] || 'General') : 'General';
       if (category.trim().toUpperCase() === 'NA' || category.trim().toUpperCase() === 'NAN') category = 'General';
-      
-      let secCategory = schema.hasSecCat ? String(row[schema.secCatCol] || 'Other') : 'Other';
-      let entity = schema.hasEntity ? String(row[schema.entityCol] || 'Other') : 'Other';
-      
+
+      let secCategory = schema.hasSecCat ? String(row[schema.secCatCol] || 'Unspecified') : 'Unspecified';
+      let entity = schema.hasEntity ? String(row[schema.entityCol] || 'Unspecified') : 'Unspecified';
+
       const date = schema.hasDate ? String(row[schema.dateCol] || 'Unknown Date') : 'Unknown Date';
 
       let dayOfWeek = 'Unknown';
@@ -146,21 +165,20 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
   // ── Stats ───────────────────────────────────────────────────────
   const stats = useMemo(() => {
     if (filteredData.length === 0) return { totalExceptions: 0, distinctEmployees: 0, distinctCategories: 0, distinctSecondaries: 0, totalAmount: 0, avgPerException: 0, avgPerPerson: 0, maxPerPerson: 0 };
-    
+
     const totalExceptions = filteredData.length;
     const distinctEmployees = new Set(filteredData.map(d => d._employee)).size;
     const distinctCategories = new Set(filteredData.map(d => d._category)).size;
     const distinctSecondaries = new Set(filteredData.map(d => d._secCategory)).size;
-    
+
     const totalAmount = schema.hasAmount ? filteredData.reduce((sum, d) => sum + d._amount, 0) : totalExceptions;
     const avgPerException = totalExceptions > 0 ? totalAmount / totalExceptions : 0;
     const avgPerPerson = distinctEmployees > 0 ? totalAmount / distinctEmployees : 0;
 
-    // Count max exceptions for a single employee
     const empCounts = {};
     filteredData.forEach(d => { empCounts[d._employee] = (empCounts[d._employee] || 0) + 1; });
     const maxPerPerson = Math.max(...Object.values(empCounts), 0);
-    
+
     return { totalExceptions, distinctEmployees, distinctCategories, distinctSecondaries, totalAmount, avgPerException, avgPerPerson, maxPerPerson };
   }, [filteredData, schema]);
 
@@ -169,21 +187,33 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
     const acc = {};
     filteredData.forEach(row => {
       const k = keyGetter(row);
-      const valToAdd = schema.hasAmount ? row._amount : 1; 
+      const valToAdd = schema.hasAmount ? row._amount : 1;
       acc[k] = (acc[k] || 0) + valToAdd;
     });
     return Object.entries(acc).map(([name, value]) => ({ name, value }));
   };
 
-  const byEmployee = useMemo(() => aggregateBy(d => d._employee).sort((a, b) => b.value - a.value).slice(0, 10), [filteredData, schema]);
-  const byCategory = useMemo(() => aggregateBy(d => d._category).sort((a, b) => b.value - a.value), [filteredData, schema]);
-  const bySecCategory = useMemo(() => aggregateBy(d => d._secCategory).sort((a, b) => b.value - a.value).slice(0, 10), [filteredData, schema]);
-  const byEntity = useMemo(() => aggregateBy(d => d._entity).sort((a, b) => b.value - a.value).slice(0, 10), [filteredData, schema]);
-  
+  const isValidName = (name) => {
+    const str = String(name).trim().toUpperCase();
+    return str !== 'N/A' && str !== 'NAN' && str !== 'NULL' && str !== '';
+  };
+
+  const byEmployee = useMemo(() => aggregateBy(d => d._employee).filter(d => isValidName(d.name)).sort((a, b) => b.value - a.value).slice(0, 10), [filteredData, schema]);
+  const byCategory = useMemo(() => aggregateBy(d => d._category).filter(d => isValidName(d.name)).sort((a, b) => b.value - a.value), [filteredData, schema]);
+  const bySecCategory = useMemo(() => aggregateBy(d => d._secCategory).filter(d => isValidName(d.name)).sort((a, b) => b.value - a.value).slice(0, 10), [filteredData, schema]);
+  const byEntity = useMemo(() => aggregateBy(d => d._entity).filter(d => isValidName(d.name)).sort((a, b) => b.value - a.value).slice(0, 10), [filteredData, schema]);
+
+  const freqByCategory = useMemo(() => {
+    const acc = {};
+    filteredData.forEach(row => { acc[row._category] = (acc[row._category] || 0) + 1; });
+    return Object.entries(acc).map(([name, value]) => ({ name, value })).filter(d => isValidName(d.name)).sort((a, b) => b.value - a.value).slice(0, 8);
+  }, [filteredData]);
+
   const byDayOfWeek = useMemo(() => {
     const daysOrder = { Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6, Sun: 7, Unknown: 8 };
     return aggregateBy(d => d._dayOfWeek).sort((a, b) => (daysOrder[a.name] || 99) - (daysOrder[b.name] || 99));
   }, [filteredData, schema]);
+
   const byDate = useMemo(() => {
     return aggregateBy(d => d._date).filter(d => d.name !== 'Unknown Date' && d.name !== 'NaT' && d.name !== 'NaN').sort((a, b) => new Date(a.name) - new Date(b.name));
   }, [filteredData, schema]);
@@ -276,6 +306,20 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
     return null;
   };
 
+  const CustomCountTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div style={{ background: '#05192d', color: 'white', padding: '10px 15px', borderRadius: '8px' }}>
+          <p style={{ margin: '0 0 4px 0', fontSize: '12px', color: '#94a3b8' }}>{label}</p>
+          <p style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#3b82f6' }}>
+            {payload[0].value.toLocaleString()} Exceptions
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   const title = exceptionName ? `${insightName} - ${exceptionName}` : insightName || 'Dashboard';
   if (title.toLowerCase().includes('context')) return null;
 
@@ -299,14 +343,12 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
   ];
 
   if (schema.hasAmount) {
-    // The 6 Financial KPIs
     kpiCards.push({ label: 'Unique Employees', value: stats.distinctEmployees.toLocaleString(), icon: <IconUser />, color: '#f59e0b' });
     kpiCards.push({ label: 'Risk Categories', value: stats.distinctCategories.toLocaleString(), icon: <IconLayers />, color: '#3b82f6' });
     kpiCards.push({ label: 'Total Risk Value', value: `${RS}${formatVal(stats.totalAmount)}`, icon: <IconMoney />, color: '#6FAE2C' });
     kpiCards.push({ label: 'Avg per Exception', value: `${RS}${formatVal(stats.avgPerException)}`, icon: <IconChart />, color: '#8b5cf6' });
     kpiCards.push({ label: 'Avg per Employee', value: `${RS}${formatVal(stats.avgPerPerson)}`, icon: <IconId />, color: '#0B4F94' });
   } else {
-    // The 6 Volume/Data-Master KPIs
     kpiCards.push({ label: 'Unique Employees', value: stats.distinctEmployees.toLocaleString(), icon: <IconUser />, color: '#f59e0b' });
     kpiCards.push({ label: schema.catCol || 'Categories', value: stats.distinctCategories.toLocaleString(), icon: <IconLayers />, color: '#3b82f6' });
     kpiCards.push({ label: schema.secCatCol || 'Locations/Depts', value: stats.distinctSecondaries.toLocaleString(), icon: <IconMap />, color: '#6FAE2C' });
@@ -369,7 +411,7 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
         ))}
       </div>
 
-      {/* ── FILTERS (Always 3+) ── */}
+      {/* ── FILTERS ── */}
       <div style={styles.filterBox}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -422,72 +464,80 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
           <div style={styles.chartsRow}>
             <div style={styles.chartCard}>
               <div style={styles.chartTitleRow}><div style={styles.chartAccent} /><h3 style={styles.chartTitle}>Top 10 Employees by {metricLabel}</h3></div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={byEmployee} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }} barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                  <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} tickFormatter={axisFormatter} />
-                  <YAxis type="category" dataKey="name" stroke="#05192d" tick={{ fontSize: 11, fontWeight: '600' }} width={80} />
-                  <Tooltip content={<CustomSmartTooltip />} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>{byEmployee.map((_, i) => <Cell key={i} fill={APP_COLORS[i % APP_COLORS.length]} />)}</Bar>
-                </BarChart>
-              </ResponsiveContainer>
+              {byEmployee.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={byEmployee} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }} barCategoryGap="20%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} tickFormatter={axisFormatter} />
+                    <YAxis type="category" dataKey="name" stroke="#05192d" tick={{ fontSize: 11, fontWeight: '600' }} width={80} />
+                    <Tooltip content={<CustomSmartTooltip />} cursor={{ fill: '#f8fafc' }} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>{byEmployee.map((_, i) => <Cell key={i} fill={APP_COLORS[i % APP_COLORS.length]} />)}</Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <ChartEmptyState />}
             </div>
 
             <div style={styles.chartCard}>
               <div style={styles.chartTitleRow}><div style={styles.chartAccent} /><h3 style={styles.chartTitle}>{schema.catCol || 'Category'} Distribution</h3></div>
-              <div style={{ display: 'flex', height: '300px', alignItems: 'center' }}>
-                <div style={{ flex: 1, height: '100%' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={byCategory.slice(0, 8)} cx="50%" cy="50%" innerRadius="45%" outerRadius="80%" paddingAngle={2} dataKey="value">
-                        {byCategory.slice(0, 8).map((_, i) => <Cell key={i} fill={APP_COLORS[i % APP_COLORS.length]} stroke="white" strokeWidth={2} />)}
-                      </Pie>
-                      <Tooltip content={<CustomSmartTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
+              {byCategory.length > 0 ? (
+                <div style={{ display: 'flex', height: '300px', alignItems: 'center' }}>
+                  <div style={{ flex: 1, height: '100%' }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie data={byCategory.slice(0, 8)} cx="50%" cy="50%" innerRadius="45%" outerRadius="80%" paddingAngle={2} dataKey="value">
+                          {byCategory.slice(0, 8).map((_, i) => <Cell key={i} fill={APP_COLORS[i % APP_COLORS.length]} stroke="white" strokeWidth={2} />)}
+                        </Pie>
+                        <Tooltip content={<CustomSmartTooltip />} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div style={{ width: '150px', paddingRight: '10px' }}>
+                    <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total {metricLabel}</div>
+                    <div style={{ fontSize: '20px', fontWeight: '900', color: '#05192d', marginBottom: '14px' }}>{schema.hasAmount ? fmtCurrency(stats.totalAmount) : stats.totalAmount.toLocaleString()}</div>
+                    <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '200px', overflowY: 'auto' }}>
+                      {byCategory.slice(0, 8).map((item, i) => (
+                        <li key={item.name} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', fontSize: '11px', color: '#334155' }}>
+                          <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: APP_COLORS[i % APP_COLORS.length], marginRight: '8px', flexShrink: 0 }} />
+                          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>{item.name}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div style={{ width: '150px', paddingRight: '10px' }}>
-                  <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total {metricLabel}</div>
-                  <div style={{ fontSize: '20px', fontWeight: '900', color: '#05192d', marginBottom: '14px' }}>{schema.hasAmount ? fmtCurrency(stats.totalAmount) : stats.totalAmount.toLocaleString()}</div>
-                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, maxHeight: '200px', overflowY: 'auto' }}>
-                    {byCategory.slice(0, 8).map((item, i) => (
-                      <li key={item.name} style={{ display: 'flex', alignItems: 'center', marginBottom: '8px', fontSize: '11px', color: '#334155' }}>
-                        <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: APP_COLORS[i % APP_COLORS.length], marginRight: '8px', flexShrink: 0 }} />
-                        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={item.name}>{item.name}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              ) : <ChartEmptyState />}
             </div>
           </div>
 
-          {/* Row 2: Secondary Category + Entity/Report */}
+          {/* Row 2: Exception Volume (Count) + Secondary Category/Entity */}
           <div style={styles.chartsRow}>
             <div style={styles.chartCard}>
-              <div style={styles.chartTitleRow}><div style={styles.chartAccent} /><h3 style={styles.chartTitle}>Distribution by {schema.secCatCol || 'Secondary Category'}</h3></div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={bySecCategory} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10 }} angle={-35} textAnchor="end" interval={0} />
-                  <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} tickFormatter={axisFormatter} />
-                  <Tooltip content={<CustomSmartTooltip />} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="#3b82f6" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={styles.chartTitleRow}><div style={styles.chartAccent} /><h3 style={styles.chartTitle}>Exception Volume by {schema.catCol || 'Category'}</h3></div>
+              {freqByCategory.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={freqByCategory} margin={{ top: 20, right: 30, left: 0, bottom: 40 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 10 }} angle={-35} textAnchor="end" interval={0} />
+                    <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} />
+                    <Tooltip content={<CustomCountTooltip />} cursor={{ fill: '#f8fafc' }} />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]} fill="#3b82f6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <ChartEmptyState />}
             </div>
 
             <div style={styles.chartCard}>
-              <div style={styles.chartTitleRow}><div style={styles.chartAccent} /><h3 style={styles.chartTitle}>Top 10 {schema.entityCol || 'Entities'}</h3></div>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={byEntity} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }} barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                  <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} tickFormatter={axisFormatter} />
-                  <YAxis type="category" dataKey="name" stroke="#05192d" tick={{ fontSize: 10, fontWeight: '500' }} width={90} />
-                  <Tooltip content={<CustomSmartTooltip />} cursor={{ fill: '#f8fafc' }} />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} fill="#f59e0b" />
-                </BarChart>
-              </ResponsiveContainer>
+              <div style={styles.chartTitleRow}><div style={styles.chartAccent} /><h3 style={styles.chartTitle}>Top 10 by {schema.hasAmount ? (schema.entityCol || 'Entities') : (schema.secCatCol || 'Secondary Info')}</h3></div>
+              {(schema.hasAmount ? byEntity : bySecCategory).length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={schema.hasAmount ? byEntity : bySecCategory} layout="vertical" margin={{ top: 5, right: 20, left: 60, bottom: 5 }} barCategoryGap="20%">
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
+                    <XAxis type="number" stroke="#94a3b8" tick={{ fontSize: 11 }} tickFormatter={axisFormatter} />
+                    <YAxis type="category" dataKey="name" stroke="#05192d" tick={{ fontSize: 10, fontWeight: '500' }} width={90} />
+                    <Tooltip content={<CustomSmartTooltip />} cursor={{ fill: '#f8fafc' }} />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]} fill="#f59e0b" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : <ChartEmptyState />}
             </div>
           </div>
 
@@ -495,15 +545,17 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
           <div style={styles.chartsRow}>
             <div style={styles.chartCard}>
               <div style={styles.chartTitleRow}><div style={styles.chartAccent} /><h3 style={styles.chartTitle}>{metricLabel} by Day of Week</h3></div>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={byDayOfWeek} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                  <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fontWeight: 'bold' }} />
-                  <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} tickFormatter={axisFormatter} />
-                  <Tooltip content={<CustomSmartTooltip />} />
-                  <Line type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={3} activeDot={{ r: 6 }} />
-                </LineChart>
-              </ResponsiveContainer>
+              {byDayOfWeek.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={byDayOfWeek} margin={{ top: 20, right: 30, left: 10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="name" stroke="#94a3b8" tick={{ fontSize: 11, fontWeight: 'bold' }} />
+                    <YAxis stroke="#94a3b8" tick={{ fontSize: 11 }} tickFormatter={axisFormatter} />
+                    <Tooltip content={<CustomSmartTooltip />} />
+                    <Line type="monotone" dataKey="value" stroke="#8b5cf6" strokeWidth={3} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : <ChartEmptyState />}
             </div>
 
             <div style={styles.chartCard}>
@@ -522,7 +574,7 @@ const Dashboard = ({ data, onBackToTable, insightName, exceptionName, dataType }
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div style={{ display: 'flex', height: '300px', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '13px' }}>Insufficient chronological data for trend line.</div>
+                <ChartEmptyState />
               )}
             </div>
           </div>

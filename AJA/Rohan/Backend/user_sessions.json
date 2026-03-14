@@ -1,0 +1,34 @@
+[
+  {
+    "username": "uploader",
+    "role": "uploader",
+    "login_time": "2026-03-14T14:22:39.578712+05:30",
+    "logout_time": "2026-03-14T14:22:50.498914+05:30",
+    "logout_reason": "manual",
+    "expired": false
+  },
+  {
+    "username": "uploader",
+    "role": "uploader",
+    "login_time": "2026-03-14T14:23:15.211810+05:30",
+    "logout_time": null,
+    "logout_reason": null,
+    "expired": false
+  },
+  {
+    "username": "uploader",
+    "role": "uploader",
+    "login_time": "2026-03-14T16:55:20.169105+05:30",
+    "logout_time": null,
+    "logout_reason": null,
+    "expired": false
+  },
+  {
+    "username": "uploader",
+    "role": "uploader",
+    "login_time": "2026-03-14T17:42:24.571175+05:30",
+    "logout_time": "2026-03-14T17:47:57.689581+05:30",
+    "logout_reason": "manual",
+    "expired": false
+  }
+]

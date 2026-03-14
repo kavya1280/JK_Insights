@@ -379,14 +379,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
     else localStorage.removeItem("aja_viewing_insight");
   }, [viewingInsightId]);
 
-  const [files, setFiles] = useState(() => {
-    try {
-      const saved = localStorage.getItem("aja_session_files");
-      return saved ? JSON.parse(saved) : { concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null };
-    } catch {
-      return { concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null };
-    }
-  });
+  const [files, setFiles] = useState({ concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null });
 
   const [isUploading, setIsUploading] = useState(false);
   const [activeAnalysisResults, setActiveAnalysisResults] = useState(() => {
@@ -1102,12 +1095,18 @@ const Uploader = ({ user, logo, handleLogout }) => {
             )}
             {uploadKPIs.total_transactions !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#7DC030' }}>
-                <div className="kpi-stat-icon" style={{ background: 'rgba(125,192,48,0.12)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7DC030" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>
+
+                <div className="kpi-stat-icon" style={{ background: 'rgba(125,192,48,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: '#7DC030', fontSize: '18px', fontWeight: '700' }}>#</span>
                 </div>
+
                 <div className="kpi-stat-label">Total Transactions</div>
                 <div className="kpi-stat-value">{uploadKPIs.total_transactions.toLocaleString()}</div>
-                <div className="kpi-stat-bar" style={{ background: 'rgba(125,192,48,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#7DC030', width: '85%' }} /></div>
+
+                <div className="kpi-stat-bar" style={{ background: 'rgba(125,192,48,0.15)' }}>
+                  <div className="kpi-stat-bar-fill" style={{ background: '#7DC030', width: '85%' }} />
+                </div>
+
               </div>
             )}
             {uploadKPIs.average_claim !== undefined && (
@@ -1303,7 +1302,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
                 <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '14px', color: '#05192d', fontWeight: (isProcessing || isDone) ? '600' : '400' }}>{insight?.label}</span>
                   {isProcessing && <div className="spinner" style={{ width: '14px', height: '14px', border: '2px solid #f1f5f9', borderTop: '2px solid #3b82f6', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }}></div>}
-                  {isDone?.status === 'Success' && <span style={{ color: '#1059b9ff', fontSize: '14px' }}>{"✔ Processing"}</span>}
+                  {isDone?.status === 'Success' && <span style={{ color: '#1059b9ff', fontSize: '14px' }}>{"✔ Processed"}</span>}
                   {isDone?.status === 'Failed' && <span style={{ color: '#ef4444', fontSize: '14px' }}>{"✘ Failed"}</span>}
                   {!isProcessing && !isDone && <span style={{ color: '#94a3b8', fontSize: '14px' }}>Waiting...</span>}
                 </div>
