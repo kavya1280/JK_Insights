@@ -29,11 +29,12 @@ from Modules.PJPA38 import generate_odd_travels_insight
 from Modules.PJPA39 import generate_active_with_sep_date_insight
 from Modules.PJPA40 import generate_transaction_date_anomaly_insight
 
-def run_selected_insights(selected_insights):
-    print(f"Initializing Backend for specific modules: {selected_insights}")
+def run_selected_insights(selected_insights, username="default"):
+    print(f"Initializing Backend for specific modules: {selected_insights} (User Workspace: {username})")
     
-    data_dir = r"Data"
-    output_dir = r"Output"
+    # ISOLATION FIX: Dynamically target the user's specific Data and Output folders
+    data_dir = os.path.join("Data", username)
+    output_dir = os.path.join("Output", username)
     os.makedirs(output_dir, exist_ok=True)
     
     # Master File Paths

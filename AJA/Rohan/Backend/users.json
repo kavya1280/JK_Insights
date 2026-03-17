@@ -1,0 +1,44 @@
+[
+  {
+    "id": "1",
+    "username": "admin",
+    "password": "password123",
+    "role": "admin",
+    "status": "Active"
+  },
+  {
+    "id": "2",
+    "username": "uploader",
+    "password": "password123",
+    "role": "uploader",
+    "status": "Active"
+  },
+  {
+    "id": "3",
+    "username": "reviewer",
+    "password": "password123",
+    "role": "reviewer",
+    "status": "Active"
+  },
+  {
+    "id": "4",
+    "username": "viewer",
+    "password": "password123",
+    "role": "viewer",
+    "status": "Active"
+  },
+  {
+    "id": "5",
+    "username": "uploader02",
+    "password": "password123",
+    "role": "uploader",
+    "status": "Active"
+  },
+  {
+    "id": "6",
+    "username": "Rohan",
+    "password": "123",
+    "role": "uploader",
+    "status": "Active"
+  }
+]

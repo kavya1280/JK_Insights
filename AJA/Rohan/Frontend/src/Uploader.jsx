@@ -86,7 +86,7 @@ const AnimatedBinButton = ({ onDelete }) => {
 };
 
 const DeleteSessionButton = ({ onHide }) => {
-  const [phase, setPhase] = useState('idle'); // idle | hovered | confirmed | done
+  const [phase, setPhase] = useState('idle');
 
   const handleClick = () => {
     if (phase !== 'hovered' && phase !== 'idle') return;
@@ -102,151 +102,32 @@ const DeleteSessionButton = ({ onHide }) => {
   return (
     <>
       <style>{`
-        @keyframes dsb-x-pop {
-          0%   { opacity: 0; transform: scale(0.5) rotate(-20deg); }
-          60%  { opacity: 1; transform: scale(1.2) rotate(5deg); }
-          100% { opacity: 1; transform: scale(1) rotate(0deg); }
-        }
-        @keyframes dsb-check-pop {
-          0%   { transform: scale(0.5); opacity: 0; }
-          60%  { transform: scale(1.3); opacity: 1; }
-          100% { transform: scale(1); opacity: 1; }
-        }
-        @keyframes dsb-tooltip-in {
-          0%   { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.95); }
-          100% { opacity: 1; transform: translateX(-50%) translateY(0px) scale(1); }
-        }
-        .dsb-wrap {
-          position: relative;
-          display: inline-flex;
-          flex-shrink: 0;
-        }
-        .dsb-btn {
-          position: relative;
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 8px;
-          border: 1.5px solid #e2e8f0;
-          background: #f8fafc;
-          cursor: pointer;
-          overflow: visible;
-          transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
-        }
-        .dsb-btn:hover {
-          border-color: #fca5a5;
-          background: #fff5f5;
-          box-shadow: 0 2px 8px rgba(239,68,68,0.15);
-        }
-        .dsb-btn.phase-confirmed {
-          border-color: #22c55e !important;
-          background: #f0fdf4 !important;
-          box-shadow: 0 2px 8px rgba(34,197,94,0.15) !important;
-        }
-        .dsb-label {
-          font-size: 9px;
-          font-weight: 800;
-          color: #94a3b8;
-          letter-spacing: 0.5px;
-          text-transform: uppercase;
-          transition: opacity 0.2s, transform 0.2s;
-          position: absolute;
-          white-space: nowrap;
-          pointer-events: none;
-        }
-        .dsb-btn:hover .dsb-label {
-          opacity: 0;
-          transform: scale(0.6);
-        }
-        .dsb-btn.phase-confirmed .dsb-label {
-          opacity: 0 !important;
-        }
-        .dsb-x-icon {
-          position: absolute;
-          width: 13px;
-          height: 13px;
-          opacity: 0;
-          pointer-events: none;
-        }
-        .dsb-x-icon::before,
-        .dsb-x-icon::after {
-          content: '';
-          position: absolute;
-          top: 50%;
-          left: 0;
-          width: 13px;
-          height: 2.5px;
-          background: #ef4444;
-          border-radius: 2px;
-          margin-top: -1.25px;
-        }
+        @keyframes dsb-x-pop { 0% { opacity: 0; transform: scale(0.5) rotate(-20deg); } 60% { opacity: 1; transform: scale(1.2) rotate(5deg); } 100% { opacity: 1; transform: scale(1) rotate(0deg); } }
+        @keyframes dsb-check-pop { 0% { transform: scale(0.5); opacity: 0; } 60% { transform: scale(1.3); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes dsb-tooltip-in { 0% { opacity: 0; transform: translateX(-50%) translateY(4px) scale(0.95); } 100% { opacity: 1; transform: translateX(-50%) translateY(0px) scale(1); } }
+        .dsb-wrap { position: relative; display: inline-flex; flex-shrink: 0; }
+        .dsb-btn { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid #e2e8f0; background: #f8fafc; cursor: pointer; overflow: visible; transition: border-color 0.2s, background 0.2s, box-shadow 0.2s; }
+        .dsb-btn:hover { border-color: #fca5a5; background: #fff5f5; box-shadow: 0 2px 8px rgba(239,68,68,0.15); }
+        .dsb-btn.phase-confirmed { border-color: #22c55e !important; background: #f0fdf4 !important; box-shadow: 0 2px 8px rgba(34,197,94,0.15) !important; }
+        .dsb-label { font-size: 9px; font-weight: 800; color: #94a3b8; letter-spacing: 0.5px; text-transform: uppercase; transition: opacity 0.2s, transform 0.2s; position: absolute; white-space: nowrap; pointer-events: none; }
+        .dsb-btn:hover .dsb-label { opacity: 0; transform: scale(0.6); }
+        .dsb-btn.phase-confirmed .dsb-label { opacity: 0 !important; }
+        .dsb-x-icon { position: absolute; width: 13px; height: 13px; opacity: 0; pointer-events: none; }
+        .dsb-x-icon::before, .dsb-x-icon::after { content: ''; position: absolute; top: 50%; left: 0; width: 13px; height: 2.5px; background: #ef4444; border-radius: 2px; margin-top: -1.25px; }
         .dsb-x-icon::before { transform: rotate(45deg); }
         .dsb-x-icon::after  { transform: rotate(-45deg); }
-        .dsb-btn:hover .dsb-x-icon {
-          animation: dsb-x-pop 0.28s cubic-bezier(0.2,1,0.3,1) forwards;
-        }
-        .dsb-btn.phase-confirmed .dsb-x-icon {
-          opacity: 0 !important;
-          animation: none !important;
-        }
-        .dsb-check {
-          position: absolute;
-          font-size: 15px;
-          opacity: 0;
-          pointer-events: none;
-          line-height: 1;
-        }
-        .dsb-btn.phase-confirmed .dsb-check {
-          animation: dsb-check-pop 0.4s cubic-bezier(0.2,1,0.3,1) forwards;
-        }
-        .dsb-tooltip {
-          display: none;
-          position: absolute;
-          bottom: calc(100% + 10px);
-          left: 50%;
-          transform: translateX(-50%);
-          background: #1e293b;
-          color: #f1f5f9;
-          font-size: 11px;
-          font-weight: 600;
-          white-space: nowrap;
-          padding: 6px 10px;
-          border-radius: 7px;
-          pointer-events: none;
-          z-index: 999;
-          letter-spacing: 0.2px;
-          box-shadow: 0 4px 14px rgba(0,0,0,0.2);
-        }
-        .dsb-tooltip::after {
-          content: '';
-          position: absolute;
-          top: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          border: 5px solid transparent;
-          border-top-color: #1e293b;
-        }
-        .dsb-btn:hover .dsb-tooltip {
-          display: block;
-          animation: dsb-tooltip-in 0.2s cubic-bezier(0.2,1,0.3,1) forwards;
-        }
-        .dsb-btn.phase-confirmed .dsb-tooltip {
-          display: none !important;
-        }
+        .dsb-btn:hover .dsb-x-icon { animation: dsb-x-pop 0.28s cubic-bezier(0.2,1,0.3,1) forwards; }
+        .dsb-btn.phase-confirmed .dsb-x-icon { opacity: 0 !important; animation: none !important; }
+        .dsb-check { position: absolute; font-size: 15px; opacity: 0; pointer-events: none; line-height: 1; }
+        .dsb-btn.phase-confirmed .dsb-check { animation: dsb-check-pop 0.4s cubic-bezier(0.2,1,0.3,1) forwards; }
+        .dsb-tooltip { display: none; position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translateX(-50%); background: #1e293b; color: #f1f5f9; font-size: 11px; font-weight: 600; white-space: nowrap; padding: 6px 10px; border-radius: 7px; pointer-events: none; z-index: 999; letter-spacing: 0.2px; box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+        .dsb-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #1e293b; }
+        .dsb-btn:hover .dsb-tooltip { display: block; animation: dsb-tooltip-in 0.2s cubic-bezier(0.2,1,0.3,1) forwards; }
+        .dsb-btn.phase-confirmed .dsb-tooltip { display: none !important; }
       `}</style>
       <div className="dsb-wrap">
-        <button
-          className={`dsb-btn ${phase === 'confirmed' || phase === 'done' ? 'phase-confirmed' : ''}`}
-          onClick={handleClick}
-          onMouseEnter={() => phase === 'idle' && setPhase('hovered')}
-          onMouseLeave={() => phase === 'hovered' && setPhase('idle')}
-        >
-          <span className="dsb-label">DEL</span>
-          <span className="dsb-x-icon" />
-          <span className="dsb-check">✅</span>
-          <span className="dsb-tooltip">🗑 Delete this session</span>
+        <button className={`dsb-btn ${phase === 'confirmed' || phase === 'done' ? 'phase-confirmed' : ''}`} onClick={handleClick} onMouseEnter={() => phase === 'idle' && setPhase('hovered')} onMouseLeave={() => phase === 'hovered' && setPhase('idle')}>
+          <span className="dsb-label">DEL</span><span className="dsb-x-icon" /><span className="dsb-check">✅</span><span className="dsb-tooltip">🗑 Delete this session</span>
         </button>
       </div>
     </>
@@ -255,30 +136,14 @@ const DeleteSessionButton = ({ onHide }) => {
 
 const SessionCard = ({ session, formatDateTime, onLoad, onHide }) => {
   const [hiding, setHiding] = useState(false);
-
-  const handleHide = () => {
-    setHiding(true);
-    setTimeout(() => onHide(session.id), 500);
-  };
-
+  const handleHide = () => { setHiding(true); setTimeout(() => onHide(session.id), 500); };
   return (
     <>
       <style>{`
-        @keyframes session-card-exit {
-          0%   { opacity: 1; transform: scale(1);    max-height: 300px; margin-bottom: 0;   }
-          30%  { opacity: 0.6; transform: scale(0.97); }
-          100% { opacity: 0; transform: scale(0.92); max-height: 0;   margin-bottom: -20px; }
-        }
-        .session-card-hiding {
-          animation: session-card-exit 0.5s cubic-bezier(0.4,0,0.2,1) forwards;
-          pointer-events: none;
-          overflow: hidden;
-        }
+        @keyframes session-card-exit { 0% { opacity: 1; transform: scale(1); max-height: 300px; margin-bottom: 0; } 30% { opacity: 0.6; transform: scale(0.97); } 100% { opacity: 0; transform: scale(0.92); max-height: 0; margin-bottom: -20px; } }
+        .session-card-hiding { animation: session-card-exit 0.5s cubic-bezier(0.4,0,0.2,1) forwards; pointer-events: none; overflow: hidden; }
       `}</style>
-      <div
-        className={hiding ? 'session-card-hiding' : ''}
-        style={{ background: 'white', padding: '24px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', transition: 'box-shadow 0.2s', position: 'relative' }}
-      >
+      <div className={hiding ? 'session-card-hiding' : ''} style={{ background: 'white', padding: '24px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.03)', border: '1px solid #f1f5f9', transition: 'box-shadow 0.2s', position: 'relative' }}>
         <div style={{ fontSize: '11px', color: '#64748b', textTransform: 'uppercase', fontWeight: 'bold', marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>{formatDateTime(session.timestamp).split(' ')[0]}</span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -288,9 +153,7 @@ const SessionCard = ({ session, formatDateTime, onLoad, onHide }) => {
         </div>
         <h4 style={{ color: '#05192d', margin: '0 0 8px 0', fontSize: '16px' }}>{session.name}</h4>
         <p style={{ fontSize: '12px', color: '#64748b', margin: '0 0 20px 0' }}>{session.insights.length} insight modules analyzed.</p>
-        <button
-          onClick={onLoad}
-          style={{ width: '100%', padding: '10px', background: '#f8fafc', color: '#05192d', border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>
+        <button onClick={onLoad} style={{ width: '100%', padding: '10px', background: '#f8fafc', color: '#05192d', border: '1px solid #e2e8f0', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}>
           {"📂 Restore Session"}
         </button>
       </div>
@@ -337,6 +200,11 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const location = useLocation();
   const basePath = `/login/${user?.username || 'uploader'}`;
 
+  const authHeaders = {
+    "Content-Type": "application/json",
+    "X-Username": user?.username || "default"
+  };
+
   const formatDateTime = (dateString) => {
     if (!dateString) return "";
     let d = new Date(dateString);
@@ -346,14 +214,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
     if (isNaN(d.getTime())) return dateString;
 
     const pad = (n) => String(n).padStart(2, '0');
-    const dd = pad(d.getDate());
-    const mm = pad(d.getMonth() + 1);
-    const yyyy = d.getFullYear();
-    const hh = pad(d.getHours());
-    const min = pad(d.getMinutes());
-    const ss = pad(d.getSeconds());
-
-    return `${dd}/${mm}/${yyyy} ${hh}:${min}:${ss}`;
+    return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   };
 
   const getViewFromPath = (path) => {
@@ -370,9 +231,26 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const [selectedInsights, setSelectedInsights] = useState([]);
   const [isNotifyEnabled, setIsNotifyEnabled] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-
-  // FIX 1: We now strictly store the unique ID, not the generic module name.
   const [viewingInsightId, setViewingInsightId] = useState(() => localStorage.getItem("aja_viewing_insight") || null);
+
+  // -- PROFILE AND PASSWORD MODAL STATES --
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [pwdForm, setPwdForm] = useState({ old: '', new: '', confirm: '' });
+  const [pwdStatus, setPwdStatus] = useState({ type: '', msg: '' });
+  const [isChangingPwd, setIsChangingPwd] = useState(false);
+
+  // -- EDIT PROFILE STATE --
+  const profileStorageKey = `aja_profile_${user?.username || 'default'}`;
+  const [profileData, setProfileData] = useState(() => {
+    try {
+      const saved = localStorage.getItem(profileStorageKey);
+      return saved ? JSON.parse(saved) : { fullName: '', email: '', phone: '', address: '', avatar: '' };
+    } catch { return { fullName: '', email: '', phone: '', address: '', avatar: '' }; }
+  });
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [tempProfile, setTempProfile] = useState(profileData);
 
   useEffect(() => {
     if (viewingInsightId) localStorage.setItem("aja_viewing_insight", viewingInsightId);
@@ -380,7 +258,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
   }, [viewingInsightId]);
 
   const [files, setFiles] = useState({ concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null });
-
   const [isUploading, setIsUploading] = useState(false);
   const [activeAnalysisResults, setActiveAnalysisResults] = useState(() => {
     try { return JSON.parse(localStorage.getItem("aja_last_session_results")) || []; }
@@ -388,7 +265,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
   });
 
   const [currentViewMode, setCurrentViewMode] = useState("table");
-
   const [pjpa32SubView, setPjpa32SubView] = useState('holiday');
   const [pjpa24Type, setPjpa24Type] = useState('Mod_Z');
   const [pjpa24Category, setPjpa24Category] = useState('Overall');
@@ -405,31 +281,25 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const [hiddenSessionIds, setHiddenSessionIds] = useState([]);
   const [isClearModalOpen, setIsClearModalOpen] = useState(false);
   const [isNewSessionModalOpen, setIsNewSessionModalOpen] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null); // { text, type: 'error' | 'warn' }
 
+  // TOAST FIX: Now supports 'success'
+  const [toastMsg, setToastMsg] = useState(null);
   const showToast = (text, type = 'error') => {
     setToastMsg({ text, type });
     setTimeout(() => setToastMsg(null), 3000);
   };
 
-  const [lastSessionResults, setLastSessionResults] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("aja_last_session_results")) || []; }
-    catch { return []; }
-  });
-
   const fetchSavedSessions = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/sessions");
+      const res = await fetch("http://localhost:5000/api/sessions", { headers: authHeaders });
       if (res.ok) {
         const data = await res.json();
         setSavedSessions(data);
       }
-    } catch (e) { console.warn("Failed to fetch sessions"); }
+    } catch (e) { }
   };
 
-  useEffect(() => {
-    fetchSavedSessions();
-  }, [view]);
+  useEffect(() => { fetchSavedSessions(); }, [view]);
 
   const [history, setHistory] = useState(() => {
     const saved = localStorage.getItem("aja_audit_history");
@@ -438,15 +308,11 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const safelyPersistResults = (data) => {
     const KEY = "aja_last_session_results";
-    try {
-      localStorage.setItem(KEY, JSON.stringify(data));
-    } catch (e) {
+    try { localStorage.setItem(KEY, JSON.stringify(data)); } catch (e) {
       try {
         const metadataOnly = data.map(({ data, ...rest }) => ({ ...rest, data: [], isMetadataOnly: true }));
         localStorage.setItem(KEY, JSON.stringify(metadataOnly));
-      } catch (e2) {
-        console.error("Critical: Local storage exhausted.", e2);
-      }
+      } catch (e2) { }
     }
   };
 
@@ -454,76 +320,53 @@ const Uploader = ({ user, logo, handleLogout }) => {
     try {
       const historyMinimal = history.map(({ data, ...rest }) => rest);
       localStorage.setItem("aja_audit_history", JSON.stringify(historyMinimal));
-    } catch (e) {
-      localStorage.removeItem("aja_audit_history");
-    }
+    } catch (e) { localStorage.removeItem("aja_audit_history"); }
   }, [history]);
 
   const handleReportToggle = () => {
     if (view === "report") {
-      if (activeAnalysisResults.length > 0 && viewingInsightId) {
-        navigate(`${basePath}/results`);
-      } else {
-        navigate(`${basePath}/new-session`);
-      }
+      if (activeAnalysisResults.length > 0 && viewingInsightId) navigate(`${basePath}/results`);
+      else navigate(`${basePath}/new-session`);
     } else {
       navigate(`${basePath}/report`);
     }
   };
 
   const startNewSession = async () => {
-    if (activeAnalysisResults.length > 0) {
-      setLastSessionResults(activeAnalysisResults);
-      safelyPersistResults(activeAnalysisResults);
-    }
+    if (activeAnalysisResults.length > 0) safelyPersistResults(activeAnalysisResults);
     setFiles({ concurFile: null, leftEmpFile: null, empMasterFile: null, lineItemFile: null });
     setSelectedInsights([]);
     setUploadKPIs({});
     setActiveTabs({});
     setViewingInsightId(null);
-
     localStorage.removeItem("aja_session_files");
     localStorage.removeItem("aja_session_kpis");
     localStorage.removeItem("aja_viewing_insight");
-
     navigate(`${basePath}/new-session`);
   };
 
   const handleSaveSession = async (name = "") => {
     try {
-      // EXACT FIX: Filter out restored items. Only save insights generated right now in the current session.
-      const currentSessionInsights = activeAnalysisResults
-        .filter(r => !r.isRestored)
-        .map(r => r.moduleId);
-
-      if (currentSessionInsights.length === 0) return true; // Nothing to save
+      const currentSessionInsights = activeAnalysisResults.filter(r => !r.isRestored).map(r => r.moduleId);
+      if (currentSessionInsights.length === 0) return true;
 
       const response = await fetch("http://localhost:5000/api/save-session", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name,
-          insights: currentSessionInsights
-        })
+        headers: authHeaders,
+        body: JSON.stringify({ name: name, insights: currentSessionInsights })
       });
       if (response.ok) {
         fetchSavedSessions();
         return true;
       }
-    } catch (e) { console.error("Save failed", e); }
+    } catch (e) { }
     return false;
   };
 
   const handleDeleteSession = async (sessionId) => {
-    // Optimistically remove from local state so UI responds instantly
     setSavedSessions(prev => prev.filter(s => s.id !== sessionId));
     setHiddenSessionIds(prev => prev.filter(id => id !== sessionId));
-    try {
-      await fetch(`http://localhost:5000/api/sessions/${sessionId}`, { method: "DELETE" });
-    } catch (e) {
-      console.error("Failed to delete session from backend", e);
-      fetchSavedSessions(); // Re-fetch to restore accurate state if call failed
-    }
+    try { await fetch(`http://localhost:5000/api/sessions/${sessionId}`, { method: "DELETE", headers: authHeaders }); } catch (e) { fetchSavedSessions(); }
   };
 
   const handleLoadSession = async (sessionId) => {
@@ -535,11 +378,11 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
       const loadedResults = [];
       for (const insightId of session.insights) {
-        const res = await fetch(`http://localhost:5000/api/sessions/${sessionId}/${insightId}/data`);
+        const res = await fetch(`http://localhost:5000/api/sessions/${sessionId}/${insightId}/data`, { headers: authHeaders });
         if (res.ok) {
           const dataJson = await res.json();
           loadedResults.push({
-            id: insightId + "_" + Date.now() + Math.random(), // Unique execution ID
+            id: insightId + "_" + Date.now() + Math.random(),
             moduleId: insightId,
             name: INSIGHT_OPTIONS.find(o => o.id === insightId)?.label || insightId,
             status: "Success",
@@ -554,7 +397,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
       }
 
       setActiveAnalysisResults(prev => {
-        // FIX 2: Only filter out old RESTORED sessions of the same id. Do NOT delete Current Session runs!
         const newResults = [...prev.filter(p => !loadedResults.find(l => l.moduleId === p.moduleId && p.sessionId === l.sessionId)), ...loadedResults];
         safelyPersistResults(newResults);
         return newResults;
@@ -576,9 +418,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
       setFiles((prev) => {
         const updated = { ...prev, [fileKey]: newFile };
         const mockFiles = {};
-        Object.keys(updated).forEach(k => {
-          mockFiles[k] = updated[k] ? { name: updated[k].name } : null;
-        });
+        Object.keys(updated).forEach(k => { mockFiles[k] = updated[k] ? { name: updated[k].name } : null; });
         localStorage.setItem("aja_session_files", JSON.stringify(mockFiles));
         return updated;
       });
@@ -589,9 +429,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
     setFiles((prev) => {
       const updated = { ...prev, [fileKey]: null };
       const mockFiles = {};
-      Object.keys(updated).forEach(k => {
-        mockFiles[k] = updated[k] ? { name: updated[k].name } : null;
-      });
+      Object.keys(updated).forEach(k => { mockFiles[k] = updated[k] ? { name: updated[k].name } : null; });
       localStorage.setItem("aja_session_files", JSON.stringify(mockFiles));
       return updated;
     });
@@ -601,13 +439,15 @@ const Uploader = ({ user, logo, handleLogout }) => {
     setIsUploading(true);
     const formData = new FormData();
     Object.keys(files).forEach(key => {
-      if (files[key] && files[key] instanceof File) {
-        formData.append(key, files[key]);
-      }
+      if (files[key] && files[key] instanceof File) formData.append(key, files[key]);
     });
 
     try {
-      const response = await fetch("http://localhost:5000/api/upload", { method: "POST", body: formData });
+      const response = await fetch("http://localhost:5000/api/upload", {
+        method: "POST",
+        headers: { "X-Username": user?.username || "default" },
+        body: formData
+      });
       const resData = await response.json();
 
       if (response.ok) {
@@ -617,11 +457,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
       } else {
         alert(`Upload error: ${resData.message}`);
       }
-    } catch (err) {
-      alert("Upload failed. Ensure backend is running.");
-    } finally {
-      setIsUploading(false);
-    }
+    } catch (err) { alert("Upload failed. Ensure backend is running."); } finally { setIsUploading(false); }
   };
 
   const startAnalysis = async () => {
@@ -634,30 +470,10 @@ const Uploader = ({ user, logo, handleLogout }) => {
       const missingFiles = insight.req.filter(reqFile => !files[reqFile]);
 
       if (missingFiles.length > 0) {
-        currentReports.push({
-          id: insight.id + "_" + Date.now() + Math.random(),
-          moduleId: insight.id,
-          name: insight.label,
-          status: "Failed",
-          reason: `Missing Data: ${FILE_TYPES.find(f => f.key === missingFiles[0])?.label || missingFiles[0]}`,
-          missingFiles: missingFiles,
-          data: [],
-          timestamp: new Date().toISOString(),
-          isRestored: false
-        });
+        currentReports.push({ id: insight.id + "_" + Date.now() + Math.random(), moduleId: insight.id, name: insight.label, status: "Failed", reason: `Missing Data: ${FILE_TYPES.find(f => f.key === missingFiles[0])?.label || missingFiles[0]}`, missingFiles: missingFiles, data: [], timestamp: new Date().toISOString(), isRestored: false });
       } else {
         toRun.push(insightId);
-        currentReports.push({
-          id: insight.id + "_" + Date.now() + Math.random(),
-          moduleId: insight.id,
-          name: insight.label,
-          status: "In Progress",
-          reason: "Processing...",
-          missingFiles: [],
-          data: [],
-          timestamp: new Date().toISOString(),
-          isRestored: false
-        });
+        currentReports.push({ id: insight.id + "_" + Date.now() + Math.random(), moduleId: insight.id, name: insight.label, status: "In Progress", reason: "Processing...", missingFiles: [], data: [], timestamp: new Date().toISOString(), isRestored: false });
       }
     });
 
@@ -668,56 +484,29 @@ const Uploader = ({ user, logo, handleLogout }) => {
       const insightDef = INSIGHT_OPTIONS.find(o => o.id === insightId);
       try {
         const genRes = await fetch("http://localhost:5000/api/generate", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ insights: [insightId] })
+          method: "POST", headers: authHeaders, body: JSON.stringify({ insights: [insightId] })
         });
         if (!genRes.ok) throw new Error("Generation failed");
 
-        const dataRes = await fetch(`http://localhost:5000/api/insight/${insightId}/data`);
+        const dataRes = await fetch(`http://localhost:5000/api/insight/${insightId}/data`, { headers: authHeaders });
         if (!dataRes.ok) throw new Error("Data retrieval failed");
 
         const dataJson = await dataRes.json();
         const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
 
-        const successItem = {
-          id: insightId + "_" + Date.now() + Math.random(),
-          moduleId: insightId,
-          name: insightDef.label,
-          status: "Success",
-          reason: "",
-          missingFiles: [],
-          data: extractedData,
-          timestamp: new Date().toISOString(),
-          isRestored: false
-        };
+        const successItem = { id: insightId + "_" + Date.now() + Math.random(), moduleId: insightId, name: insightDef.label, status: "Success", reason: "", missingFiles: [], data: extractedData, timestamp: new Date().toISOString(), isRestored: false };
 
         setActiveAnalysisResults(prev => {
-          // FIX 3: Delete old CURRENT session versions of this, but safely leave RESTORED ones untouched
           const updated = [...prev.filter(p => !(p.moduleId === insightId && !p.isRestored)), successItem];
           safelyPersistResults(updated);
           return updated;
         });
 
-        setHistory(prev => prev.map(item =>
-          (item.moduleId === insightId && item.status === "In Progress") ? successItem : item
-        ));
+        setHistory(prev => prev.map(item => (item.moduleId === insightId && item.status === "In Progress") ? successItem : item));
 
       } catch (err) {
-        const failItem = {
-          id: insightId + "_" + Date.now() + Math.random(),
-          moduleId: insightId,
-          name: insightDef.label,
-          status: "In-Active",
-          reason: "Processing error.",
-          missingFiles: [],
-          data: [],
-          timestamp: new Date().toISOString(),
-          isRestored: false
-        };
-        setHistory(prev => prev.map(item =>
-          (item.moduleId === insightId && item.status === "In Progress") ? failItem : item
-        ));
+        const failItem = { id: insightId + "_" + Date.now() + Math.random(), moduleId: insightId, name: insightDef.label, status: "In-Active", reason: "Processing error.", missingFiles: [], data: [], timestamp: new Date().toISOString(), isRestored: false };
+        setHistory(prev => prev.map(item => (item.moduleId === insightId && item.status === "In Progress") ? failItem : item));
       }
     }
 
@@ -737,14 +526,12 @@ const Uploader = ({ user, logo, handleLogout }) => {
       setFiles((prev) => {
         const updated = { ...prev, [fileKey]: file };
         const mockFiles = {};
-        Object.keys(updated).forEach(k => {
-          mockFiles[k] = updated[k] ? { name: updated[k].name } : null;
-        });
+        Object.keys(updated).forEach(k => { mockFiles[k] = updated[k] ? { name: updated[k].name } : null; });
         localStorage.setItem("aja_session_files", JSON.stringify(mockFiles));
         return updated;
       });
 
-      const uploadRes = await fetch("http://localhost:5000/api/upload", { method: "POST", body: formData });
+      const uploadRes = await fetch("http://localhost:5000/api/upload", { method: "POST", headers: { "X-Username": user?.username || "default" }, body: formData });
       if (!uploadRes.ok) throw new Error("Upload failed");
 
       setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Missing Data Pending" } : item));
@@ -758,13 +545,11 @@ const Uploader = ({ user, logo, handleLogout }) => {
       setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, status: 'In Progress', reason: "Processing Insight..." } : item));
 
       const genRes = await fetch("http://localhost:5000/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ insights: [reportItem.moduleId] })
+        method: "POST", headers: authHeaders, body: JSON.stringify({ insights: [reportItem.moduleId] })
       });
       if (!genRes.ok) throw new Error("Backend generation failed");
 
-      const dataRes = await fetch(`http://localhost:5000/api/insight/${reportItem.moduleId}/data`);
+      const dataRes = await fetch(`http://localhost:5000/api/insight/${reportItem.moduleId}/data`, { headers: authHeaders });
       if (!dataRes.ok) throw new Error("Data retrieval failed");
 
       const dataJson = await dataRes.json();
@@ -774,9 +559,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
       setHistory(prev => prev.map(item => item.id === reportItem.id ? updatedItem : item));
       setActiveAnalysisResults(prev => {
-        if (prev.some(p => p.id === reportItem.id)) {
-          return prev.map(p => p.id === reportItem.id ? updatedItem : p);
-        }
+        if (prev.some(p => p.id === reportItem.id)) return prev.map(p => p.id === reportItem.id ? updatedItem : p);
         return [...prev, updatedItem];
       });
 
@@ -787,39 +570,28 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const handleRefreshReport = async () => {
     const successfulItems = history.filter(item => item.status === "Success");
-    if (successfulItems.length === 0) {
-      showToast("Empty session to refresh", "warn");
-      return;
-    }
+    if (successfulItems.length === 0) { showToast("Empty session to refresh", "warn"); return; }
 
     setHistory(prev => prev.map(item => item.status === "Success" ? { ...item, status: "Reprocessing", reason: "Fetching latest data..." } : item));
 
     successfulItems.forEach(async (reportItem) => {
       try {
-        // FIX 4: STRICT ROUTING. Send Restored items to the archive API, and Current items to the active API.
         const isArchive = reportItem.isRestored === true;
-        const url = isArchive
-          ? `http://localhost:5000/api/sessions/${reportItem.sessionId}/${reportItem.moduleId}/data`
-          : `http://localhost:5000/api/insight/${reportItem.moduleId}/data`;
+        const url = isArchive ? `http://localhost:5000/api/sessions/${reportItem.sessionId}/${reportItem.moduleId}/data` : `http://localhost:5000/api/insight/${reportItem.moduleId}/data`;
 
-        const res = await fetch(url);
+        const res = await fetch(url, { headers: authHeaders });
         if (!res.ok) throw new Error("Failed to fetch data.");
 
         const dataJson = await res.json();
         const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
 
         const refreshedItem = { ...reportItem, status: "Success", reason: reportItem.reason, data: extractedData, timestamp: new Date().toISOString() };
-
         setHistory(prev => prev.map(item => item.id === reportItem.id ? refreshedItem : item));
 
         setActiveAnalysisResults(prev => {
-          // Rescue the item perfectly into active memory
           let updated;
-          if (prev.some(p => p.id === reportItem.id)) {
-            updated = prev.map(p => p.id === reportItem.id ? refreshedItem : p);
-          } else {
-            updated = [...prev, refreshedItem];
-          }
+          if (prev.some(p => p.id === reportItem.id)) updated = prev.map(p => p.id === reportItem.id ? refreshedItem : p);
+          else updated = [...prev, refreshedItem];
           safelyPersistResults(updated);
           return updated;
         });
@@ -839,13 +611,9 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const deleteHistoryItem = (id) => {
     setHistory((prev) => {
       const updatedHistory = prev.filter((item) => item.id !== id);
-      try {
-        const historyMinimal = updatedHistory.map(({ data, ...rest }) => rest);
-        localStorage.setItem("aja_audit_history", JSON.stringify(historyMinimal));
-      } catch (e) { console.error("Failed to update storage", e); }
+      try { localStorage.setItem("aja_audit_history", JSON.stringify(updatedHistory.map(({ data, ...rest }) => rest))); } catch (e) { }
       return updatedHistory;
     });
-    // Also clean it out of the active viewer memory so it doesn't become a ghost!
     setActiveAnalysisResults((prev) => {
       const updated = prev.filter((item) => item.id !== id);
       safelyPersistResults(updated);
@@ -853,89 +621,78 @@ const Uploader = ({ user, logo, handleLogout }) => {
     });
   };
 
+  // --- AVATAR UPLOAD HANDLER ---
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTempProfile(prev => ({ ...prev, avatar: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // --- SAVE PROFILE HANDLER ---
+  const handleSaveProfile = () => {
+    setProfileData(tempProfile);
+    localStorage.setItem(profileStorageKey, JSON.stringify(tempProfile));
+    setIsEditingProfile(false);
+    showToast('Profile updated successfully!', 'success');
+  };
+
+  // --- PASSWORD SUBMISSION HANDLER ---
+  const handleChangePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPwdStatus({ type: '', msg: '' });
+
+    if (pwdForm.new !== pwdForm.confirm) {
+      setPwdStatus({ type: 'error', msg: 'New passwords do not match.' });
+      return;
+    }
+
+    setIsChangingPwd(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/change-password", {
+        method: "POST",
+        headers: authHeaders,
+        body: JSON.stringify({
+          username: user.username,
+          old_password: pwdForm.old,
+          new_password: pwdForm.new
+        })
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setPwdStatus({ type: 'success', msg: 'Password successfully updated!' });
+        setTimeout(() => {
+          setIsPasswordModalOpen(false);
+          setPwdForm({ old: '', new: '', confirm: '' });
+          setPwdStatus({ type: '', msg: '' });
+        }, 2000);
+      } else {
+        setPwdStatus({ type: 'error', msg: data.message || 'Failed to update password.' });
+      }
+    } catch (err) {
+      setPwdStatus({ type: 'error', msg: 'Server error. Please try again.' });
+    } finally {
+      setIsChangingPwd(false);
+    }
+  };
+
   const getPremiumButtonStyle = (isActive) => ({
-    padding: '12px 26px',
-    borderRadius: '8px',
-    border: 'none',
-    fontWeight: '700',
-    fontFamily: 'inherit',
-    letterSpacing: '0.5px',
-    background: isActive ? '#00df81' : 'transparent',
-    color: isActive ? '#05192d' : '#64748b',
-    cursor: 'pointer',
-    fontSize: '15px',
-    transition: 'all 0.3s ease',
+    padding: '12px 26px', borderRadius: '8px', border: 'none', fontWeight: '700', fontFamily: 'inherit', letterSpacing: '0.5px',
+    background: isActive ? '#00df81' : 'transparent', color: isActive ? '#05192d' : '#64748b', cursor: 'pointer', fontSize: '15px', transition: 'all 0.3s ease',
     boxShadow: isActive ? '0 4px 12px rgba(0,223,129,0.3)' : 'none'
   });
 
   const renderUploadView = () => {
     const cardData = [
-      {
-        ...FILE_TYPES[0],
-        icon: (
-          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 90, height: 90 }}>
-            <rect x="20" y="15" width="70" height="90" rx="8" fill="#e8f5ff" stroke="#00df81" strokeWidth="2" />
-            <rect x="30" y="30" width="50" height="6" rx="3" fill="#00df81" opacity="0.7" />
-            <rect x="30" y="44" width="38" height="5" rx="2.5" fill="#b0e0ff" />
-            <rect x="30" y="55" width="44" height="5" rx="2.5" fill="#b0e0ff" />
-            <rect x="30" y="66" width="30" height="5" rx="2.5" fill="#b0e0ff" />
-            <circle cx="85" cy="85" r="20" fill="#05192d" />
-            <path d="M78 85 L83 90 L92 80" stroke="#00df81" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-        color: "#00df81",
-        accent: "#e8fff4",
-        tag: "01"
-      },
-      {
-        ...FILE_TYPES[1],
-        icon: (
-          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 90, height: 90 }}>
-            <rect x="15" y="25" width="90" height="70" rx="8" fill="#fff5e8" stroke="#00df81" strokeWidth="2" />
-            <rect x="15" y="25" width="90" height="20" rx="8" fill="#05192d" />
-            <rect x="15" y="38" width="90" height="7" fill="#05192d" />
-            {[0, 1, 2, 3].map(i => (
-              <rect key={i} x="25" y={55 + i * 10} width={i % 2 === 0 ? 60 : 40} height="5" rx="2.5" fill={i === 0 ? "#00df81" : "#cbd5e1"} />
-            ))}
-            <circle cx="92" cy="92" r="16" fill="#00df81" />
-            <path d="M85 92 L90 96 L99 87" stroke="#05192d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-        color: "#00df81",
-        accent: "#f0fff8",
-        tag: "02"
-      },
-      {
-        ...FILE_TYPES[2],
-        icon: (
-          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 90, height: 90 }}>
-            <circle cx="60" cy="42" r="22" fill="#e8f0ff" stroke="#00df81" strokeWidth="2" />
-            <circle cx="60" cy="40" r="12" fill="#05192d" />
-            <path d="M25 98 C25 75 95 75 95 98" fill="#e8f0ff" stroke="#00df81" strokeWidth="2" />
-            <circle cx="90" cy="88" r="18" fill="#05192d" />
-            <path d="M83 88 L88 93 L97 83" stroke="#00df81" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-        color: "#00df81",
-        accent: "#f5f0ff",
-        tag: "03"
-      },
-      {
-        ...FILE_TYPES[3],
-        icon: (
-          <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ width: 90, height: 90 }}>
-            <rect x="20" y="20" width="55" height="70" rx="8" fill="#fff0f0" stroke="#00df81" strokeWidth="2" />
-            <circle cx="47" cy="48" r="12" fill="#05192d" opacity="0.8" />
-            <path d="M25 90 C25 72 70 72 70 90" fill="#fff0f0" stroke="#00df81" strokeWidth="1.5" />
-            <path d="M78 50 L98 50 M88 40 L98 50 L88 60" stroke="#00df81" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="88" cy="88" r="16" fill="#05192d" />
-            <path d="M82 88 L87 92 L95 83" stroke="#00df81" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        ),
-        color: "#00df81",
-        accent: "#fff5f5",
-        tag: "04"
-      }
+      { ...FILE_TYPES[0], icon: (<svg viewBox="0 0 120 120" fill="none" style={{ width: 90, height: 90 }}><rect x="20" y="15" width="70" height="90" rx="8" fill="#e8f5ff" stroke="#00df81" strokeWidth="2" /><rect x="30" y="30" width="50" height="6" rx="3" fill="#00df81" opacity="0.7" /><rect x="30" y="44" width="38" height="5" rx="2.5" fill="#b0e0ff" /><rect x="30" y="55" width="44" height="5" rx="2.5" fill="#b0e0ff" /><rect x="30" y="66" width="30" height="5" rx="2.5" fill="#b0e0ff" /><circle cx="85" cy="85" r="20" fill="#05192d" /><path d="M78 85 L83 90 L92 80" stroke="#00df81" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>), color: "#00df81", accent: "#e8fff4", tag: "01" },
+      { ...FILE_TYPES[1], icon: (<svg viewBox="0 0 120 120" fill="none" style={{ width: 90, height: 90 }}><rect x="15" y="25" width="90" height="70" rx="8" fill="#fff5e8" stroke="#00df81" strokeWidth="2" /><rect x="15" y="25" width="90" height="20" rx="8" fill="#05192d" /><rect x="15" y="38" width="90" height="7" fill="#05192d" />{[0, 1, 2, 3].map(i => (<rect key={i} x="25" y={55 + i * 10} width={i % 2 === 0 ? 60 : 40} height="5" rx="2.5" fill={i === 0 ? "#00df81" : "#cbd5e1"} />))}<circle cx="92" cy="92" r="16" fill="#00df81" /><path d="M85 92 L90 96 L99 87" stroke="#05192d" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>), color: "#00df81", accent: "#f0fff8", tag: "02" },
+      { ...FILE_TYPES[2], icon: (<svg viewBox="0 0 120 120" fill="none" style={{ width: 90, height: 90 }}><circle cx="60" cy="42" r="22" fill="#e8f0ff" stroke="#00df81" strokeWidth="2" /><circle cx="60" cy="40" r="12" fill="#05192d" /><path d="M25 98 C25 75 95 75 95 98" fill="#e8f0ff" stroke="#00df81" strokeWidth="2" /><circle cx="90" cy="88" r="18" fill="#05192d" /><path d="M83 88 L88 93 L97 83" stroke="#00df81" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>), color: "#00df81", accent: "#f5f0ff", tag: "03" },
+      { ...FILE_TYPES[3], icon: (<svg viewBox="0 0 120 120" fill="none" style={{ width: 90, height: 90 }}><rect x="20" y="20" width="55" height="70" rx="8" fill="#fff0f0" stroke="#00df81" strokeWidth="2" /><circle cx="47" cy="48" r="12" fill="#05192d" opacity="0.8" /><path d="M25 90 C25 72 70 72 70 90" fill="#fff0f0" stroke="#00df81" strokeWidth="1.5" /><path d="M78 50 L98 50 M88 40 L98 50 L88 60" stroke="#00df81" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /><circle cx="88" cy="88" r="16" fill="#05192d" /><path d="M82 88 L87 92 L95 83" stroke="#00df81" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" /></svg>), color: "#00df81", accent: "#fff5f5", tag: "04" }
     ];
 
     const hasAnyFile = Object.values(files).some(f => f);
@@ -943,19 +700,9 @@ const Uploader = ({ user, logo, handleLogout }) => {
     return (
       <div className="upload-redesign-root animate-in">
         <div className="upload-bg-canvas">
-          <div className="bg-orb bg-orb-1" />
-          <div className="bg-orb bg-orb-2" />
-          <div className="bg-orb bg-orb-3" />
-          <div className="bg-grid" />
+          <div className="bg-orb bg-orb-1" /><div className="bg-orb bg-orb-2" /><div className="bg-orb bg-orb-3" /><div className="bg-grid" />
           {[...Array(12)].map((_, i) => (
-            <div key={i} className="bg-particle" style={{
-              left: `${8 + i * 8}%`,
-              animationDelay: `${i * 0.4}s`,
-              animationDuration: `${3 + (i % 3)}s`,
-              width: i % 3 === 0 ? '6px' : '4px',
-              height: i % 3 === 0 ? '6px' : '4px',
-              opacity: 0.15 + (i % 4) * 0.06
-            }} />
+            <div key={i} className="bg-particle" style={{ left: `${8 + i * 8}%`, animationDelay: `${i * 0.4}s`, animationDuration: `${3 + (i % 3)}s`, width: i % 3 === 0 ? '6px' : '4px', height: i % 3 === 0 ? '6px' : '4px', opacity: 0.15 + (i % 4) * 0.06 }} />
           ))}
         </div>
 
@@ -975,42 +722,16 @@ const Uploader = ({ user, logo, handleLogout }) => {
                   <div className="card-illustration">
                     <div className="card-illustration-bg" />
                     {isLoaded ? (
-                      <div className="card-loaded-check">
-                        <svg viewBox="0 0 60 60" fill="none" style={{ width: 70, height: 70 }}>
-                          <circle cx="30" cy="30" r="28" fill="#05192d" />
-                          <path d="M18 30 L26 38 L42 22" stroke="#00df81" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className="card-svg-wrap">{type.icon}</div>
-                    )}
+                      <div className="card-loaded-check"><svg viewBox="0 0 60 60" fill="none" style={{ width: 70, height: 70 }}><circle cx="30" cy="30" r="28" fill="#05192d" /><path d="M18 30 L26 38 L42 22" stroke="#00df81" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" /></svg></div>
+                    ) : (<div className="card-svg-wrap">{type.icon}</div>)}
                   </div>
                   <div className="card-content">
                     <div className="card-label">{type.label}</div>
                     <div className="card-sub">{type.sub}</div>
                     {isLoaded ? (
-                      <>
-                        <div className="card-filename">
-                          <span className="card-filename-icon">📄</span>
-                          <span className="card-filename-text">{files[type.key].name}</span>
-                        </div>
-                        <button onClick={() => removeFile(type.key)} className="card-remove-btn">✕ Remove</button>
-                      </>
+                      <><div className="card-filename"><span className="card-filename-icon">📄</span><span className="card-filename-text">{files[type.key].name}</span></div><button onClick={() => removeFile(type.key)} className="card-remove-btn">✕ Remove</button></>
                     ) : (
-                      <>
-                        <label className="card-upload-label">
-                          <input type="file" accept=".csv, .xls, .xlsx, .zip" onChange={(e) => handleFileChange(e, type.key)} style={{ display: 'none' }} />
-                          <span className="card-upload-btn">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}>
-                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                              <polyline points="17 8 12 3 7 8" />
-                              <line x1="12" y1="3" x2="12" y2="15" />
-                            </svg>
-                            Select File
-                          </span>
-                        </label>
-                        <a href={type.sample} download onClick={(e) => e.stopPropagation()} className="card-sample-link">View sample ↗</a>
-                      </>
+                      <><label className="card-upload-label"><input type="file" accept=".csv, .xls, .xlsx, .zip" onChange={(e) => handleFileChange(e, type.key)} style={{ display: 'none' }} /><span className="card-upload-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>Select File</span></label><a href={type.sample} download onClick={(e) => e.stopPropagation()} className="card-sample-link">View sample ↗</a></>
                     )}
                   </div>
                   <div className={`card-status-strip ${isLoaded ? 'card-status-strip--on' : ''}`} />
@@ -1021,26 +742,16 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
           <div className="upload-progress-row">
             <div className="upload-progress-track">
-              {FILE_TYPES.map((type) => (
-                <div key={type.key} className={`upload-progress-dot ${files[type.key] ? 'upload-progress-dot--on' : ''}`} title={type.label} />
-              ))}
+              {FILE_TYPES.map((type) => (<div key={type.key} className={`upload-progress-dot ${files[type.key] ? 'upload-progress-dot--on' : ''}`} title={type.label} />))}
             </div>
-            <span className="upload-progress-label">
-              {Object.values(files).filter(Boolean).length} of 4 files selected
-            </span>
+            <span className="upload-progress-label">{Object.values(files).filter(Boolean).length} of 4 files selected</span>
           </div>
 
           <div className="upload-cta-row">
             <button onClick={handleUploadSubmit} disabled={isUploading || !hasAnyFile} className={`upload-cta-btn ${(!hasAnyFile || isUploading) ? 'upload-cta-btn--disabled' : ''}`}>
-              {isUploading ? (
-                <><span className="upload-cta-spinner" />Syncing Data...</>
-              ) : (
-                <>Continue to Audit<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 8 }}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg></>
-              )}
+              {isUploading ? (<><span className="upload-cta-spinner" />Syncing Data...</>) : (<>Continue to Audit<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 8 }}><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg></>)}
             </button>
-            <p className="upload-hint">
-              {hasAnyFile ? "You can upload remaining files after the audit starts." : "Upload at least one file to continue."}
-            </p>
+            <p className="upload-hint">{hasAnyFile ? "You can upload remaining files after the audit starts." : "Upload at least one file to continue."}</p>
           </div>
         </div>
       </div>
@@ -1049,35 +760,22 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const renderKPIView = () => (
     <div className="kpi-view-root animate-in">
-      {/* ── Page Header ── */}
       <div className="kpi-page-header">
         <div className="kpi-page-header-left">
-          <div className="kpi-success-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
-            Validation Complete
-          </div>
+          <div className="kpi-success-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>Validation Complete</div>
           <h1 className="kpi-page-title">Data Validation <span className="kpi-title-accent">Successful</span></h1>
           <p className="kpi-page-subtitle">Your files have been processed. Review the extracted metrics below and choose which audit controls to run.</p>
         </div>
-        <button onClick={() => navigate(`${basePath}/new-session`)} className="kpi-change-files-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
-          Change Files
-        </button>
+        <button onClick={() => navigate(`${basePath}/new-session`)} className="kpi-change-files-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>Change Files</button>
       </div>
 
-      {/* ── Concur KPIs ── */}
       {uploadKPIs && uploadKPIs.total_transactions !== undefined && (
         <div className="kpi-section">
-          <div className="kpi-section-label">
-            <span className="kpi-section-dot kpi-dot-green" />
-            Concur Header Extraction
-          </div>
+          <div className="kpi-section-label"><span className="kpi-section-dot kpi-dot-green" />Concur Header Extraction</div>
           <div className="kpi-cards-grid kpi-cards-grid--5">
             {uploadKPIs.unique_employees !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#00df81' }}>
-                <div className="kpi-stat-icon" style={{ background: 'rgba(0,223,129,0.12)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00df81" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg>
-                </div>
+                <div className="kpi-stat-icon" style={{ background: 'rgba(0,223,129,0.12)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00df81" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></svg></div>
                 <div className="kpi-stat-label">Unique Employees</div>
                 <div className="kpi-stat-value">{uploadKPIs.unique_employees.toLocaleString()}</div>
                 <div className="kpi-stat-bar" style={{ background: 'rgba(0,223,129,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#00df81', width: '70%' }} /></div>
@@ -1085,9 +783,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
             )}
             {uploadKPIs.unique_reports !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#2196F3' }}>
-                <div className="kpi-stat-icon" style={{ background: 'rgba(33,150,243,0.12)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2196F3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>
-                </div>
+                <div className="kpi-stat-icon" style={{ background: 'rgba(33,150,243,0.12)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2196F3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg></div>
                 <div className="kpi-stat-label">Unique Report IDs</div>
                 <div className="kpi-stat-value">{uploadKPIs.unique_reports.toLocaleString()}</div>
                 <div className="kpi-stat-bar" style={{ background: 'rgba(33,150,243,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#2196F3', width: '60%' }} /></div>
@@ -1095,45 +791,25 @@ const Uploader = ({ user, logo, handleLogout }) => {
             )}
             {uploadKPIs.total_transactions !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#7DC030' }}>
-
-                <div className="kpi-stat-icon" style={{ background: 'rgba(125,192,48,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: '#7DC030', fontSize: '18px', fontWeight: '700' }}>#</span>
-                </div>
-
+                <div className="kpi-stat-icon" style={{ background: 'rgba(125,192,48,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><span style={{ color: '#7DC030', fontSize: '18px', fontWeight: '700' }}>#</span></div>
                 <div className="kpi-stat-label">Total Transactions</div>
                 <div className="kpi-stat-value">{uploadKPIs.total_transactions.toLocaleString()}</div>
-
-                <div className="kpi-stat-bar" style={{ background: 'rgba(125,192,48,0.15)' }}>
-                  <div className="kpi-stat-bar-fill" style={{ background: '#7DC030', width: '85%' }} />
-                </div>
-
+                <div className="kpi-stat-bar" style={{ background: 'rgba(125,192,48,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#7DC030', width: '85%' }} /></div>
               </div>
             )}
             {uploadKPIs.average_claim !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#FF9800' }}>
-                <div className="kpi-stat-icon" style={{ background: 'rgba(255,152,0,0.12)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>
-                </div>
+                <div className="kpi-stat-icon" style={{ background: 'rgba(255,152,0,0.12)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FF9800" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg></div>
                 <div className="kpi-stat-label">Avg Claim Amount</div>
-                <div className="kpi-stat-value kpi-stat-value--sm" title={`₹${uploadKPIs.average_claim.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}>
-                  ₹{uploadKPIs.average_claim.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
+                <div className="kpi-stat-value kpi-stat-value--sm" title={`₹${uploadKPIs.average_claim.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}>₹{uploadKPIs.average_claim.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                 <div className="kpi-stat-bar" style={{ background: 'rgba(255,152,0,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#FF9800', width: '50%' }} /></div>
               </div>
             )}
             {uploadKPIs.total_amount !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#05192d' }}>
-                <div className="kpi-stat-icon" style={{ background: 'rgba(5,25,45,0.08)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#05192d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>
-                </div>
+                <div className="kpi-stat-icon" style={{ background: 'rgba(5,25,45,0.08)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#05192d" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg></div>
                 <div className="kpi-stat-label">Total Amount Approved</div>
-                <div className="kpi-stat-value kpi-stat-value--sm">
-                  {uploadKPIs.total_amount >= 10000000
-                    ? `₹${(uploadKPIs.total_amount / 10000000).toFixed(2)} Cr`
-                    : uploadKPIs.total_amount >= 100000
-                      ? `₹${(uploadKPIs.total_amount / 100000).toFixed(2)} L`
-                      : `₹${uploadKPIs.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                </div>
+                <div className="kpi-stat-value kpi-stat-value--sm">{uploadKPIs.total_amount >= 10000000 ? `₹${(uploadKPIs.total_amount / 10000000).toFixed(2)} Cr` : uploadKPIs.total_amount >= 100000 ? `₹${(uploadKPIs.total_amount / 100000).toFixed(2)} L` : `₹${uploadKPIs.total_amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</div>
                 <div className="kpi-stat-bar" style={{ background: 'rgba(5,25,45,0.08)' }}><div className="kpi-stat-bar-fill" style={{ background: '#05192d', width: '75%' }} /></div>
               </div>
             )}
@@ -1141,27 +817,19 @@ const Uploader = ({ user, logo, handleLogout }) => {
         </div>
       )}
 
-      {/* ── Employee Master KPIs ── */}
       {uploadKPIs && uploadKPIs.master_unique_employees !== undefined && (
         <div className="kpi-section">
-          <div className="kpi-section-label">
-            <span className="kpi-section-dot kpi-dot-purple" />
-            Employee Master Extraction
-          </div>
+          <div className="kpi-section-label"><span className="kpi-section-dot kpi-dot-purple" />Employee Master Extraction</div>
           <div className="kpi-cards-grid kpi-cards-grid--4">
             <div className="kpi-stat-card" style={{ '--kpi-accent': '#8b5cf6' }}>
-              <div className="kpi-stat-icon" style={{ background: 'rgba(139,92,246,0.12)' }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-              </div>
+              <div className="kpi-stat-icon" style={{ background: 'rgba(139,92,246,0.12)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg></div>
               <div className="kpi-stat-label">Master Unique Emps</div>
               <div className="kpi-stat-value">{uploadKPIs.master_unique_employees.toLocaleString()}</div>
               <div className="kpi-stat-bar" style={{ background: 'rgba(139,92,246,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#8b5cf6', width: '100%' }} /></div>
             </div>
             {uploadKPIs.master_active_employees !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#10b981' }}>
-                <div className="kpi-stat-icon" style={{ background: 'rgba(16,185,129,0.12)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-                </div>
+                <div className="kpi-stat-icon" style={{ background: 'rgba(16,185,129,0.12)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg></div>
                 <div className="kpi-stat-label">Active Employees</div>
                 <div className="kpi-stat-value">{uploadKPIs.master_active_employees.toLocaleString()}</div>
                 <div className="kpi-stat-bar" style={{ background: 'rgba(16,185,129,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#10b981', width: `${Math.round(uploadKPIs.master_active_employees / uploadKPIs.master_unique_employees * 100)}%` }} /></div>
@@ -1169,9 +837,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
             )}
             {uploadKPIs.master_separated_employees !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#ef4444' }}>
-                <div className="kpi-stat-icon" style={{ background: 'rgba(239,68,68,0.12)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="18" y1="8" x2="23" y2="13" /><line x1="23" y1="8" x2="18" y2="13" /></svg>
-                </div>
+                <div className="kpi-stat-icon" style={{ background: 'rgba(239,68,68,0.12)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="8.5" cy="7" r="4" /><line x1="18" y1="8" x2="23" y2="13" /><line x1="23" y1="8" x2="18" y2="13" /></svg></div>
                 <div className="kpi-stat-label">Separated Employees</div>
                 <div className="kpi-stat-value">{uploadKPIs.master_separated_employees.toLocaleString()}</div>
                 <div className="kpi-stat-bar" style={{ background: 'rgba(239,68,68,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#ef4444', width: `${Math.round(uploadKPIs.master_separated_employees / uploadKPIs.master_unique_employees * 100)}%` }} /></div>
@@ -1179,9 +845,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
             )}
             {uploadKPIs.master_company_codes !== undefined && (
               <div className="kpi-stat-card" style={{ '--kpi-accent': '#f59e0b' }}>
-                <div className="kpi-stat-icon" style={{ background: 'rgba(245,158,11,0.12)' }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-                </div>
+                <div className="kpi-stat-icon" style={{ background: 'rgba(245,158,11,0.12)' }}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg></div>
                 <div className="kpi-stat-label">Company Codes</div>
                 <div className="kpi-stat-value">{uploadKPIs.master_company_codes.toLocaleString()}</div>
                 <div className="kpi-stat-bar" style={{ background: 'rgba(245,158,11,0.15)' }}><div className="kpi-stat-bar-fill" style={{ background: '#f59e0b', width: '25%' }} /></div>
@@ -1191,62 +855,25 @@ const Uploader = ({ user, logo, handleLogout }) => {
         </div>
       )}
 
-      {/* ── Audit Controls Panel ── */}
       <div className="audit-controls-panel">
         <div className="audit-controls-header">
           <div>
             <h2 className="audit-controls-title">Choose Audit Controls to Run</h2>
-            <p className="audit-controls-subtitle">
-              <span className="audit-selected-count">{selectedInsights.length}</span> of {INSIGHT_OPTIONS.length} controls selected
-            </p>
+            <p className="audit-controls-subtitle"><span className="audit-selected-count">{selectedInsights.length}</span> of {INSIGHT_OPTIONS.length} controls selected</p>
           </div>
-          <button
-            onClick={() => {
-              if (selectedInsights.length === INSIGHT_OPTIONS.length) {
-                setSelectedInsights([]);
-              } else {
-                setSelectedInsights(INSIGHT_OPTIONS.map(opt => opt.id));
-              }
-            }}
-            className={`audit-select-all-btn ${selectedInsights.length === INSIGHT_OPTIONS.length ? 'audit-select-all-btn--deselect' : ''}`}
-          >
-            {selectedInsights.length === INSIGHT_OPTIONS.length
-              ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg> Deselect All</>
-              : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg> Select All</>
-            }
+          <button onClick={() => { if (selectedInsights.length === INSIGHT_OPTIONS.length) { setSelectedInsights([]); } else { setSelectedInsights(INSIGHT_OPTIONS.map(opt => opt.id)); } }} className={`audit-select-all-btn ${selectedInsights.length === INSIGHT_OPTIONS.length ? 'audit-select-all-btn--deselect' : ''}`}>
+            {selectedInsights.length === INSIGHT_OPTIONS.length ? <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg> Deselect All</> : <><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg> Select All</>}
           </button>
         </div>
 
         <div className="audit-controls-grid">
           {INSIGHT_OPTIONS.map((opt, idx) => {
             const isChecked = selectedInsights.includes(opt.id);
-            const idCode = opt.id;
-            const labelText = opt.label.replace(opt.id + ' - ', '');
             return (
-              <label
-                key={opt.id}
-                className={`audit-control-item ${isChecked ? 'audit-control-item--checked' : ''}`}
-                style={{ '--item-delay': `${idx * 0.02}s` }}
-              >
-                <div className={`audit-custom-checkbox ${isChecked ? 'audit-custom-checkbox--checked' : ''}`}>
-                  {isChecked && (
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </div>
-                <input
-                  type="checkbox"
-                  style={{ display: 'none' }}
-                  checked={isChecked}
-                  onChange={() => setSelectedInsights(prev =>
-                    prev.includes(opt.id) ? prev.filter(x => x !== opt.id) : [...prev, opt.id]
-                  )}
-                />
-                <div className="audit-control-text">
-                  <span className="audit-control-id">{idCode}</span>
-                  <span className="audit-control-label">{labelText}</span>
-                </div>
+              <label key={opt.id} className={`audit-control-item ${isChecked ? 'audit-control-item--checked' : ''}`} style={{ '--item-delay': `${idx * 0.02}s` }}>
+                <div className={`audit-custom-checkbox ${isChecked ? 'audit-custom-checkbox--checked' : ''}`}>{isChecked && (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>)}</div>
+                <input type="checkbox" style={{ display: 'none' }} checked={isChecked} onChange={() => setSelectedInsights(prev => prev.includes(opt.id) ? prev.filter(x => x !== opt.id) : [...prev, opt.id])} />
+                <div className="audit-control-text"><span className="audit-control-id">{opt.id}</span><span className="audit-control-label">{opt.label.replace(opt.id + ' - ', '')}</span></div>
               </label>
             );
           })}
@@ -1254,40 +881,21 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
         <div className="audit-controls-footer">
           <label className="audit-notify-label">
-            <div className={`audit-custom-checkbox audit-notify-checkbox ${isNotifyEnabled ? 'audit-custom-checkbox--checked' : ''}`}>
-              {isNotifyEnabled && (
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              )}
-            </div>
+            <div className={`audit-custom-checkbox audit-notify-checkbox ${isNotifyEnabled ? 'audit-custom-checkbox--checked' : ''}`}>{isNotifyEnabled && (<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>)}</div>
             <input type="checkbox" style={{ display: 'none' }} checked={isNotifyEnabled} onChange={e => setIsNotifyEnabled(e.target.checked)} />
             <span className="audit-notify-text">Notify me when results are generated</span>
           </label>
-          <button
-            onClick={startAnalysis}
-            disabled={selectedInsights.length === 0}
-            className={`audit-start-btn ${selectedInsights.length === 0 ? 'audit-start-btn--disabled' : ''}`}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
-            Start Risk Analysis
-            {selectedInsights.length > 0 && <span className="audit-start-count">{selectedInsights.length}</span>}
-          </button>
+          <button onClick={startAnalysis} disabled={selectedInsights.length === 0} className={`audit-start-btn ${selectedInsights.length === 0 ? 'audit-start-btn--disabled' : ''}`}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>Start Risk Analysis {selectedInsights.length > 0 && <span className="audit-start-count">{selectedInsights.length}</span>}</button>
         </div>
       </div>
     </div>
   );
 
-
   const renderProcessingView = () => (
     <div style={{ textAlign: 'center', background: 'white', padding: '60px 40px', borderRadius: '24px', boxShadow: '0 20px 60px rgba(0,0,0,0.08)', width: '100%', maxWidth: '700px' }}>
       <div className="spinner" style={{ width: '60px', height: '60px', border: '5px solid #f1f5f9', borderTop: '5px solid #00df81', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 30px' }}></div>
-      <h2 style={{ color: '#05192d', fontSize: '28px', marginBottom: '10px' }}>
-        {isRestoring ? "Restoring Data..." : "Auditing Data..."}
-      </h2>
-      <p style={{ color: '#64748b', fontSize: '16px', marginBottom: '40px' }}>
-        {isRestoring ? "Fetching historical session data from archives." : "Executing control modules. This may take a moment for larger files."}
-      </p>
+      <h2 style={{ color: '#05192d', fontSize: '28px', marginBottom: '10px' }}>{isRestoring ? "Restoring Data..." : "Auditing Data..."}</h2>
+      <p style={{ color: '#64748b', fontSize: '16px', marginBottom: '40px' }}>{isRestoring ? "Fetching historical session data from archives." : "Executing control modules. This may take a moment for larger files."}</p>
 
       {!isRestoring && (
         <div style={{ textAlign: 'left', background: '#f8fafc', borderRadius: '16px', padding: '20px', border: '1px solid #edf2f7' }}>
@@ -1297,7 +905,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
               const insight = INSIGHT_OPTIONS.find(o => o.id === id);
               const isProcessing = history.find(h => h.moduleId === id && h.status === 'In Progress');
               const isDone = history.find(h => h.moduleId === id && (h.status === 'Success' || h.status === 'Failed'));
-
               return (
                 <div key={id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span style={{ fontSize: '14px', color: '#05192d', fontWeight: (isProcessing || isDone) ? '600' : '400' }}>{insight?.label}</span>
@@ -1315,31 +922,18 @@ const Uploader = ({ user, logo, handleLogout }) => {
   );
 
   const renderResultsView = () => {
-    // 1. STRICT MATCHING: Find the ONE exactly requested insight
     let activeInsight = null;
-    if (viewingInsightId) {
-      // Find by unique execution ID (Primary), fallback to generic module ID (if old cache)
-      activeInsight = activeAnalysisResults.find(r => r.id === viewingInsightId) || activeAnalysisResults.find(r => r.moduleId === viewingInsightId);
-    }
+    if (viewingInsightId) activeInsight = activeAnalysisResults.find(r => r.id === viewingInsightId) || activeAnalysisResults.find(r => r.moduleId === viewingInsightId);
 
-    // 2. PREVENT STACKING: If no exact match is found, force the user to select one instead of dumping all of them
     if (!activeInsight) {
       return (
         <div className="animate-in" style={{ width: '100%', maxWidth: '1200px', textAlign: 'center', padding: '80px 20px', background: 'white', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.05)' }}>
-          <div style={{ fontSize: '40px', marginBottom: '15px' }}>📊</div>
-          <h2 style={{ color: '#05192d', marginBottom: '10px' }}>No Insight Selected</h2>
-          <p style={{ color: '#64748b', marginBottom: '30px' }}>Please select a specific insight to view from your execution report.</p>
-          <button
-            onClick={() => navigate(`${basePath}/report`)}
-            style={{ padding: '12px 24px', background: '#00df81', color: '#05192d', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer', fontSize: '15px', boxShadow: '0 4px 12px rgba(0,223,129,0.3)' }}
-          >
-            ← Go to Execution Report
-          </button>
+          <div style={{ fontSize: '40px', marginBottom: '15px' }}>📊</div><h2 style={{ color: '#05192d', marginBottom: '10px' }}>No Insight Selected</h2><p style={{ color: '#64748b', marginBottom: '30px' }}>Please select a specific insight to view from your execution report.</p>
+          <button onClick={() => navigate(`${basePath}/report`)} style={{ padding: '12px 24px', background: '#00df81', color: '#05192d', border: 'none', borderRadius: '8px', fontWeight: '800', cursor: 'pointer', fontSize: '15px', boxShadow: '0 4px 12px rgba(0,223,129,0.3)' }}>← Go to Execution Report</button>
         </div>
       );
     }
 
-    // 3. PROCESS THE SINGLE INSIGHT (No more .map() loop!)
     const isMultiSheet = activeInsight.data && typeof activeInsight.data === 'object' && !Array.isArray(activeInsight.data);
     const sheets = isMultiSheet ? Object.keys(activeInsight.data) : [];
     const currentSheet = activeTabs[activeInsight.id] || (sheets.length > 0 ? sheets[0] : null);
@@ -1361,26 +955,10 @@ const Uploader = ({ user, logo, handleLogout }) => {
           const firstVal = Object.values(row)[0];
           const missingDateStr = row['Missing submit date'] || row['Missing Date'] || row['Date'] || firstVal || '';
           let year = '', month = '', dateVal = '', day = '';
-          if (missingDateStr) {
-            const d = new Date(missingDateStr);
-            if (!isNaN(d)) {
-              year = d.getFullYear();
-              month = d.toLocaleString('en-US', { month: 'short' });
-              dateVal = d.getDate();
-              day = d.toLocaleString('en-US', { weekday: 'long' });
-            }
-          }
-          return {
-            "Missing submit date": missingDateStr,
-            "Year": year,
-            "Month": month,
-            "Date": dateVal,
-            "Day": day
-          };
+          if (missingDateStr) { const d = new Date(missingDateStr); if (!isNaN(d)) { year = d.getFullYear(); month = d.toLocaleString('en-US', { month: 'short' }); dateVal = d.getDate(); day = d.toLocaleString('en-US', { weekday: 'long' }); } }
+          return { "Missing submit date": missingDateStr, "Year": year, "Month": month, "Date": dateVal, "Day": day };
         });
-      } else {
-        displayData = [];
-      }
+      } else { displayData = []; }
       currentExceptionName = "Missing Date Gaps";
     } else if (isMultiSheet) {
       displayData = activeInsight.data[currentSheet] || [];
@@ -1389,133 +967,144 @@ const Uploader = ({ user, logo, handleLogout }) => {
       displayData = activeInsight.data || [];
     }
 
-    // 4. RENDER EXACTLY ONE DASHBOARD
     return (
       <div className="animate-in" style={{ width: '100%', maxWidth: '1200px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
-
-        {/* TOP HEADER & NAVIGATION */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-          <div>
-            <h2 style={{ color: '#05192d', fontSize: '36px', fontWeight: '900', marginBottom: '4px', letterSpacing: '-0.5px' }}>
-              {activeInsight.name.split(" - ")[0]}
-            </h2>
-            <p style={{ color: '#64748b', fontSize: '18px', fontWeight: '500' }}>
-              {activeInsight.name.split(" - ")[1] || activeInsight.name}
-            </p>
-          </div>
-
+          <div><h2 style={{ color: '#05192d', fontSize: '36px', fontWeight: '900', marginBottom: '4px', letterSpacing: '-0.5px' }}>{activeInsight.name.split(" - ")[0]}</h2><p style={{ color: '#64748b', fontSize: '18px', fontWeight: '500' }}>{activeInsight.name.split(" - ")[1] || activeInsight.name}</p></div>
           <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-            {/* The Back Navigation Buttons you requested */}
             {currentViewMode === 'table' && (
               <div style={{ display: 'flex', gap: '10px', marginRight: '10px', paddingRight: '15px', borderRight: '2px solid #e2e8f0' }}>
-                <button
-                  onClick={() => navigate(`${basePath}/report`)}
-                  style={{ padding: '10px 16px', background: '#ffffff', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '13px', transition: 'all 0.2s ease' }}
-                  onMouseOver={(e) => { e.target.style.background = '#f8fafc'; e.target.style.color = '#05192d'; }}
-                  onMouseOut={(e) => { e.target.style.background = '#ffffff'; e.target.style.color = '#64748b'; }}
-                  title="Go back to the Execution Report history"
-                >
-                  ← Execution Report
-                </button>
-                <button
-                  onClick={() => navigate(`${basePath}/insight-selection`)}
-                  style={{ padding: '10px 16px', background: '#f1f5f9', color: '#05192d', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px', transition: 'all 0.2s ease' }}
-                  onMouseOver={(e) => e.target.style.background = '#e2e8f0'}
-                  onMouseOut={(e) => e.target.style.background = '#f1f5f9'}
-                  title="Go back to select new controls"
-                >
-                  ← Control Selection
-                </button>
+                <button onClick={() => navigate(`${basePath}/report`)} style={{ padding: '10px 16px', background: '#ffffff', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '13px', transition: 'all 0.2s ease' }} onMouseOver={(e) => { e.target.style.background = '#f8fafc'; e.target.style.color = '#05192d'; }} onMouseOut={(e) => { e.target.style.background = '#ffffff'; e.target.style.color = '#64748b'; }} title="Go back to the Execution Report history">← Execution Report</button>
+                <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ padding: '10px 16px', background: '#f1f5f9', color: '#05192d', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px', transition: 'all 0.2s ease' }} onMouseOver={(e) => e.target.style.background = '#e2e8f0'} onMouseOut={(e) => e.target.style.background = '#f1f5f9'} title="Go back to select new controls">← Control Selection</button>
               </div>
             )}
-
-            <div style={{ display: 'flex', gap: '12px' }}>
-              <button onClick={() => setCurrentViewMode("table")} style={getPremiumButtonStyle(currentViewMode === 'table')}>Table View</button>
-              <button onClick={() => setCurrentViewMode("dashboard")} style={getPremiumButtonStyle(currentViewMode === 'dashboard')}>Dashboard View</button>
-            </div>
+            <div style={{ display: 'flex', gap: '12px' }}><button onClick={() => setCurrentViewMode("table")} style={getPremiumButtonStyle(currentViewMode === 'table')}>Table View</button><button onClick={() => setCurrentViewMode("dashboard")} style={getPremiumButtonStyle(currentViewMode === 'dashboard')}>Dashboard View</button></div>
           </div>
         </div>
 
-        {/* INNER CONTENT WRAPPER */}
         <div style={{ background: 'white', padding: '30px', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
-
-          {/* PJPA24 Custom Tabs */}
           {activeInsight.moduleId === "PJPA24" && (
-            <>
-              <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                <button onClick={() => setPjpa24Type('Mod_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Mod_Z')}>Modified Z-Score</button>
-                <button onClick={() => setPjpa24Type('Std_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Std_Z')}>Standard Z-Score</button>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-                <button onClick={() => setPjpa24Category('Overall')} style={getPremiumButtonStyle(pjpa24Category === 'Overall')}>Overall Context</button>
-                <button onClick={() => setPjpa24Category('Emp')} style={getPremiumButtonStyle(pjpa24Category === 'Emp')}>By Employee</button>
-                <button onClick={() => setPjpa24Category('Loc')} style={getPremiumButtonStyle(pjpa24Category === 'Loc')}>By Location</button>
-                <button onClick={() => setPjpa24Category('RepDate')} style={getPremiumButtonStyle(pjpa24Category === 'RepDate')}>By Report Date</button>
-                <button onClick={() => setPjpa24Category('TransDate')} style={getPremiumButtonStyle(pjpa24Category === 'TransDate')}>By Transaction Date</button>
-              </div>
-            </>
+            <><div style={{ display: 'flex', gap: '10px', marginBottom: '15px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}><button onClick={() => setPjpa24Type('Mod_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Mod_Z')}>Modified Z-Score</button><button onClick={() => setPjpa24Type('Std_Z')} style={getPremiumButtonStyle(pjpa24Type === 'Std_Z')}>Standard Z-Score</button></div><div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}><button onClick={() => setPjpa24Category('Overall')} style={getPremiumButtonStyle(pjpa24Category === 'Overall')}>Overall Context</button><button onClick={() => setPjpa24Category('Emp')} style={getPremiumButtonStyle(pjpa24Category === 'Emp')}>By Employee</button><button onClick={() => setPjpa24Category('Loc')} style={getPremiumButtonStyle(pjpa24Category === 'Loc')}>By Location</button><button onClick={() => setPjpa24Category('RepDate')} style={getPremiumButtonStyle(pjpa24Category === 'RepDate')}>By Report Date</button><button onClick={() => setPjpa24Category('TransDate')} style={getPremiumButtonStyle(pjpa24Category === 'TransDate')}>By Transaction Date</button></div></>
           )}
 
-          {/* PJPA32 Custom Tabs */}
           {activeInsight.moduleId === "PJPA32" && (
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
-              <button onClick={() => setPjpa32SubView('holiday')} style={getPremiumButtonStyle(pjpa32SubView === 'holiday')}>Holiday Travel</button>
-              <button onClick={() => setPjpa32SubView('weekend')} style={getPremiumButtonStyle(pjpa32SubView === 'weekend')}>Weekend Travel</button>
-            </div>
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}><button onClick={() => setPjpa32SubView('holiday')} style={getPremiumButtonStyle(pjpa32SubView === 'holiday')}>Holiday Travel</button><button onClick={() => setPjpa32SubView('weekend')} style={getPremiumButtonStyle(pjpa32SubView === 'weekend')}>Weekend Travel</button></div>
           )}
 
-          {/* Generic Multi-Sheet Custom Tabs */}
           {activeInsight.moduleId !== "PJPA24" && activeInsight.moduleId !== "PJPA32" && activeInsight.moduleId !== "PJPA36" && isMultiSheet && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginBottom: '20px', background: '#f8fafc', padding: '8px', borderRadius: '12px', border: '1px solid #e2e8f0', width: 'fit-content' }}>
               {sheets.map(sheet => {
                 const formattedName = sheet.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                return (
-                  <button
-                    key={sheet}
-                    onClick={() => setActiveTabs(prev => ({ ...prev, [activeInsight.id]: sheet }))}
-                    style={getPremiumButtonStyle(currentSheet === sheet)}
-                  >
-                    {formattedName}
-                  </button>
-                );
+                return (<button key={sheet} onClick={() => setActiveTabs(prev => ({ ...prev, [activeInsight.id]: sheet }))} style={getPremiumButtonStyle(currentSheet === sheet)}>{formattedName}</button>);
               })}
             </div>
           )}
 
-          {/* THE ACTUAL DATA RENDERER */}
           {currentViewMode === "table" ? (
             <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
               {displayData.length > 0 ? (
                 <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
-                  <thead>
-                    <tr style={{ background: '#05192d', color: 'white' }}>
-                      {Object.keys(displayData[0]).map(k => <th key={k} style={{ padding: '16px 12px', textAlign: 'left', fontSize: '12px', background: '#05192d', position: 'sticky', top: '0', zIndex: '10', borderBottom: '2px solid #00df81', whiteSpace: 'nowrap' }}>{k}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {displayData.map((row, i) => (
-                      <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>
-                        {Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155', whiteSpace: 'nowrap' }}>{String(v)}</td>)}
-                      </tr>
-                    ))}
-                  </tbody>
+                  <thead><tr style={{ background: '#05192d', color: 'white' }}>{Object.keys(displayData[0]).map(k => <th key={k} style={{ padding: '16px 12px', textAlign: 'left', fontSize: '12px', background: '#05192d', position: 'sticky', top: '0', zIndex: '10', borderBottom: '2px solid #00df81', whiteSpace: 'nowrap' }}>{k}</th>)}</tr></thead>
+                  <tbody>{displayData.map((row, i) => (<tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>{Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155', whiteSpace: 'nowrap' }}>{String(v)}</td>)}</tr>))}</tbody>
                 </table>
-              ) : (
-                <div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '15px' }}>No exceptions identified for the selected insights in the data uploaded.</div>
-              )}
+              ) : (<div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '15px' }}>No exceptions identified for the selected insights in the data uploaded.</div>)}
             </div>
           ) : activeInsight.moduleId === "PJPA36" ? (
-            <PJPA36Dashboard
-              data={activeInsight.data}
-              insightName={activeInsight.name}
-            />
+            <PJPA36Dashboard data={activeInsight.data} insightName={activeInsight.name} />
           ) : (
-            <Dashboard
-              data={displayData}
-              onBackToTable={() => setCurrentViewMode("table")}
-              insightName={activeInsight.name}
-              exceptionName={currentExceptionName}
-            />
+            <Dashboard data={displayData} onBackToTable={() => setCurrentViewMode("table")} insightName={activeInsight.name} exceptionName={currentExceptionName} />
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderProfileModal = () => {
+    if (!isProfileModalOpen) return null;
+
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(5,25,45,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(4px)' }}>
+        <div className="animate-in" style={{ background: 'white', padding: '30px', borderRadius: '24px', maxWidth: '450px', width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', position: 'relative' }}>
+
+          {!isEditingProfile && (
+            <button onClick={() => { setTempProfile(profileData); setIsEditingProfile(true); }} style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1f5f9', border: 'none', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: '0.2s' }} onMouseOver={e => { e.currentTarget.style.background = '#e2e8f0'; e.currentTarget.style.color = '#05192d'; }} onMouseOut={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#64748b'; }} title="Edit Profile">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            </button>
+          )}
+
+          <div style={{ position: 'relative', width: '90px', height: '90px', margin: '0 auto 20px' }}>
+            {isEditingProfile ? (
+              <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: '#e2e8f0', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', border: '3px solid #00df81', position: 'relative' }}>
+                {tempProfile.avatar ? <img src={tempProfile.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👤'}
+                <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                </div>
+                <input type="file" accept="image/*" onChange={handleAvatarUpload} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }} />
+              </div>
+            ) : (
+              <div style={{ width: '90px', height: '90px', borderRadius: '50%', background: '#e2e8f0', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '36px', border: '3px solid #f1f5f9' }}>
+                {profileData.avatar ? <img src={profileData.avatar} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : '👤'}
+              </div>
+            )}
+          </div>
+
+          {isEditingProfile ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', marginBottom: '24px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Full Name</label>
+                <input type="text" value={tempProfile.fullName} onChange={e => setTempProfile({ ...tempProfile, fullName: e.target.value })} placeholder="John Doe" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', fontSize: '14px', outline: 'none' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Email Address</label>
+                <input type="email" value={tempProfile.email} onChange={e => setTempProfile({ ...tempProfile, email: e.target.value })} placeholder="john@example.com" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', fontSize: '14px', outline: 'none' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Phone Number</label>
+                <input type="text" value={tempProfile.phone} onChange={e => setTempProfile({ ...tempProfile, phone: e.target.value })} placeholder="+91 9876543210" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', fontSize: '14px', outline: 'none' }} />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '4px', textTransform: 'uppercase' }}>Address</label>
+                <textarea value={tempProfile.address} onChange={e => setTempProfile({ ...tempProfile, address: e.target.value })} placeholder="City, State" rows="2" style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid #cbd5e1', background: '#f8fafc', fontSize: '14px', outline: 'none', resize: 'none' }} />
+              </div>
+            </div>
+          ) : (
+            <>
+              <h2 style={{ color: '#05192d', marginBottom: '4px', fontSize: '22px' }}>{profileData.fullName || user?.username}</h2>
+              {profileData.email && <p style={{ color: '#64748b', fontSize: '13px', margin: '0 0 4px 0' }}>{profileData.email}</p>}
+              {profileData.phone && <p style={{ color: '#64748b', fontSize: '13px', margin: '0 0 16px 0' }}>{profileData.phone}</p>}
+
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', textAlign: 'left', marginBottom: '24px', border: '1px solid #edf2f7' }}>
+                {profileData.address && (
+                  <div style={{ marginBottom: '12px' }}>
+                    <span style={{ display: 'block', color: '#94a3b8', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase' }}>Address</span>
+                    <span style={{ color: '#334155', fontSize: '13px', fontWeight: '500' }}>{profileData.address}</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Role</span>
+                  <span style={{ color: '#05192d', fontSize: '13px', fontWeight: '800', textTransform: 'capitalize' }}>{user?.role}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                  <span style={{ color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Account Status</span>
+                  <span style={{ color: '#10b981', fontSize: '13px', fontWeight: '800' }}>Active ✅</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#64748b', fontSize: '13px', fontWeight: '600' }}>Workspace ID</span>
+                  <span style={{ color: '#05192d', fontSize: '13px', fontWeight: '800', fontFamily: 'monospace' }}>USR-{user?.id || '000'}</span>
+                </div>
+              </div>
+            </>
+          )}
+
+          {isEditingProfile ? (
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button onClick={handleSaveProfile} style={{ flex: 1, padding: '12px', background: '#00df81', color: '#05192d', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>Save Changes</button>
+              <button onClick={() => setIsEditingProfile(false)} style={{ flex: 1, padding: '12px', background: '#f1f5f9', color: '#64748b', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>Cancel</button>
+            </div>
+          ) : (
+            <button onClick={() => setIsProfileModalOpen(false)} style={{ width: '100%', padding: '12px', background: '#f1f5f9', color: '#05192d', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer', fontSize: '14px' }}>
+              Close
+            </button>
           )}
         </div>
       </div>
@@ -1632,7 +1221,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
                     {item.status === 'Success' ? (
                       <button
                         onClick={() => {
-                          setViewingInsightId(item.id); // FIX 6: Use exact item ID to view the correct result
+                          setViewingInsightId(item.id);
                           setCurrentViewMode('table');
                           navigate(`${basePath}/results`);
                         }}
@@ -1689,26 +1278,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
     return (
       <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
-
-        {/* ── TOAST NOTIFICATION ── */}
-        {toastMsg && (
-          <div style={{
-            position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
-            zIndex: 99999, pointerEvents: 'none',
-            background: toastMsg.type === 'warn' ? '#fffbeb' : '#fef2f2',
-            border: `1.5px solid ${toastMsg.type === 'warn' ? '#fcd34d' : '#fca5a5'}`,
-            color: toastMsg.type === 'warn' ? '#92400e' : '#b91c1c',
-            padding: '12px 24px', borderRadius: '12px',
-            fontWeight: '700', fontSize: '14px',
-            boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
-            display: 'flex', alignItems: 'center', gap: '8px',
-            animation: 'slideDown 0.25s ease-out',
-          }}>
-            <span>{toastMsg.type === 'warn' ? '⚠️' : '🚫'}</span>
-            {toastMsg.text}
-          </div>
-        )}
-
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>← Control Selection</button>
@@ -1725,8 +1294,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
             }} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Clear Report History</button>
           </div>
         </div>
-
-        {renderClearHistoryModal()}
 
         {history.length > 0 ? (
           <>
@@ -1763,22 +1330,127 @@ const Uploader = ({ user, logo, handleLogout }) => {
     );
   };
 
+  const renderPasswordModal = () => {
+    if (!isPasswordModalOpen) return null;
+    return (
+      <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(5,25,45,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, backdropFilter: 'blur(4px)' }}>
+        <div className="animate-in" style={{ background: 'white', padding: '40px', borderRadius: '24px', maxWidth: '400px', width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.2)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h2 style={{ color: '#05192d', margin: 0, fontSize: '24px' }}>Change Password</h2>
+            <button onClick={() => { setIsPasswordModalOpen(false); setPwdStatus({ type: '', msg: '' }); setPwdForm({ old: '', new: '', confirm: '' }); }} style={{ background: 'none', border: 'none', fontSize: '24px', color: '#94a3b8', cursor: 'pointer' }}>×</button>
+          </div>
+
+          <form onSubmit={handleChangePasswordSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#64748b', marginBottom: '6px' }}>Current Password</label>
+              <input type="password" value={pwdForm.old} onChange={(e) => setPwdForm({ ...pwdForm, old: e.target.value })} required style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: '14px', outline: 'none' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#64748b', marginBottom: '6px' }}>New Password</label>
+              <input type="password" value={pwdForm.new} onChange={(e) => setPwdForm({ ...pwdForm, new: e.target.value })} required style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: '14px', outline: 'none' }} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#64748b', marginBottom: '6px' }}>Confirm New Password</label>
+              <input type="password" value={pwdForm.confirm} onChange={(e) => setPwdForm({ ...pwdForm, confirm: e.target.value })} required style={{ width: '100%', padding: '12px 14px', borderRadius: '8px', border: '1.5px solid #e2e8f0', background: '#f8fafc', fontSize: '14px', outline: 'none' }} />
+            </div>
+
+            {pwdStatus.msg && (
+              <div style={{ padding: '10px', borderRadius: '8px', fontSize: '13px', fontWeight: '600', marginTop: '4px', background: pwdStatus.type === 'error' ? '#fef2f2' : '#f0fdf4', color: pwdStatus.type === 'error' ? '#ef4444' : '#10b981', border: `1px solid ${pwdStatus.type === 'error' ? '#fecaca' : '#bbf7d0'}` }}>
+                {pwdStatus.msg}
+              </div>
+            )}
+
+            <button type="submit" disabled={isChangingPwd} style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#00df81', color: '#05192d', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '14px', cursor: isChangingPwd ? 'default' : 'pointer', opacity: isChangingPwd ? 0.7 : 1 }}>
+              {isChangingPwd ? "Updating..." : "Update Password"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="up-page-wrapper">
       {renderNewSessionModal()}
-      <nav className="up-nav" style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '15px 0' }}>
+      {renderClearHistoryModal()}
+      {renderProfileModal()}
+      {renderPasswordModal()}
+
+      {/* ── GLOBAL TOAST NOTIFICATION ── */}
+      {toastMsg && (
+        <div style={{
+          position: 'fixed', top: '24px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 99999, pointerEvents: 'none',
+          background: toastMsg.type === 'success' ? '#f0fdf4' : toastMsg.type === 'warn' ? '#fffbeb' : '#fef2f2',
+          border: `1.5px solid ${toastMsg.type === 'success' ? '#bbf7d0' : toastMsg.type === 'warn' ? '#fcd34d' : '#fca5a5'}`,
+          color: toastMsg.type === 'success' ? '#166534' : toastMsg.type === 'warn' ? '#92400e' : '#b91c1c',
+          padding: '12px 24px', borderRadius: '12px',
+          fontWeight: '700', fontSize: '14px',
+          boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+          display: 'flex', alignItems: 'center', gap: '8px',
+          animation: 'slideDown 0.25s ease-out',
+        }}>
+          <span>{toastMsg.type === 'success' ? '✅' : toastMsg.type === 'warn' ? '⚠️' : '🚫'}</span>
+          {toastMsg.text}
+        </div>
+      )}
+
+      <nav className="up-nav" style={{ background: '#fff', borderBottom: '1px solid #e2e8f0', padding: '15px 0', position: 'relative', zIndex: 100 }}>
         <div className="up-inner-nav" style={{ maxWidth: '1400px', margin: '0 auto', width: '90%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <img src={ajalabsblack} alt="AjaLabs" className="nav-logo-aja" style={{ height: '35px' }} />
+
           <div className="nav-actions" style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
             <button onClick={() => setIsNewSessionModalOpen(true)} style={{ background: '#e2e8f0', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', color: '#05192d' }}>
               New Session
             </button>
-            <button onClick={handleReportToggle} style={{ background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer', color: view === 'report' ? '#00df81' : '#64748b' }}>{view === 'report' ? 'Close Report' : 'Report'}</button>
-            <button onClick={handleSignOutClick} style={{ border: 'none', background: 'none', color: '#ef4444', fontWeight: 'bold', cursor: 'pointer' }}>Sign Out</button>
+            <button onClick={handleReportToggle} style={{ background: 'none', border: 'none', fontWeight: 'bold', cursor: 'pointer', color: view === 'report' ? '#00df81' : '#64748b' }}>
+              {view === 'report' ? 'Close Report' : 'Report'}
+            </button>
+
+            <div
+              style={{ position: 'relative' }}
+              onMouseEnter={() => setIsProfileOpen(true)}
+              onMouseLeave={() => setIsProfileOpen(false)}
+            >
+              <button style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f8fafc', border: '1px solid #cbd5e1', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', color: '#05192d', transition: '0.2s' }}>
+                {profileData.avatar ? (
+                  <img src={profileData.avatar} alt="Profile" style={{ width: '20px', height: '20px', borderRadius: '50%', objectFit: 'cover' }} />
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                )}
+                {profileData.fullName ? profileData.fullName.split(' ')[0] : user?.username || 'Profile'}
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isProfileOpen ? 'rotate(180deg)' : 'rotate(0)', transition: '0.2s' }}><polyline points="6 9 12 15 18 9"></polyline></svg>
+              </button>
+
+              {isProfileOpen && (
+                <div className="animate-in" style={{ position: 'absolute', top: '100%', right: 0, paddingTop: '8px', width: '220px', zIndex: 100 }}>
+                  <div style={{ background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', overflow: 'hidden' }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
+                      <div style={{ fontSize: '11px', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Signed in as</div>
+                      <div style={{ fontSize: '14px', color: '#05192d', fontWeight: '800' }}>{profileData.fullName || user?.username}</div>
+                    </div>
+                    <div style={{ padding: '8px' }}>
+                      <button onClick={() => { setIsProfileOpen(false); setIsProfileModalOpen(true); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left', padding: '10px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#334155', fontWeight: '600', fontSize: '13px', transition: '0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                        <span style={{ fontSize: '16px' }}>👤</span> My Profile
+                      </button>
+                      <button onClick={() => { setIsProfileOpen(false); setIsPasswordModalOpen(true); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left', padding: '10px 12px', background: 'none', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#334155', fontWeight: '600', fontSize: '13px', transition: '0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#f1f5f9'} onMouseOut={e => e.currentTarget.style.background = 'none'}>
+                        <span style={{ fontSize: '16px' }}>🔒</span> Change Password
+                      </button>
+                      <div style={{ height: '1px', background: '#f1f5f9', margin: '4px 0' }} />
+                      <button onClick={handleSignOutClick} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', textAlign: 'left', padding: '10px 12px', background: '#fef2f2', border: 'none', borderRadius: '6px', cursor: 'pointer', color: '#ef4444', fontWeight: 'bold', fontSize: '13px', transition: '0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#fee2e2'} onMouseOut={e => e.currentTarget.style.background = '#fef2f2'}>
+                        <span style={{ fontSize: '16px' }}>🚪</span> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <img src={logo} alt="JK Cement" className="nav-logo-jk" style={{ height: '40px' }} />
           </div>
         </div>
       </nav>
+
       <div className="up-main-area" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', padding: '40px' }}>
         <Routes>
           <Route path="new-session" element={renderUploadView()} />

@@ -1,0 +1,1269 @@
+[
+  {
+    "timestamp": "2026-03-16T16:48:52.273539+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T16:49:01.885152+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T16:52:29.300251+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T16:52:36.982182+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T16:52:59.436130+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T16:53:05.297323+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T16:55:22.783623+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T16:55:50.025364+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:02.855714+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:15.218471+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA10"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:15.556381+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA10"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:26.290680+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA14"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:26.365145+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA14"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:30.476085+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA18"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:31.096210+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA18"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:45.736873+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA20"
+  },
+  {
+    "timestamp": "2026-03-16T16:56:46.064446+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA20"
+  },
+  {
+    "timestamp": "2026-03-16T16:57:28.931138+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T16:58:36.538548+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:01:50.965690+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:02:04.623201+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:02:13.110805+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:02:22.021628+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA10"
+  },
+  {
+    "timestamp": "2026-03-16T17:02:22.330475+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA10"
+  },
+  {
+    "timestamp": "2026-03-16T17:02:37.456088+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:03:14.150394+05:30",
+    "username": "uploader2",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:03:45.776430+05:30",
+    "username": "uploader2",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:05:44.869316+05:30",
+    "username": "uploader2",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:05:49.539088+05:30",
+    "username": "uploader2",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:06:01.081689+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:06:32.712973+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "USER_CREATED",
+    "details": "Created user 'Kavya' with role 'viewer'"
+  },
+  {
+    "timestamp": "2026-03-16T17:07:39.219985+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:08:50.166406+05:30",
+    "username": "Kavya",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:09:07.512898+05:30",
+    "username": "Kavya",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:09:19.635843+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:10:34.679382+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA19"
+  },
+  {
+    "timestamp": "2026-03-16T17:10:34.763507+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA19"
+  },
+  {
+    "timestamp": "2026-03-16T17:13:52.175295+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:15:02.623664+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:15:26.758579+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:23:45.026588+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, lineItemFile, empMasterFile, leftEmpFile"
+  },
+  {
+    "timestamp": "2026-03-16T17:24:04.180287+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:24:34.270120+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:20.588481+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:30.850859+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:35.098224+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA13"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:35.436122+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA13"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:36.742532+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA16"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:37.035032+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA16"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:37.677696+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA14"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:38.311982+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA14"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:38.968430+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA10"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:39.592222+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA10"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:40.528749+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA18"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:40.863244+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA18"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:42.096932+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA23"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:42.411480+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA23"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:43.169551+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA27"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:43.795033+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA27"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:44.219592+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA24"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:44.826698+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA24"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:46.575520+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA32"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:46.921251+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA32"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:47.816304+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA33"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:48.148469+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA33"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:49.429655+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA35"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:50.051917+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA35"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:51.069466+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA38"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:51.718101+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA38"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:52.624259+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA36"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:52.944580+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:54.113397+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA39"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:54.400617+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA39"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:54.873063+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA40"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:55.496916+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA40"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:56.432144+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA32"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:57.068795+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA32"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:57.744297+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA30"
+  },
+  {
+    "timestamp": "2026-03-16T17:34:58.071600+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA30"
+  },
+  {
+    "timestamp": "2026-03-16T17:37:29.673356+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:38:07.425017+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-16T17:46:25.233050+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:47:02.026004+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-16T17:48:33.862680+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: leftEmpFile"
+  },
+  {
+    "timestamp": "2026-03-16T17:49:10.771936+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile"
+  },
+  {
+    "timestamp": "2026-03-16T17:50:35.439714+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:50:52.594980+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:51:00.751177+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:51:04.730653+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA31"
+  },
+  {
+    "timestamp": "2026-03-16T17:51:05.062257+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA31"
+  },
+  {
+    "timestamp": "2026-03-16T17:51:08.541410+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA36"
+  },
+  {
+    "timestamp": "2026-03-16T17:51:08.828863+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed insight: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-16T17:51:13.121506+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:51:23.865692+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:51:39.329559+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:53:02.978331+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:53:11.321097+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:53:19.968675+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:54:08.724322+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:54:19.217223+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:55:23.860734+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:57:10.129374+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T17:57:19.252145+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T17:59:11.215972+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, lineItemFile, empMasterFile, leftEmpFile"
+  },
+  {
+    "timestamp": "2026-03-16T18:05:55.472679+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-16T18:08:46.175958+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, leftEmpFile, empMasterFile, lineItemFile"
+  },
+  {
+    "timestamp": "2026-03-16T18:09:53.368810+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA29"
+  },
+  {
+    "timestamp": "2026-03-16T18:10:38.233004+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA30"
+  },
+  {
+    "timestamp": "2026-03-16T18:11:45.565824+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-16T18:14:10.081570+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-16T18:14:21.893289+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T09:50:03.259547+05:30",
+    "username": "uploader2",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T10:37:40.539427+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T10:39:06.550282+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T10:39:18.883105+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T11:18:15.206659+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T11:38:24.157642+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T11:47:34.992424+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T11:47:43.466430+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T11:58:44.392312+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T12:04:43.794437+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T12:12:01.130666+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T12:42:31.547230+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T12:52:34.287165+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T13:18:37.559843+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T13:23:38.634135+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T13:24:36.376867+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-17T13:25:21.201247+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-17T13:25:23.543221+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile"
+  },
+  {
+    "timestamp": "2026-03-17T13:25:44.857761+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T14:21:25.151384+05:30",
+    "username": "Kavya",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T14:21:35.301341+05:30",
+    "username": "Kavya",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T14:21:46.876016+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T14:22:04.630945+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "USER_UPDATED",
+    "details": "Updated user 'uploader' \u2192 'uploader'"
+  },
+  {
+    "timestamp": "2026-03-17T15:16:18.621393+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "USER_DELETED",
+    "details": "Deleted user 'Kavya'"
+  },
+  {
+    "timestamp": "2026-03-17T15:17:41.693843+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "USER_UPDATED",
+    "details": "Updated user 'uploader2' \u2192 'U2'"
+  },
+  {
+    "timestamp": "2026-03-17T15:18:40.970628+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "USER_UPDATED",
+    "details": "Updated user 'U2' \u2192 'uploader02'"
+  },
+  {
+    "timestamp": "2026-03-17T15:45:57.861423+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T15:46:58.514933+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T15:47:45.893788+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T15:59:24.213512+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T16:12:05.519410+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "USER_CREATED",
+    "details": "Created user 'Rohan' with role 'uploader'"
+  },
+  {
+    "timestamp": "2026-03-17T16:56:08.803308+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T16:56:45.891057+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:00:06.508295+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:02:27.654264+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:02:39.397912+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:02:42.848802+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA22"
+  },
+  {
+    "timestamp": "2026-03-17T17:04:41.891597+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA31"
+  },
+  {
+    "timestamp": "2026-03-17T17:05:59.413658+05:30",
+    "username": "Rohan",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:06:29.860119+05:30",
+    "username": "Rohan",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:06:39.493189+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:09:50.406352+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:10:01.296435+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:10:13.003212+05:30",
+    "username": "reviewer",
+    "role": "reviewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:10:28.699211+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:10:32.321206+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA13"
+  },
+  {
+    "timestamp": "2026-03-17T17:16:59.674979+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:17:26.740894+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:19:29.148656+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-17T17:20:24.484072+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-17T17:24:27.994360+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-17T17:25:08.252116+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-17T17:25:14.637772+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:25:23.033455+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:26:31.023083+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:26:43.049212+05:30",
+    "username": "Rohan",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:27:32.810586+05:30",
+    "username": "Rohan",
+    "role": "uploader",
+    "action": "SAVE_SESSION",
+    "details": "Saved session: "
+  },
+  {
+    "timestamp": "2026-03-17T17:27:53.092778+05:30",
+    "username": "Rohan",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:28:03.011670+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:28:43.662751+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:28:51.684973+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:36:31.317582+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:36:39.600883+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA31 from session session_20260314_143459"
+  },
+  {
+    "timestamp": "2026-03-17T17:37:23.522839+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:37:36.495181+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:39:04.910111+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile"
+  },
+  {
+    "timestamp": "2026-03-17T17:39:58.817595+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-17T17:40:13.780570+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-17T17:40:24.372169+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-17T17:40:45.629454+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  }
+]
