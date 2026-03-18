@@ -7,30 +7,21 @@ import PJPA32Dashboard from "./PJPA32Dashboard";
 const API = "http://localhost:5000";
 
 const INSIGHT_CATALOG = [
+  // Employee
   { id: "PJPA10", name: "Junior/Senior Analysis", category: "Employee", icon: "👤", desc: "Compares expense patterns between junior and senior employees." },
-  { id: "PJPA13", name: "Policy Validation", category: "Policy", icon: "📋", desc: "Validates submitted expenses against company travel policy." },
-  { id: "PJPA14", name: "Duplicate Claims", category: "Fraud", icon: "🔁", desc: "Detects identical or near-identical expense claims." },
-  { id: "PJPA16", name: "Duplicate Employee", category: "Employee", icon: "👥", desc: "Identifies duplicate entries in the employee master." },
-  { id: "PJPA18", name: "Multiple Submits", category: "Fraud", icon: "📤", desc: "Flags employees who submit the same report multiple times." },
-  { id: "PJPA19", name: "Multiple Travel Modes", category: "Travel", icon: "✈️", desc: "Detects trips using conflicting transportation modes." },
-  { id: "PJPA20", name: "Odd Time Submission", category: "Fraud", icon: "🕐", desc: "Flags expense reports submitted at unusual hours." },
-  { id: "PJPA21", name: "Overlapping Travel Dates", category: "Travel", icon: "📅", desc: "Identifies employees with overlapping travel schedules." },
-  { id: "PJPA22", name: "Cross-Employee Duplicate", category: "Fraud", icon: "⚡", desc: "Detects duplicated claims submitted by different employees." },
-  { id: "PJPA23", name: "Submit Before Start", category: "Policy", icon: "⏩", desc: "Flags claims submitted before the travel start date." },
-  { id: "PJPA24", name: "Z-Score Anomalies", category: "Stats", icon: "📊", desc: "Statistical outlier detection using Z-score analysis." },
   { id: "PJPA27", name: "Notice Period Claims", category: "Employee", icon: "📄", desc: "Expense claims during employee notice period." },
-  { id: "PJPA28", name: "Benford's Law", category: "Stats", icon: "🔢", desc: "Applies Benford's Law to detect amount manipulation." },
-  { id: "PJPA29", name: "New Joiner Claims", category: "Employee", icon: "🆕", desc: "Anomalous claims from recently joined employees." },
-  { id: "PJPA30", name: "Short Trip Abuse", category: "Travel", icon: "🏃", desc: "Short trips with disproportionately high expenses." },
-  { id: "PJPA31", name: "Structural Splitting", category: "Fraud", icon: "✂️", desc: "Detects expense splitting to stay under approval limits." },
-  { id: "PJPA32", name: "Holiday/Weekend Travel", category: "Travel", icon: "🏖️", desc: "Trips claimed on holidays or weekends." },
-  { id: "PJPA33", name: "Bulk Booker", category: "Travel", icon: "📦", desc: "Employees booking travel in unusually large batches." },
-  { id: "PJPA34", name: "Low Value Claims", category: "Fraud", icon: "💰", desc: "High-frequency low-value claims to avoid detection." },
+  // Policy
+  { id: "PJPA13", name: "Policy Validation", category: "Policy", icon: "📋", desc: "Validates submitted expenses against company travel policy." },
   { id: "PJPA35", name: "Duplicate Report IDs", category: "Policy", icon: "🆔", desc: "Reports with identical IDs indicating data integrity issues." },
+  // Fraud
+  { id: "PJPA14", name: "Duplicate Claims", category: "Fraud", icon: "🔁", desc: "Detects identical or near-identical expense claims." },
+  { id: "PJPA31", name: "Structural Splitting", category: "Fraud", icon: "✂️", desc: "Detects expense splitting to stay under approval limits." },
+  // Travel
+  { id: "PJPA32", name: "Holiday/Weekend Travel", category: "Travel", icon: "🏖️", desc: "Trips claimed on holidays or weekends." },
   { id: "PJPA36", name: "Missing Days", category: "Travel", icon: "❓", desc: "Travel days missing from expense reports." },
-  { id: "PJPA38", name: "Odd Travels", category: "Travel", icon: "🌍", desc: "Unusual travel destinations flagged by rarity analysis." },
-  { id: "PJPA39", name: "Active with Sep Date", category: "Employee", icon: "⚠️", desc: "Active employees with a recorded separation date." },
-  { id: "PJPA40", name: "Transaction Date Anomaly", category: "Policy", icon: "🗓️", desc: "Expenses with transaction dates outside the travel window." },
+  // Stats
+  { id: "PJPA24", name: "Z-Score Anomalies", category: "Stats", icon: "📊", desc: "Statistical outlier detection using Z-score analysis." },
+  { id: "PJPA28", name: "Benford's Law", category: "Stats", icon: "🔢", desc: "Applies Benford's Law to detect amount manipulation." },
 ];
 
 const CATEGORIES = ["All", ...Array.from(new Set(INSIGHT_CATALOG.map(i => i.category)))];
@@ -48,14 +39,14 @@ const Viewer = ({ user, logo, ajalabsblack, handleLogout }) => {
 
   const [sessions, setSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState("");
-  
+
   // Dashboard/Sub-view states
   const [dataViewMode, setDataViewMode] = useState("table"); // 'table' | 'dashboard'
   const [pjpa32SubView, setPjpa32SubView] = useState('holiday');
   const [pjpa24Type, setPjpa24Type] = useState('Mod_Z');
   const [pjpa24Category, setPjpa24Category] = useState('Overall');
   const [activeTabs, setActiveTabs] = useState({}); // { insightId: activeSheetName }
-  
+
   useEffect(() => {
     fetch(`${API}/api/sessions`, {
       headers: { "X-Username": user?.username || "viewer" }
@@ -140,13 +131,13 @@ const Viewer = ({ user, logo, ajalabsblack, handleLogout }) => {
 
   const renderData = () => {
     if (!insightData) return null;
-    
+
     // Handle PJPA32 Table View
     if (selectedInsight.id === "PJPA32") {
       const rows = insightData[pjpa32SubView] || [];
       return renderTable(rows);
     }
-    
+
     // Handle PJPA24 Table View
     if (selectedInsight.id === "PJPA24") {
       const sheetName = `${pjpa24Type}_${pjpa24Category}`;
@@ -221,7 +212,7 @@ const Viewer = ({ user, logo, ajalabsblack, handleLogout }) => {
 
   const renderDashboardContent = () => {
     if (!insightData || !selectedInsight) return null;
-    
+
     if (selectedInsight.id === "PJPA36") {
       return <PJPA36Dashboard data={insightData} insightName={selectedInsight.name} />;
     }
@@ -282,9 +273,9 @@ const Viewer = ({ user, logo, ajalabsblack, handleLogout }) => {
 
         <div className="vw-topbar-right">
           <div className="vw-session-select-wrap" style={{ marginRight: '16px' }}>
-            <select 
-              className="vw-session-select" 
-              value={activeSessionId} 
+            <select
+              className="vw-session-select"
+              value={activeSessionId}
               onChange={e => {
                 setActiveSessionId(e.target.value);
                 setInsightData(null);
@@ -359,8 +350,8 @@ const Viewer = ({ user, logo, ajalabsblack, handleLogout }) => {
               {cat !== "All" && <span className="vw-cat-dot" style={{ background: CATEGORY_COLORS[cat] }} />}
               <span>{cat}</span>
               <span className="vw-cat-count">
-                {cat === "All" 
-                  ? INSIGHT_CATALOG.filter(i => generatedInsightIds.includes(i.id)).length 
+                {cat === "All"
+                  ? INSIGHT_CATALOG.filter(i => generatedInsightIds.includes(i.id)).length
                   : INSIGHT_CATALOG.filter(i => i.category === cat && generatedInsightIds.includes(i.id)).length}
               </span>
             </button>
@@ -392,12 +383,12 @@ const Viewer = ({ user, logo, ajalabsblack, handleLogout }) => {
             ) : filtered.map(item => {
               const color = CATEGORY_COLORS[item.category] || "#94a3b8";
               const isGenerated = generatedInsightIds.includes(item.id);
-              
+
               return (
                 <div
                   key={item.id}
                   className={`vw-insight-card ${selectedInsight?.id === item.id ? "selected" : ""} ${!isGenerated ? "vw-insight-disabled" : ""}`}
-                  style={{ 
+                  style={{
                     "--cc": color,
                     opacity: isGenerated ? 1 : 0.6,
                     cursor: isGenerated ? 'pointer' : 'default'
@@ -438,12 +429,12 @@ const Viewer = ({ user, logo, ajalabsblack, handleLogout }) => {
               <div className="vw-drawer-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                 {!dataLoading && !dataError && insightData && (
                   <div className="vw-data-mode-toggle" style={{ display: 'flex', background: '#f1f5f9', padding: '4px', borderRadius: '8px' }}>
-                    <button 
+                    <button
                       className={`vw-dmt-btn ${dataViewMode === 'table' ? 'active' : ''}`}
                       onClick={() => setDataViewMode('table')}
                       style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', background: dataViewMode === 'table' ? '#fff' : 'transparent', boxShadow: dataViewMode === 'table' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none' }}
                     >Table</button>
-                    <button 
+                    <button
                       className={`vw-dmt-btn ${dataViewMode === 'dashboard' ? 'active' : ''}`}
                       onClick={() => setDataViewMode('dashboard')}
                       style={{ padding: '6px 12px', borderRadius: '6px', border: 'none', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer', background: dataViewMode === 'dashboard' ? '#fff' : 'transparent', boxShadow: dataViewMode === 'dashboard' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none' }}

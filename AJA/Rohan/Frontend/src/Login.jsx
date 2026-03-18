@@ -88,16 +88,9 @@ const Login = ({
     const result = await handleDirectLogin({
       username: adminCreds.username.trim(),
       password: adminCreds.password,
-    });
+    }, "admin");
 
-    if (result.success) {
-      if (result.data.role !== "admin") {
-        // Non-admin authenticated but tried the admin portal — block + log out
-        setAdminError("Access denied — this portal is for admins only.");
-        setAdminAuthenticating(false);
-      }
-      // If admin: App.jsx already called setUser + navigate, component unmounts
-    } else {
+    if (!result.success) {
       setAdminError(result.message || "Invalid admin credentials.");
       setAdminAuthenticating(false);
     }
@@ -133,7 +126,7 @@ const Login = ({
               </div>
 
               <div className="lp-role-chips">
-                {["Uploader", "Reviewer", "Viewer"].map(r => (
+                {["Uploader", "Viewer"].map(r => (
                   <span key={r} className="lp-role-chip">{r}</span>
                 ))}
               </div>

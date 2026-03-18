@@ -370,46 +370,77 @@ const Uploader = ({ user, logo, handleLogout }) => {
   };
 
   const handleLoadSession = async (sessionId) => {
-    try {
-      setIsRestoring(true);
-      navigate(`${basePath}/processing`);
-      const session = savedSessions.find(s => s.id === sessionId);
-      if (!session) return;
+    const session = savedSessions.find(s => s.id === sessionId);
+    if (!session) return;
 
-      const loadedResults = [];
-      for (const insightId of session.insights) {
-        const res = await fetch(`http://localhost:5000/api/sessions/${sessionId}/${insightId}/data`, { headers: authHeaders });
-        if (res.ok) {
+    // 1. INSTANTLY create placeholder rows so the table renders immediately
+    const placeholders = session.insights.map(insightId => ({
+      id: insightId + "_" + Date.now() + Math.random(),
+      moduleId: insightId,
+      name: INSIGHT_OPTIONS.find(o => o.id === insightId)?.label || insightId,
+      status: "Refreshing...", // This triggers your blue spinner UI
+      reason: `Restoring from: ${session.name}`,
+      missingFiles: [],
+      data: [],
+      timestamp: session.timestamp,
+      isRestored: true,
+      sessionId: sessionId
+    }));
+
+    // Push placeholders to history so the "Restored" section exists instantly
+    setHistory(prev => [...placeholders, ...prev].slice(0, 50));
+
+    // 2. Go to processing screen
+    setIsRestoring(true);
+    navigate(`${basePath}/processing`);
+
+    // 3. Wait exactly 5 seconds, then move to the report screen
+    setTimeout(() => {
+      setIsRestoring(false); 
+      navigate(`${basePath}/report`);
+
+      // Smoothly auto-scroll to the guaranteed-to-exist table!
+      setTimeout(() => {
+        document.getElementById('restored-historical-insights')?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+      }, 150); 
+    }, 5000);
+
+    // 4. Define the background restoration loop
+    const runBackgroundRestore = async () => {
+      for (const placeholder of placeholders) {
+        try {
+          const res = await fetch(`http://localhost:5000/api/sessions/${sessionId}/${placeholder.moduleId}/data`, { headers: authHeaders });
+          if (!res.ok) throw new Error("Failed to fetch");
+
           const dataJson = await res.json();
-          loadedResults.push({
-            id: insightId + "_" + Date.now() + Math.random(),
-            moduleId: insightId,
-            name: INSIGHT_OPTIONS.find(o => o.id === insightId)?.label || insightId,
-            status: "Success",
-            reason: `Restored from: ${session.name}`,
-            missingFiles: [],
-            data: dataJson.data || [],
-            timestamp: session.timestamp,
-            isRestored: true,
-            sessionId: sessionId
+          const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
+
+          // Build the final success item
+          const successItem = { ...placeholder, status: "Success", reason: `Restored from: ${session.name}`, data: extractedData };
+
+          // Apply to global analysis results
+          setActiveAnalysisResults(prev => {
+            const updated = [...prev.filter(p => !(p.moduleId === placeholder.moduleId && p.sessionId === sessionId)), successItem];
+            safelyPersistResults(updated);
+            return updated;
           });
+
+          // Update this specific row in the table to "Success"
+          setHistory(prev => prev.map(item => item.id === placeholder.id ? successItem : item));
+
+        } catch (e) {
+          // If it fails, update this specific row to "Failed"
+          const failItem = { ...placeholder, status: "In-Active", reason: "Failed to load session data." };
+          setHistory(prev => prev.map(item => item.id === placeholder.id ? failItem : item));
         }
       }
+    };
 
-      setActiveAnalysisResults(prev => {
-        const newResults = [...prev.filter(p => !loadedResults.find(l => l.moduleId === p.moduleId && p.sessionId === l.sessionId)), ...loadedResults];
-        safelyPersistResults(newResults);
-        return newResults;
-      });
-
-      setHistory(prev => [...loadedResults, ...prev].slice(0, 50));
-      navigate(`${basePath}/report`);
-    } catch (e) {
-      alert("Failed to load session data");
-      navigate(`${basePath}/report`);
-    } finally {
-      setIsRestoring(false);
-    }
+    // 5. Fire the loop without awaiting it so it runs silently in the background
+    runBackgroundRestore();
   };
 
   const handleFileChange = (e, fileKey) => {
@@ -461,14 +492,20 @@ const Uploader = ({ user, logo, handleLogout }) => {
   };
 
   const startAnalysis = async () => {
+    // 1. Instantly go to processing screen
     navigate(`${basePath}/processing`);
-    const currentReports = [];
+    
+    // 2. Wait exactly 5 seconds, then move to the report screen
+    setTimeout(() => {
+      navigate(`${basePath}/report`);
+    }, 5000);
+
+    const currentReports = []; 
     const toRun = [];
 
     selectedInsights.forEach(insightId => {
       const insight = INSIGHT_OPTIONS.find(o => o.id === insightId);
       const missingFiles = insight.req.filter(reqFile => !files[reqFile]);
-
       if (missingFiles.length > 0) {
         currentReports.push({ id: insight.id + "_" + Date.now() + Math.random(), moduleId: insight.id, name: insight.label, status: "Failed", reason: `Missing Data: ${FILE_TYPES.find(f => f.key === missingFiles[0])?.label || missingFiles[0]}`, missingFiles: missingFiles, data: [], timestamp: new Date().toISOString(), isRestored: false });
       } else {
@@ -480,38 +517,36 @@ const Uploader = ({ user, logo, handleLogout }) => {
     const reportsToUpdate = [...currentReports];
     setHistory(prev => [...reportsToUpdate, ...prev].slice(0, 50));
 
-    for (const insightId of toRun) {
-      const insightDef = INSIGHT_OPTIONS.find(o => o.id === insightId);
-      try {
-        const genRes = await fetch("http://localhost:5000/api/generate", {
-          method: "POST", headers: authHeaders, body: JSON.stringify({ insights: [insightId] })
-        });
-        if (!genRes.ok) throw new Error("Generation failed");
+    // 3. Define the background processing loop
+    const runBackgroundProcessing = async () => {
+      for (const insightId of toRun) {
+        const insightDef = INSIGHT_OPTIONS.find(o => o.id === insightId);
+        try {
+          const genRes = await fetch("http://localhost:5000/api/generate", { method: "POST", headers: authHeaders, body: JSON.stringify({ insights: [insightId] }) });
+          if (!genRes.ok) throw new Error("Generation failed");
 
-        const dataRes = await fetch(`http://localhost:5000/api/insight/${insightId}/data`, { headers: authHeaders });
-        if (!dataRes.ok) throw new Error("Data retrieval failed");
+          const dataRes = await fetch(`http://localhost:5000/api/insight/${insightId}/data`, { headers: authHeaders });
+          if (!dataRes.ok) throw new Error("Data retrieval failed");
 
-        const dataJson = await dataRes.json();
-        const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
+          const dataJson = await dataRes.json();
+          const extractedData = Array.isArray(dataJson) ? dataJson : (dataJson.data || []);
+          const successItem = { id: insightId + "_" + Date.now() + Math.random(), moduleId: insightId, name: insightDef.label, status: "Success", reason: "", missingFiles: [], data: extractedData, timestamp: new Date().toISOString(), isRestored: false };
 
-        const successItem = { id: insightId + "_" + Date.now() + Math.random(), moduleId: insightId, name: insightDef.label, status: "Success", reason: "", missingFiles: [], data: extractedData, timestamp: new Date().toISOString(), isRestored: false };
-
-        setActiveAnalysisResults(prev => {
-          const updated = [...prev.filter(p => !(p.moduleId === insightId && !p.isRestored)), successItem];
-          safelyPersistResults(updated);
-          return updated;
-        });
-
-        setHistory(prev => prev.map(item => (item.moduleId === insightId && item.status === "In Progress") ? successItem : item));
-
-      } catch (err) {
-        const failItem = { id: insightId + "_" + Date.now() + Math.random(), moduleId: insightId, name: insightDef.label, status: "In-Active", reason: "Processing error.", missingFiles: [], data: [], timestamp: new Date().toISOString(), isRestored: false };
-        setHistory(prev => prev.map(item => (item.moduleId === insightId && item.status === "In Progress") ? failItem : item));
+          setActiveAnalysisResults(prev => {
+            const updated = [...prev.filter(p => !(p.moduleId === insightId && !p.isRestored)), successItem];
+            safelyPersistResults(updated); return updated;
+          });
+          setHistory(prev => prev.map(item => (item.moduleId === insightId && item.status === "In Progress") ? successItem : item));
+        } catch (err) {
+          const failItem = { id: insightId + "_" + Date.now() + Math.random(), moduleId: insightId, name: insightDef.label, status: "In-Active", reason: "Processing error.", missingFiles: [], data: [], timestamp: new Date().toISOString(), isRestored: false };
+          setHistory(prev => prev.map(item => (item.moduleId === insightId && item.status === "In Progress") ? failItem : item));
+        }
       }
-    }
+      if (isNotifyEnabled && reportsToUpdate.some(r => r.status === "Success")) alert("Audit session completed.");
+    };
 
-    if (isNotifyEnabled && reportsToUpdate.some(r => r.status === "Success")) alert("Audit session completed.");
-    navigate(`${basePath}/report`);
+    // 4. Fire the loop without awaiting it so it runs silently in the background
+    runBackgroundProcessing();
   };
 
   const handleInlineUploadOnly = async (e, reportItem, fileKey) => {
@@ -519,10 +554,20 @@ const Uploader = ({ user, logo, handleLogout }) => {
     if (!file) return;
 
     try {
-      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: `Uploading...` } : item));
+      // 1. Instantly mark ALL failed insights waiting for THIS specific file as "Uploading..."
+      setHistory(prev => prev.map(item => 
+        (item.status === 'Failed' && item.missingFiles?.includes(fileKey)) 
+          ? { ...item, reason: `Uploading file...` } 
+          : item
+      ));
+
       const formData = new FormData();
       formData.append(fileKey, file);
 
+      // 2. Predict the new files state locally so we can evaluate what is still missing
+      const newFilesState = { ...files, [fileKey]: file };
+
+      // Update the global file state so ALL UI buttons update to "✅ Ready"
       setFiles((prev) => {
         const updated = { ...prev, [fileKey]: file };
         const mockFiles = {};
@@ -531,12 +576,45 @@ const Uploader = ({ user, logo, handleLogout }) => {
         return updated;
       });
 
-      const uploadRes = await fetch("http://localhost:5000/api/upload", { method: "POST", headers: { "X-Username": user?.username || "default" }, body: formData });
+      // 3. Upload the file to the backend
+      const uploadRes = await fetch("http://localhost:5000/api/upload", { 
+        method: "POST", 
+        headers: { "X-Username": user?.username || "default" }, 
+        body: formData 
+      });
       if (!uploadRes.ok) throw new Error("Upload failed");
 
-      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Missing Data Pending" } : item));
+      // 4. Update the visual text: "Pending" or "Starting automatically"
+      setHistory(prev => prev.map(item => {
+        if (item.status === 'Failed' && item.missingFiles?.includes(fileKey)) {
+          const stillMissing = item.missingFiles.filter(reqFile => !newFilesState[reqFile]);
+          if (stillMissing.length > 0) {
+            return { ...item, reason: "Pending other missing files" };
+          }
+          return { ...item, reason: "Starting automatically..." };
+        }
+        return item;
+      }));
+
+      // 5. Automatically launch retries for ALL fully unblocked insights across the board!
+      history.forEach(item => {
+        if (item.status === 'Failed' && item.missingFiles?.includes(fileKey)) {
+          const stillMissing = item.missingFiles.filter(reqFile => !newFilesState[reqFile]);
+          if (stillMissing.length === 0) {
+            // Slight delay so the user can actually read "Starting automatically..."
+            setTimeout(() => {
+              handleRetryProcessing(item);
+            }, 600);
+          }
+        }
+      });
+
     } catch (err) {
-      setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, reason: "Upload failed. Try again." } : item));
+      setHistory(prev => prev.map(item => 
+        (item.status === 'Failed' && item.missingFiles?.includes(fileKey)) 
+          ? { ...item, reason: "Upload failed. Try again." } 
+          : item
+      ));
     }
   };
 
@@ -599,6 +677,33 @@ const Uploader = ({ user, logo, handleLogout }) => {
         setHistory(prev => prev.map(item => item.id === reportItem.id ? { ...item, status: "In-Active", reason: "Refresh failed." } : item));
       }
     });
+  };
+
+  // --- NEW: GLOBAL RETRY FUNCTION ---
+  const handleGlobalRetry = () => {
+    const failedItems = history.filter(item => item.status === 'Failed' || item.status === 'In-Active');
+    let retriedCount = 0;
+
+    failedItems.forEach(item => {
+      // Find the requirements for this specific insight
+      const insightDef = INSIGHT_OPTIONS.find(o => o.id === item.moduleId);
+      if (!insightDef) return;
+      
+      // Check if the required files are currently uploaded
+      const stillMissing = insightDef.req.filter(reqFile => !files[reqFile]);
+      
+      // If nothing is missing, launch the retry!
+      if (stillMissing.length === 0) {
+        handleRetryProcessing(item);
+        retriedCount++;
+      }
+    });
+
+    if (retriedCount === 0) {
+      showToast("No failed controls are ready to retry (check missing files).", "warn");
+    } else {
+      showToast(`Retrying ${retriedCount} control(s)...`, "success");
+    }
   };
 
   const handleSignOutClick = () => {
@@ -967,6 +1072,30 @@ const Uploader = ({ user, logo, handleLogout }) => {
       displayData = activeInsight.data || [];
     }
 
+    // --- CSV DOWNLOAD HANDLER ---
+    const handleDownloadCSV = () => {
+      if (!displayData || displayData.length === 0) return;
+      
+      const headers = Object.keys(displayData[0]);
+      const csvRows = displayData.map(row => 
+        headers.map(fieldName => JSON.stringify(row[fieldName] ?? '')).join(',')
+      );
+      
+      const csvString = [headers.join(','), ...csvRows].join('\r\n');
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const safeName = (currentExceptionName || 'data').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      link.setAttribute('download', `${activeInsight.moduleId}_${safeName}.csv`);
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+    // -----------------------------
+
     return (
       <div className="animate-in" style={{ width: '100%', maxWidth: '1200px', display: 'flex', flexDirection: 'column', gap: '30px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -975,7 +1104,6 @@ const Uploader = ({ user, logo, handleLogout }) => {
             {currentViewMode === 'table' && (
               <div style={{ display: 'flex', gap: '10px', marginRight: '10px', paddingRight: '15px', borderRight: '2px solid #e2e8f0' }}>
                 <button onClick={() => navigate(`${basePath}/report`)} style={{ padding: '10px 16px', background: '#ffffff', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: '600', cursor: 'pointer', fontSize: '13px', transition: 'all 0.2s ease' }} onMouseOver={(e) => { e.target.style.background = '#f8fafc'; e.target.style.color = '#05192d'; }} onMouseOut={(e) => { e.target.style.background = '#ffffff'; e.target.style.color = '#64748b'; }} title="Go back to the Execution Report history">← Execution Report</button>
-                <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ padding: '10px 16px', background: '#f1f5f9', color: '#05192d', border: '1px solid #cbd5e1', borderRadius: '8px', fontWeight: '700', cursor: 'pointer', fontSize: '13px', transition: 'all 0.2s ease' }} onMouseOver={(e) => e.target.style.background = '#e2e8f0'} onMouseOut={(e) => e.target.style.background = '#f1f5f9'} title="Go back to select new controls">← Control Selection</button>
               </div>
             )}
             <div style={{ display: 'flex', gap: '12px' }}><button onClick={() => setCurrentViewMode("table")} style={getPremiumButtonStyle(currentViewMode === 'table')}>Table View</button><button onClick={() => setCurrentViewMode("dashboard")} style={getPremiumButtonStyle(currentViewMode === 'dashboard')}>Dashboard View</button></div>
@@ -1001,13 +1129,26 @@ const Uploader = ({ user, logo, handleLogout }) => {
           )}
 
           {currentViewMode === "table" ? (
-            <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
-              {displayData.length > 0 ? (
-                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
-                  <thead><tr style={{ background: '#05192d', color: 'white' }}>{Object.keys(displayData[0]).map(k => <th key={k} style={{ padding: '16px 12px', textAlign: 'left', fontSize: '12px', background: '#05192d', position: 'sticky', top: '0', zIndex: '10', borderBottom: '2px solid #00df81', whiteSpace: 'nowrap' }}>{k}</th>)}</tr></thead>
-                  <tbody>{displayData.map((row, i) => (<tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>{Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155', whiteSpace: 'nowrap' }}>{String(v)}</td>)}</tr>))}</tbody>
-                </table>
-              ) : (<div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '15px' }}>No exceptions identified for the selected insights in the data uploaded.</div>)}
+            <div>
+              {/* --- CSV DOWNLOAD BUTTON --- */}
+              {displayData.length > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+                  <button onClick={handleDownloadCSV} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 16px', background: '#05192d', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px', transition: '0.2s', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }} onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                    Download CSV
+                  </button>
+                </div>
+              )}
+              {/* --------------------------- */}
+              
+              <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
+                {displayData.length > 0 ? (
+                  <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
+                    <thead><tr style={{ background: '#05192d', color: 'white' }}>{Object.keys(displayData[0]).map(k => <th key={k} style={{ padding: '16px 12px', textAlign: 'left', fontSize: '12px', background: '#05192d', position: 'sticky', top: '0', zIndex: '10', borderBottom: '2px solid #00df81', whiteSpace: 'nowrap' }}>{k}</th>)}</tr></thead>
+                    <tbody>{displayData.map((row, i) => (<tr key={i} style={{ borderBottom: '1px solid #f1f5f9', background: i % 2 === 0 ? '#ffffff' : '#f8fafc' }}>{Object.values(row).map((v, j) => <td key={j} style={{ padding: '12px', fontSize: '13px', color: '#334155', whiteSpace: 'nowrap' }}>{String(v)}</td>)}</tr>))}</tbody>
+                  </table>
+                ) : (<div style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '15px' }}>No exceptions identified for the selected insights in the data uploaded.</div>)}
+              </div>
             </div>
           ) : activeInsight.moduleId === "PJPA36" ? (
             <PJPA36Dashboard data={activeInsight.data} insightName={activeInsight.name} />
@@ -1173,8 +1314,12 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
   const renderHistoryTable = (historyData, title) => {
     if (historyData.length === 0) return null;
+
+    // --- NEW: Generate an ID based on the title so we can scroll to it ---
+    const sectionId = title.replace(/\s+/g, '-').toLowerCase();
+
     return (
-      <div style={{ marginBottom: '40px' }}>
+      <div id={sectionId} style={{ marginBottom: '40px' }}>
         <h3 style={{ color: '#05192d', marginBottom: '15px', fontSize: '18px', borderLeft: '4px solid #00df81', paddingLeft: '10px' }}>{title}</h3>
         <div style={{ background: 'white', borderRadius: '20px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)', maxHeight: '600px', overflowY: 'auto', overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
@@ -1279,21 +1424,49 @@ const Uploader = ({ user, logo, handleLogout }) => {
     return (
       <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+          
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>← Control Selection</button>
-            <h2 style={{ color: '#05192d', fontSize: '28px' }}>Execution Report</h2>
+            <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', background: '#e2e8f0', color: '#334155' }}>← Control Selection</button>
+            <h2 style={{ color: '#05192d', fontSize: '28px', margin: 0 }}>Execution Report</h2>
           </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={handleRefreshReport} style={{ background: '#00df81', color: '#05192d', border: 'none', padding: '8px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>{"↻ Refresh Successful Controls"}</button>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            
+            {/* --- COMBINED SYNC BUTTON --- */}
+            <button 
+              onClick={() => { 
+                handleRefreshReport(); 
+                handleGlobalRetry(); 
+              }} 
+              style={{ background: '#00df81', color: '#05192d', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,223,129,0.2)', display: 'flex', alignItems: 'center', gap: '8px', transition: 'transform 0.2s' }} 
+              onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} 
+              onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 2v6h-6"></path>
+                <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                <path d="M3 22v-6h6"></path>
+                <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+              </svg>
+              Refresh & Retry All
+            </button>
+
+            {/* Subtle visual divider */}
+            <div style={{ width: '1px', height: '24px', background: '#cbd5e1', margin: '0 4px' }} />
+
             <button onClick={() => {
               if (history.length === 0) {
                 showToast("Empty session, add insights", "error");
                 return;
               }
               setIsClearModalOpen(true);
-            }} style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Clear Report History</button>
+            }} style={{ color: '#ef4444', background: '#fff', border: '1px solid #fecaca', padding: '9px 16px', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', transition: '0.2s' }} onMouseOver={e => e.currentTarget.style.background = '#fef2f2'} onMouseOut={e => e.currentTarget.style.background = '#fff'}>
+              Clear History
+            </button>
           </div>
         </div>
+
+       
 
         {history.length > 0 ? (
           <>
@@ -1329,6 +1502,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
       </div>
     );
   };
+
 
   const renderPasswordModal = () => {
     if (!isPasswordModalOpen) return null;

@@ -29,7 +29,6 @@ const ACTION_META = {
 const ROLE_COLORS = {
   admin: "#00df81",
   uploader: "#3b82f6",
-  reviewer: "#f59e0b",
   viewer: "#8b5cf6",
 };
 
@@ -409,7 +408,6 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
   const stats = {
     total: usersList.length,
     uploaders: usersList.filter(u => u.role === "uploader").length,
-    reviewers: usersList.filter(u => u.role === "reviewer").length,
     viewers: usersList.filter(u => u.role === "viewer").length,
     active: usersList.filter(u => u.status === "Active").length,
   };
@@ -620,7 +618,6 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
           <div className="adm-role-dist">
             {[
               { role: "Uploaders", value: stats.uploaders, color: "#3b82f6" },
-              { role: "Reviewers", value: stats.reviewers, color: "#f59e0b" },
               { role: "Viewers", value: stats.viewers, color: "#8b5cf6" },
             ].map((r, i) => (
               <div key={i} className="adm-role-dist-row">
@@ -640,7 +637,6 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
               <DonutChart
                 segments={[
                   { label: "Uploaders", value: stats.uploaders || 1, color: "#3b82f6" },
-                  { label: "Reviewers", value: stats.reviewers || 1, color: "#f59e0b" },
                   { label: "Viewers", value: stats.viewers || 1, color: "#8b5cf6" },
                 ]}
                 size={80}
@@ -667,7 +663,7 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
 
       <div className="adm-filter-row">
         <div className="adm-filter-tabs">
-          {["all", "uploader", "reviewer", "viewer"].map(r => (
+          {["all", "uploader", "viewer"].map(r => (
             <button key={r} className={`adm-tab ${activeRoleFilter === r ? "active" : ""}`} onClick={() => setActiveRoleFilter(r)}>
               {r === "all" ? "All Users" : r.charAt(0).toUpperCase() + r.slice(1) + "s"}
             </button>
@@ -1187,7 +1183,6 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
                   <label>Role</label>
                   <select value={currentUser.role} onChange={e => setCurrentUser({ ...currentUser, role: e.target.value })}>
                     <option value="uploader">Uploader</option>
-                    <option value="reviewer">Reviewer</option>
                     <option value="viewer">Viewer</option>
                   </select>
                 </div>

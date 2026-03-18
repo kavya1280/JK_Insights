@@ -3,7 +3,6 @@ import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Login from "./Login";
 import Admin from "./Admin";
 import Uploader from "./Uploader";
-import Reviewer from "./Reviewer";
 import Viewer from "./Viewer";
 
 import logo from "./assets/images/jkc.png";
@@ -18,10 +17,11 @@ const RoleBasedContainer = ({ user, logo, ajalabsblack, handleLogout }) => {
   if (!user) return <Navigate to="/login" />;
   const props = { user, logo, ajalabsblack, handleLogout };
   const role = user.role.toLowerCase();
+  
   if (role === "admin") return <Admin    {...props} />;
   if (role === "uploader") return <Uploader {...props} />;
-  if (role === "reviewer") return <Reviewer {...props} />;
   if (role === "viewer") return <Viewer   {...props} />;
+  
   return <div>Role not recognized.</div>;
 };
 
@@ -97,7 +97,7 @@ function App() {
 
   // ── Direct login — accepts { username, password } explicitly ─────────────
   // Used by the admin portal to avoid React state async race conditions.
-  const handleDirectLogin = async (credentials) => {
+  const handleDirectLogin = async (credentials, requiredRole = null) => {
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
         method: "POST",
@@ -106,6 +106,10 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
+        // Secure Role Check
+        if (requiredRole && data.role !== requiredRole) {
+          return { success: false, message: `Invalid ${requiredRole} credentials.` };
+        }
         localStorage.setItem("app_user", JSON.stringify(data));
         setUser(data);
         navigate(`/login/${data.username}`);
