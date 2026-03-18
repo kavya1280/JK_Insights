@@ -540,7 +540,7 @@
 
 /* ── Data Drawer ────────────────────────────────────────────────────────── */
 .vw-drawer {
-    width: 580px;
+    width: 800px;
     flex-shrink: 0;
     background: #fff;
     border-left: 1px solid #e2e8f0;

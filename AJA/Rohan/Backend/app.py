@@ -645,6 +645,7 @@ def save_session():
             "id":        session_id,
             "timestamp": now_local.isoformat(),
             "insights":  files_saved,
+            "creator":   username,
             "name":      req_data.get("name",
                          f"Audit Session {now_local.strftime('%d %b %Y %H:%M')}"),
         }
@@ -665,16 +666,24 @@ def save_session():
 @app.route('/api/sessions', methods=['GET'])
 def list_sessions():
     try:
-        username      = request.headers.get("X-Username", "default")
-        user_sess_dir = get_user_workspace(SESSIONS_DIR, username)
-        sessions      = []
-        if os.path.exists(user_sess_dir):
-            for folder in os.listdir(user_sess_dir):
-                meta_path = os.path.join(user_sess_dir, folder, "metadata.json")
-                if os.path.exists(meta_path):
-                    with open(meta_path, "r") as f:
-                        sessions.append(json.load(f))
-        sessions.sort(key=lambda x: x['timestamp'], reverse=True)
+        username = request.headers.get("X-Username", "default")
+        sessions = []
+        
+        # Walk through all user directories in SESSIONS_DIR to aggregate saved sessions
+        if os.path.exists(SESSIONS_DIR):
+            for user_folder in os.listdir(SESSIONS_DIR):
+                user_path = os.path.join(SESSIONS_DIR, user_folder)
+                if os.path.isdir(user_path):
+                    for session_folder in os.listdir(user_path):
+                        meta_path = os.path.join(user_path, session_folder, "metadata.json")
+                        if os.path.exists(meta_path):
+                            try:
+                                with open(meta_path, "r") as f:
+                                    sessions.append(json.load(f))
+                            except Exception:
+                                pass
+                                
+        sessions.sort(key=lambda x: x.get('timestamp', ''), reverse=True)
         return jsonify(sessions), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -695,18 +704,26 @@ def delete_session(session_id):
 @app.route('/api/sessions/<session_id>/<insight_id>/data', methods=['GET'])
 def get_session_data(session_id, insight_id):
     try:
-        username      = request.headers.get("X-Username", "default")
-        user_sess_dir = get_user_workspace(SESSIONS_DIR, username)
-
         if insight_id not in FILE_MAP:
             return jsonify({"status": "error", "message": "Insight not found"}), 404
 
         filename = FILE_MAP[insight_id]
+        
+        # Search for session folder across all users 
+        session_path = None
+        for user_folder in os.listdir(SESSIONS_DIR):
+            potential_path = os.path.join(SESSIONS_DIR, user_folder, session_id)
+            if os.path.exists(potential_path):
+                session_path = potential_path
+                break
+                
+        if not session_path:
+            return jsonify({"status": "error", "message": "Session not found"}), 404
 
         if isinstance(filename, dict):
             combined_data = {}
             for key, f in filename.items():
-                fp = os.path.join(user_sess_dir, session_id, f)
+                fp = os.path.join(session_path, f)
                 if not os.path.exists(fp):
                     return jsonify({"status": "error",
                                     "message": "Data not found in this session"}), 404
@@ -715,7 +732,7 @@ def get_session_data(session_id, insight_id):
                 combined_data[key] = df.fillna("N/A").to_dict(orient='records')
             return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
 
-        fp = os.path.join(user_sess_dir, session_id, filename)
+        fp = os.path.join(session_path, filename)
         if not os.path.exists(fp):
             return jsonify({"status": "error",
                             "message": "Data not found in this session"}), 404
@@ -727,12 +744,12 @@ def get_session_data(session_id, insight_id):
                 for sheet in excel_file.sheet_names:
                     sr = SKIP_ROWS_MAP.get(insight_id, 0)
                     if insight_id == "PJPA28" and not sheet.startswith("Anomalies"):
-                        sr = 3  # Summary stats usually have 3 blank rows
+                        sr = 3
                     df = pd.read_excel(fp, sheet_name=sheet, skiprows=sr)
                     df.columns = df.columns.astype(str)
                     combined_data[sheet] = df.fillna("N/A").to_dict(orient='records')
                 return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
-        except ValueError:
+        except Exception:
             pass
 
         df = pd.read_excel(fp, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))

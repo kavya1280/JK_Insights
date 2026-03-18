@@ -705,5 +705,180 @@
     "role": "uploader",
     "action": "LOGIN",
     "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:16:25.843000+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:17:28.073595+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T17:17:39.743186+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:18:19.125163+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T17:18:53.733426+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:19:39.989205+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T17:19:49.801541+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:26:10.871740+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:26:26.792902+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA36 from session session_20260314_143459"
+  },
+  {
+    "timestamp": "2026-03-18T17:31:14.290122+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA28 from session session_20260312_082755"
+  },
+  {
+    "timestamp": "2026-03-18T17:31:34.152410+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T17:31:47.370622+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:34:45.196904+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T17:34:59.930041+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:35:11.704199+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA35 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:35:16.530288+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA36 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:36:14.199148+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA32 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:36:17.104090+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA32 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:36:32.590456+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA36 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:36:47.337337+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA10 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:36:56.121342+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA24 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:37:15.364948+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA35 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:37:37.069604+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T17:37:40.188770+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA24 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-18T17:38:15.435162+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "VIEW_INSIGHT",
+    "details": "Viewed PJPA28 from session session_20260318_160842"
   }
 ]

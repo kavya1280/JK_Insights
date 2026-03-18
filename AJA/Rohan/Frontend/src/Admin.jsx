@@ -177,29 +177,122 @@ const SparkLine = ({ data = [], color = "#00df81", height = 40 }) => {
   );
 };
 
+const AreaChart = ({ data = [], color = "#3b82f6", labels = [], height = 180 }) => {
+  if (!data.length) return null;
+  const max = Math.max(...data, 10);
+  const paddingLeft = 40, paddingBottom = 30, paddingTop = 20;
+  const w = 450, h = height;
+  const svgW = w + paddingLeft + 20;
+  const svgH = h + paddingBottom + paddingTop;
+
+  // Y-axis ticks
+  const ticks = [0, Math.round(max * 0.25), Math.round(max * 0.5), Math.round(max * 0.75), max];
+
+  const points = data.map((v, i) => {
+    const x = paddingLeft + (i / (data.length - 1)) * (w - 20);
+    const y = h - (v / max) * h + paddingTop;
+    return `${x},${y}`;
+  }).join(" ");
+
+  const areaPoints = `${paddingLeft},${h + paddingTop} ${points} ${paddingLeft + (w - 20)},${h + paddingTop}`;
+
+  return (
+    <svg width="100%" height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+      <defs>
+        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="95%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {/* Grid lines & Y-axis labels */}
+      {ticks.map((t, idx) => {
+        const yPos = h - (t / max) * h + paddingTop;
+        return (
+          <g key={idx}>
+            <line x1={paddingLeft} y1={yPos} x2={svgW - 20} y2={yPos} stroke="#f1f5f9" strokeWidth="1" />
+            <text x={paddingLeft - 10} y={yPos + 4} textAnchor="end" fontSize="11" fontWeight="600" fill="#94a3b8">{t}</text>
+          </g>
+        );
+      })}
+
+      {/* Axis Lines */}
+      <line x1={paddingLeft} y1={paddingTop} x2={paddingLeft} y2={h + paddingTop} stroke="#e2e8f0" strokeWidth="1" />
+      <line x1={paddingLeft} y1={h + paddingTop} x2={svgW - 20} y2={h + paddingTop} stroke="#e2e8f0" strokeWidth="1" />
+
+      {/* Area fill */}
+      <polyline points={areaPoints} fill="url(#areaGradient)" stroke="none" />
+
+      {/* Line path */}
+      <polyline points={points} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+      {/* Points */}
+      {data.map((v, i) => {
+        const x = paddingLeft + (i / (data.length - 1)) * (w - 20);
+        const y = h - (v / max) * h + paddingTop;
+        return (
+          <circle key={i} cx={x} cy={y} r="4.5" fill="white" stroke={color} strokeWidth="2.5" />
+        );
+      })}
+
+      {/* X Labels */}
+      {labels.map((lbl, i) => {
+        const x = paddingLeft + (i / (labels.length - 1)) * (w - 20);
+        return (
+          <text key={i} x={x} y={h + paddingTop + 22} textAnchor="middle" fontSize="11" fontWeight="700" fill="#64748b">
+            {lbl}
+          </text>
+        );
+      })}
+    </svg>
+  );
+};
+
 const BarChart = ({ data = [], color = "#3b82f6", labels = [] }) => {
   if (!data.length) return null;
-  const max = Math.max(...data, 1);
-  const barW = 20, gap = 8, h = 80;
-  const total = data.length;
-  const svgW = total * (barW + gap);
+  const max = Math.max(...data, 10);
+  const barW = 32, gap = 16, h = 180;
+  const paddingLeft = 40, paddingBottom = 30;
+  const svgW = data.length * (barW + gap) + paddingLeft + 20;
+  const svgH = h + paddingBottom + 20;
+
+  // Y-axis ticks
+  const ticks = [0, Math.round(max * 0.25), Math.round(max * 0.5), Math.round(max * 0.75), max];
+
   return (
-    <svg width={svgW} height={h + 20}>
+    <svg width="100%" height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+      {/* Grid lines & Y-axis labels */}
+      {ticks.map((t, idx) => {
+        const yPos = h - (t / max) * h + 10;
+        return (
+          <g key={idx}>
+            <line x1={paddingLeft} y1={yPos} x2={svgW - 20} y2={yPos} stroke="#e2e8f0" strokeDasharray="4 4" />
+            <text x={paddingLeft - 8} y={yPos + 4} textAnchor="end" fontSize="10" fill="#94a3b8">{t}</text>
+          </g>
+        );
+      })}
+
+      {/* X & Y Axis Lines */}
+      <line x1={paddingLeft} y1={10} x2={paddingLeft} y2={h + 10} stroke="#cbd5e1" strokeWidth="1.5" />
+      <line x1={paddingLeft} y1={h + 10} x2={svgW - 20} y2={h + 10} stroke="#cbd5e1" strokeWidth="1.5" />
+
+      {/* Bars */}
       {data.map((v, i) => {
-        const bh = Math.max(4, (v / max) * h);
+        const bh = (v / max) * h;
+        const xPos = paddingLeft + i * (barW + gap) + gap / 2;
         return (
           <g key={i}>
             <rect
-              x={i * (barW + gap)}
-              y={h - bh}
+              x={xPos}
+              y={h - bh + 10}
               width={barW}
               height={bh}
-              rx="4"
+              rx="6"
               fill={color}
-              opacity="0.85"
+              opacity="0.9"
             />
             {labels[i] && (
-              <text x={i * (barW + gap) + barW / 2} y={h + 14} textAnchor="middle" fontSize="9" fill="#94a3b8">
+              <text x={xPos + barW / 2} y={h + 26} textAnchor="middle" fontSize="11" fill="#64748b" fontWeight="600">
                 {labels[i]}
               </text>
             )}
@@ -210,11 +303,80 @@ const BarChart = ({ data = [], color = "#3b82f6", labels = [] }) => {
   );
 };
 
-const DonutChart = ({ segments = [], size = 80 }) => {
-  const r = 30, cx = size / 2, cy = size / 2;
+const LineChart = ({ data = [], color = "#3b82f6", labels = [], height = 180 }) => {
+  if (!data.length) return null;
+  const max = Math.max(...data.flatMap(d => d.values), 10);
+  const paddingLeft = 40, paddingBottom = 30;
+  const w = 400, h = height;
+  const svgW = w + paddingLeft + 20;
+  const svgH = h + paddingBottom + 20;
+
+  // Y-axis ticks
+  const ticks = [0, Math.round(max * 0.25), Math.round(max * 0.5), Math.round(max * 0.75), max];
+
+  return (
+    <svg width="100%" height={svgH} viewBox={`0 0 ${svgW} ${svgH}`} style={{ overflow: "visible" }}>
+      {/* Grid lines & Y-axis labels */}
+      {ticks.map((t, idx) => {
+        const yPos = h - (t / max) * h + 10;
+        return (
+          <g key={idx}>
+            <line x1={paddingLeft} y1={yPos} x2={svgW - 20} y2={yPos} stroke="#e2e8f0" strokeDasharray="4 4" />
+            <text x={paddingLeft - 8} y={yPos + 4} textAnchor="end" fontSize="10" fill="#94a3b8">{t}</text>
+          </g>
+        );
+      })}
+
+      {/* X & Y Axis Lines */}
+      <line x1={paddingLeft} y1={10} x2={paddingLeft} y2={h + 10} stroke="#cbd5e1" strokeWidth="1.5" />
+      <line x1={paddingLeft} y1={h + 10} x2={svgW - 20} y2={h + 10} stroke="#cbd5e1" strokeWidth="1.5" />
+
+      {data.map((series, sIdx) => {
+        const points = series.values.map((v, i) => {
+          const x = paddingLeft + (i / (series.values.length - 1)) * (w - 20);
+          const y = h - (v / max) * h + 10;
+          return `${x},${y}`;
+        }).join(" ");
+
+        return (
+          <g key={sIdx}>
+            <polyline
+              points={points}
+              fill="none"
+              stroke={series.color}
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {series.values.map((v, i) => {
+              const x = paddingLeft + (i / (series.values.length - 1)) * (w - 20);
+              const y = h - (v / max) * h + 10;
+              return <circle key={i} cx={x} cy={y} r="3.5" fill="white" stroke={series.color} strokeWidth="2" />;
+            })}
+          </g>
+        );
+      })}
+
+      {/* X Labels */}
+      {labels.map((lbl, i) => {
+        const x = paddingLeft + (i / (labels.length - 1)) * (w - 20);
+        return (
+          <text key={i} x={x} y={h + 26} textAnchor="middle" fontSize="10" fill="#64748b" fontWeight="600">
+            {lbl}
+          </text>
+        );
+      })}
+    </svg>
+  );
+};
+
+const DonutChart = ({ segments = [], size = 160 }) => {
+  const [hoveredIdx, setHoveredIdx] = useState(null);
+  const r = size * 0.38, cx = size / 2, cy = size / 2;
   const total = segments.reduce((a, s) => a + s.value, 0) || 1;
   let angle = -90;
-  const paths = segments.map((seg) => {
+
+  const paths = segments.map((seg, i) => {
     const sweep = (seg.value / total) * 360;
     const startRad = (angle * Math.PI) / 180;
     const endRad = ((angle + sweep) * Math.PI) / 180;
@@ -225,16 +387,43 @@ const DonutChart = ({ segments = [], size = 80 }) => {
     const large = sweep > 180 ? 1 : 0;
     const d = `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`;
     angle += sweep;
-    return { d, color: seg.color, label: seg.label, value: seg.value };
+    return { d, color: seg.color, label: seg.label, value: seg.value, idx: i };
   });
+
   return (
-    <svg width={size} height={size}>
-      <circle cx={cx} cy={cy} r={r + 2} fill="none" stroke="#e2e8f0" strokeWidth="1" />
-      {paths.map((p, i) => (
-        <path key={i} d={p.d} fill={p.color} opacity="0.85" />
-      ))}
-      <circle cx={cx} cy={cy} r={r * 0.55} fill="white" />
-    </svg>
+    <div className="donut-container" style={{ position: "relative", width: size, height: size }}>
+      <svg width={size} height={size} style={{ cursor: "pointer" }}>
+        <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke="#f1f5f9" strokeWidth="1" />
+        {paths.map((p, i) => (
+          <path
+            key={i}
+            d={p.d}
+            fill={p.color}
+            opacity={hoveredIdx === null || hoveredIdx === i ? 0.9 : 0.4}
+            style={{ transition: "all 0.2s ease", transform: hoveredIdx === i ? "scale(1.05)" : "scale(1)", transformOrigin: "center" }}
+            onMouseEnter={() => setHoveredIdx(i)}
+            onMouseLeave={() => setHoveredIdx(null)}
+          />
+        ))}
+        <circle cx={cx} cy={cy} r={r * 0.65} fill="white" />
+        {hoveredIdx !== null ? (
+          <g style={{ pointerEvents: "none" }}>
+            <text x={cx} y={cy - 5} textAnchor="middle" fontSize="12" fontWeight="700" fill="#64748b">
+              {segments[hoveredIdx].label}
+            </text>
+            <text x={cx} y={cy + 15} textAnchor="middle" fontSize="18" fontWeight="900" fill="#05192d">
+              {segments[hoveredIdx].value}
+            </text>
+          </g>
+        ) : (
+          <g style={{ pointerEvents: "none" }}>
+            <text x={cx} y={cy + 5} textAnchor="middle" fontSize="14" fontWeight="800" fill="#94a3b8">
+              Roles
+            </text>
+          </g>
+        )}
+      </svg>
+    </div>
   );
 };
 
@@ -266,13 +455,6 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
 
   // Dashboard charts state
   const [weeklyLogins, setWeeklyLogins] = useState([12, 19, 8, 24, 17, 31, 22]);
-  const [countryData, setCountryData] = useState([
-    { label: "India", value: 58, color: "#f59e0b" },
-    { label: "United States", value: 21, color: "#3b82f6" },
-    { label: "United Kingdom", value: 9, color: "#8b5cf6" },
-    { label: "Germany", value: 7, color: "#00df81" },
-    { label: "Others", value: 5, color: "#94a3b8" },
-  ]);
 
   // ── fetch helpers ──────────────────────────────────────────────────────
   const fetchUsers = useCallback(async () => {
@@ -298,20 +480,6 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
       setActivityLog(log);
       setSessionsSummary(sess);
       setDailyReport(report);
-
-      // Derive country data from sessions if available
-      if (sess.length) {
-        const countryCounts = {};
-        sess.forEach(s => {
-          const c = s.country || "India";
-          countryCounts[c] = (countryCounts[c] || 0) + 1;
-        });
-        const sorted = Object.entries(countryCounts)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 5);
-        const cols = ["#f59e0b", "#3b82f6", "#8b5cf6", "#00df81", "#94a3b8"];
-        setCountryData(sorted.map(([label, value], i) => ({ label, value, color: cols[i] })));
-      }
     } catch (e) { console.error(e); }
     finally { setMonitorLoading(false); }
   }, [selectedDate]);
@@ -445,27 +613,26 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
         </div>
       </div>
 
-      {/* KPI Row */}
-      <div className="adm-kpi-row">
+      {/* KPI Row - Redesigned v2 */}
+      <div className="adm-kpi-row grid-3">
         {[
-          { label: "Total Users", value: stats.total, icon: "👥", color: "#00df81", spark: [4, 6, 5, 8, 7, 9, stats.total], trend: "+12%", trendUp: true },
-          { label: "Active Now", value: activeSessions, icon: "🟢", color: "#3b82f6", spark: [1, 3, 2, 4, 3, 5, activeSessions], trend: "Live", trendUp: true },
-          { label: "Today's Logins", value: todayLogins, icon: "🔑", color: "#f59e0b", spark: [8, 12, 9, 15, 11, 18, todayLogins], trend: "+5%", trendUp: true },
-          { label: "Events Today", value: todayEvents, icon: "📋", color: "#8b5cf6", spark: [20, 35, 28, 42, 31, 55, todayEvents], trend: "+8%", trendUp: true },
-          { label: "Insights Run", value: todayInsights, icon: "⚙️", color: "#ef4444", spark: [3, 5, 4, 7, 5, 9, todayInsights], trend: "Today", trendUp: true },
-          { label: "Active Accounts", value: stats.active, icon: "✅", color: "#00df81", spark: [3, 4, 3, 5, 4, 5, stats.active], trend: "Total", trendUp: true },
+          { label: "Total Users", value: stats.total, icon: "👤", color: "#00df81", trend: "+12%", trendUp: true },
+          { label: "Active Now", value: activeSessions, icon: "⚡", color: "#3b82f6", trend: "Live", trendUp: true },
+          { label: "Today's Logins", value: todayLogins, icon: "🔑", color: "#f59e0b", trend: "+5%", trendUp: true },
+          { label: "Events Today", value: todayEvents, icon: "🖱️", color: "#8b5cf6", trend: "+8%", trendUp: true },
+          { label: "Insights Run", value: todayInsights, icon: "📊", color: "#ef4444", trend: "Today", trendUp: true },
+          { label: "Active Accounts", value: stats.active, icon: "🛡️", color: "#00df81", trend: "Total", trendUp: true },
         ].map((k) => (
-          <div className="adm-kpi-card" key={k.label} style={{ "--kc": k.color }}>
-            <div className="adm-kpi-top">
-              <div className="adm-kpi-icon-wrap" style={{ background: k.color + "18" }}>
-                <span className="adm-kpi-icon">{k.icon}</span>
-              </div>
-              <div className={`adm-kpi-trend ${k.trendUp ? "up" : "down"}`}>{k.trend}</div>
+          <div className="adm-kpi-card-v2" key={k.label} style={{ "--kc": k.color }}>
+            <div className="adm-kpi-icon-box-v2" style={{ background: k.color + "12" }}>
+              <span className="adm-kpi-icon-v2">{k.icon}</span>
             </div>
-            <div className="adm-kpi-val">{k.value}</div>
-            <div className="adm-kpi-label">{k.label}</div>
-            <div className="adm-kpi-spark">
-              <SparkLine data={k.spark} color={k.color} height={32} />
+            <div className="adm-kpi-content-v2">
+              <div className="adm-kpi-label-row-v2">
+                <span className="adm-kpi-label-v2">{k.label}</span>
+                <span className={`adm-kpi-trend-v2 ${k.trendUp ? "up" : "down"}`}>{k.trend}</span>
+              </div>
+              <div className="adm-kpi-val-v2">{k.value}</div>
             </div>
           </div>
         ))}
@@ -473,7 +640,7 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
 
       {/* Charts row */}
       <div className="adm-charts-row">
-        {/* Weekly logins bar chart */}
+        {/* Weekly logins bar chart - Enhanced with axes */}
         <div className="adm-chart-card lg">
           <div className="adm-chart-header">
             <div>
@@ -484,8 +651,8 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
               <span className="adm-legend-dot" style={{ background: "#3b82f6" }} />Online Logins
             </div>
           </div>
-          <div className="adm-bar-chart-wrap">
-            <BarChart
+          <div className="adm-bar-chart-wrap-updated">
+            <AreaChart
               data={weeklyLogins}
               color="#3b82f6"
               labels={["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}
@@ -493,60 +660,35 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
           </div>
         </div>
 
-        {/* Visitor insights sparkline */}
+        {/* Session Trend line chart - Replaced individual sparklines */}
         <div className="adm-chart-card md">
           <div className="adm-chart-header">
             <div>
               <div className="adm-chart-title">Session Trend</div>
-              <div className="adm-chart-sub">Active vs Expired</div>
+              <div className="adm-chart-sub">Active vs Unique</div>
+            </div>
+            <div className="adm-chart-legend">
+              <span className="adm-legend-dot" style={{ background: "#00df81" }} />Active
+              <span className="adm-legend-dot" style={{ background: "#8b5cf6" }} />Unique
             </div>
           </div>
-          <div className="adm-trend-lines">
-            <div className="adm-trend-row">
-              <span className="adm-legend-dot" style={{ background: "#00df81" }} />
-              <span className="adm-trend-label">Active Sessions</span>
-              <SparkLine data={[2, 4, 3, 6, 5, 8, activeSessions]} color="#00df81" height={30} />
-            </div>
-            <div className="adm-trend-row">
-              <span className="adm-legend-dot" style={{ background: "#ef4444" }} />
-              <span className="adm-trend-label">Expired</span>
-              <SparkLine data={[1, 2, 1, 3, 2, 4, sessionsSummary.filter(s => s.expired).length]} color="#ef4444" height={30} />
-            </div>
-            <div className="adm-trend-row">
-              <span className="adm-legend-dot" style={{ background: "#8b5cf6" }} />
-              <span className="adm-trend-label">Unique Users</span>
-              <SparkLine data={[3, 4, 3, 5, 4, 6, stats.active]} color="#8b5cf6" height={30} />
-            </div>
-          </div>
-        </div>
-
-        {/* Country donut */}
-        <div className="adm-chart-card sm">
-          <div className="adm-chart-header">
-            <div>
-              <div className="adm-chart-title">Login by Country</div>
-              <div className="adm-chart-sub">By timestamp geolocation</div>
-            </div>
-          </div>
-          <div className="adm-donut-wrap">
-            <DonutChart segments={countryData} size={100} />
-            <div className="adm-donut-legend">
-              {countryData.map((c, i) => (
-                <div key={i} className="adm-donut-row">
-                  <span className="adm-legend-dot" style={{ background: c.color }} />
-                  <span className="adm-donut-label">{c.label}</span>
-                  <span className="adm-donut-val">{c.value}%</span>
-                </div>
-              ))}
-            </div>
+          <div className="adm-trend-lines-updated">
+            <LineChart
+              labels={["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]}
+              data={[
+                { label: "Active", color: "#00df81", values: [2, 4, 3, 6, 5, 8, activeSessions] },
+                { label: "Unique", color: "#8b5cf6", values: [3, 4, 3, 5, 4, 6, stats.active] }
+              ]}
+              height={140}
+            />
           </div>
         </div>
       </div>
 
-      {/* Bottom row: Top Products style → Top Users */}
+      {/* Bottom row: Top Users & Role Distribution */}
       <div className="adm-bottom-row">
-        {/* Top Active Users */}
-        <div className="adm-bottom-card lg">
+        {/* Top Active Users - Expanded to fill more space */}
+        <div className="adm-bottom-card xl">
           <div className="adm-chart-header">
             <div className="adm-chart-title">Top Active Users</div>
             <div className="adm-chart-sub">By number of actions today</div>
@@ -590,56 +732,20 @@ const Admin = ({ user, logo, ajalabsblack, handleLogout }) => {
           </div>
         </div>
 
-        {/* Country sessions detail */}
-        <div className="adm-bottom-card md">
-          <div className="adm-chart-header">
-            <div className="adm-chart-title">Country Sessions</div>
-            <div className="adm-chart-sub">Login origins by geography</div>
-          </div>
-          <div className="adm-country-list">
-            {countryData.map((c, i) => (
-              <div className="adm-country-row" key={i}>
-                <span className="adm-country-name">{c.label}</span>
-                <div className="adm-country-bar-bg">
-                  <div className="adm-country-bar-fill" style={{ width: `${c.value}%`, background: c.color }} />
-                </div>
-                <span className="adm-country-pct" style={{ color: c.color }}>{c.value}%</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Role distribution */}
+        {/* Role distribution - Enriched with larger donut */}
         <div className="adm-bottom-card sm">
           <div className="adm-chart-header">
             <div className="adm-chart-title">Role Distribution</div>
             <div className="adm-chart-sub">Users by role</div>
           </div>
-          <div className="adm-role-dist">
-            {[
-              { role: "Uploaders", value: stats.uploaders, color: "#3b82f6" },
-              { role: "Viewers", value: stats.viewers, color: "#8b5cf6" },
-            ].map((r, i) => (
-              <div key={i} className="adm-role-dist-row">
-                <div className="adm-role-dist-label">
-                  <span style={{ color: r.color }}>{r.role}</span>
-                  <span className="adm-role-dist-val">{r.value}</span>
-                </div>
-                <div className="adm-role-dist-bar-bg">
-                  <div
-                    className="adm-role-dist-bar"
-                    style={{ width: stats.total ? `${(r.value / stats.total) * 100}%` : "0%", background: r.color }}
-                  />
-                </div>
-              </div>
-            ))}
-            <div className="adm-role-donut-center">
+          <div className="adm-role-dist simple-donut">
+            <div className="adm-role-donut-center enlarged">
               <DonutChart
                 segments={[
-                  { label: "Uploaders", value: stats.uploaders || 1, color: "#3b82f6" },
-                  { label: "Viewers", value: stats.viewers || 1, color: "#8b5cf6" },
+                  { label: "Uploaders", value: stats.uploaders || 0, color: "#3b82f6" },
+                  { label: "Viewers", value: stats.viewers || 0, color: "#8b5cf6" },
                 ]}
-                size={80}
+                size={220}
               />
             </div>
           </div>

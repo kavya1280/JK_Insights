@@ -596,5 +596,77 @@
     "logout_reason": null,
     "expired": false,
     "activity_log": []
+  },
+  {
+    "username": "admin",
+    "role": "admin",
+    "login_time": "2026-03-18T17:16:25.836991+05:30",
+    "logout_time": "2026-03-18T17:17:28.068235+05:30",
+    "logout_reason": "manual",
+    "expired": false,
+    "activity_log": []
+  },
+  {
+    "username": "viewer",
+    "role": "viewer",
+    "login_time": "2026-03-18T17:17:39.737571+05:30",
+    "logout_time": "2026-03-18T17:18:19.121121+05:30",
+    "logout_reason": "manual",
+    "expired": false,
+    "activity_log": []
+  },
+  {
+    "username": "uploader",
+    "role": "uploader",
+    "login_time": "2026-03-18T17:18:53.726307+05:30",
+    "logout_time": "2026-03-18T17:19:39.983141+05:30",
+    "logout_reason": "manual",
+    "expired": false,
+    "activity_log": []
+  },
+  {
+    "username": "viewer",
+    "role": "viewer",
+    "login_time": "2026-03-18T17:19:49.796493+05:30",
+    "logout_time": null,
+    "logout_reason": null,
+    "expired": false,
+    "activity_log": []
+  },
+  {
+    "username": "viewer",
+    "role": "viewer",
+    "login_time": "2026-03-18T17:26:10.866406+05:30",
+    "logout_time": "2026-03-18T17:31:34.147072+05:30",
+    "logout_reason": "manual",
+    "expired": false,
+    "activity_log": []
+  },
+  {
+    "username": "uploader",
+    "role": "uploader",
+    "login_time": "2026-03-18T17:31:47.363230+05:30",
+    "logout_time": "2026-03-18T17:34:45.190292+05:30",
+    "logout_reason": "manual",
+    "expired": false,
+    "activity_log": []
+  },
+  {
+    "username": "viewer",
+    "role": "viewer",
+    "login_time": "2026-03-18T17:34:59.924236+05:30",
+    "logout_time": null,
+    "logout_reason": null,
+    "expired": false,
+    "activity_log": []
+  },
+  {
+    "username": "viewer",
+    "role": "viewer",
+    "login_time": "2026-03-18T17:37:37.061789+05:30",
+    "logout_time": null,
+    "logout_reason": null,
+    "expired": false,
+    "activity_log": []
   }
 ]
