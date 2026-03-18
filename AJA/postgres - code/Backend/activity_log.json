@@ -1,0 +1,709 @@
+[
+  {
+    "timestamp": "2026-03-18T12:05:19.037992+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA20"
+  },
+  {
+    "timestamp": "2026-03-18T12:05:20.422416+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA10"
+  },
+  {
+    "timestamp": "2026-03-18T12:05:20.538863+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA29"
+  },
+  {
+    "timestamp": "2026-03-18T12:11:18.382714+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T12:11:46.555924+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-18T12:12:23.105015+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA16"
+  },
+  {
+    "timestamp": "2026-03-18T12:12:26.929873+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA20"
+  },
+  {
+    "timestamp": "2026-03-18T12:12:28.658010+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA21"
+  },
+  {
+    "timestamp": "2026-03-18T12:12:30.026201+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA23"
+  },
+  {
+    "timestamp": "2026-03-18T12:12:31.551278+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA35"
+  },
+  {
+    "timestamp": "2026-03-18T12:12:32.742705+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-18T12:12:38.206035+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA39"
+  },
+  {
+    "timestamp": "2026-03-18T12:16:04.782998+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T12:16:14.182062+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T12:17:36.314551+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "SAVE_SESSION",
+    "details": "Saved session: "
+  },
+  {
+    "timestamp": "2026-03-18T12:17:42.398000+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-18T12:18:24.487023+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA16"
+  },
+  {
+    "timestamp": "2026-03-18T12:19:02.040124+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA20"
+  },
+  {
+    "timestamp": "2026-03-18T12:19:10.381134+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA21"
+  },
+  {
+    "timestamp": "2026-03-18T12:19:24.327151+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA23"
+  },
+  {
+    "timestamp": "2026-03-18T12:19:30.931400+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA35"
+  },
+  {
+    "timestamp": "2026-03-18T12:19:37.031835+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-18T12:19:58.834049+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA39"
+  },
+  {
+    "timestamp": "2026-03-18T12:20:57.434444+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T12:21:16.133381+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:36.888432+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: lineItemFile"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:40.140335+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA22"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:44.622294+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA30"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:46.776936+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA24"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:46.943935+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:47.434935+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA31"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:47.891385+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA32"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:53.015760+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA34"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:53.180282+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA38"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:54.131066+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA33"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:55.290010+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA40"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:57.266210+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA10"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:57.350214+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA19"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:57.469210+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA14"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:57.800817+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA29"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:57.975823+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: leftEmpFile"
+  },
+  {
+    "timestamp": "2026-03-18T12:22:58.032330+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA18"
+  },
+  {
+    "timestamp": "2026-03-18T12:23:02.744592+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA27"
+  },
+  {
+    "timestamp": "2026-03-18T12:23:03.829153+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA27"
+  },
+  {
+    "timestamp": "2026-03-18T12:24:10.884082+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA39"
+  },
+  {
+    "timestamp": "2026-03-18T12:25:34.592221+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T12:25:36.507379+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T12:25:37.947736+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T12:25:53.112468+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T12:25:54.689284+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T12:26:05.807931+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile"
+  },
+  {
+    "timestamp": "2026-03-18T12:27:12.310799+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: lineItemFile"
+  },
+  {
+    "timestamp": "2026-03-18T12:27:13.902441+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T12:27:15.896481+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T13:11:35.745038+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T13:15:58.864493+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T13:16:22.578064+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T16:03:35.221033+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T16:03:47.648172+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T16:04:51.461613+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T16:05:07.478708+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T16:05:20.995337+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T16:05:33.581422+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T16:06:00.488112+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T16:06:23.210048+05:30",
+    "username": "admin",
+    "role": "admin",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T16:06:43.749954+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T16:06:50.678167+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: leftEmpFile"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:15.151742+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:16.046363+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: lineItemFile"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:20.515139+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA23"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:21.104682+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA35"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:21.412526+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA27"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:21.481006+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA36"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:21.814702+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA21"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:22.809957+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA14"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:22.972959+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA19"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:23.034474+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA22"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:24.238021+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA18"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:25.583308+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA20"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:26.383459+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA24"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:26.572460+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA30"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:26.762101+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA32"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:26.863100+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:27.058124+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA31"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:30.246737+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA33"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:30.338738+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA34"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:31.579360+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA40"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:44.956987+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA39"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:45.758185+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA10"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:49.542556+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA29"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:53.216803+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA16"
+  },
+  {
+    "timestamp": "2026-03-18T16:07:59.458735+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: empMasterFile"
+  },
+  {
+    "timestamp": "2026-03-18T16:08:14.863594+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA39"
+  },
+  {
+    "timestamp": "2026-03-18T16:08:15.628794+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA29"
+  },
+  {
+    "timestamp": "2026-03-18T16:08:15.685954+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA10"
+  },
+  {
+    "timestamp": "2026-03-18T16:08:17.707638+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA16"
+  },
+  {
+    "timestamp": "2026-03-18T16:08:42.436038+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "SAVE_SESSION",
+    "details": "Saved session: "
+  },
+  {
+    "timestamp": "2026-03-18T16:08:45.531783+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T16:08:54.874705+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-18T16:09:14.448824+05:30",
+    "username": "viewer",
+    "role": "viewer",
+    "action": "LOGOUT",
+    "details": "Reason: manual"
+  },
+  {
+    "timestamp": "2026-03-18T16:09:55.411525+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  }
+]
