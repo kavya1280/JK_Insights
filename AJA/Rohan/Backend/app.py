@@ -7,6 +7,7 @@ import io
 import traceback
 import shutil
 import json
+import bcrypt
 from datetime import datetime, timezone, timedelta
 import time as _time
 from main_orchestrator import run_selected_insights
@@ -82,6 +83,36 @@ def get_next_id(users):
     if not users:
         return "1"
     return str(max(int(u["id"]) for u in users) + 1)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# PASSWORD HASHING HELPERS
+# ──────────────────────────────────────────────────────────────────────────────
+def hash_password(plain_text: str) -> str:
+    """Return a bcrypt hash string for the given plaintext password."""
+    return bcrypt.hashpw(plain_text.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+def verify_password(plain_text: str, hashed: str) -> bool:
+    """Return True if plain_text matches the stored bcrypt hash."""
+    try:
+        return bcrypt.checkpw(plain_text.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
+
+def is_hashed(password: str) -> bool:
+    """Return True if the password is already a bcrypt hash."""
+    return password.startswith("$2b$") or password.startswith("$2a$")
+
+def migrate_plaintext_passwords():
+    """One-time migration: hash any plaintext passwords found in users.json."""
+    users   = load_users()
+    changed = False
+    for user in users:
+        if not is_hashed(user.get("password", "")):
+            user["password"] = hash_password(user["password"])
+            changed = True
+    if changed:
+        save_users(users)
+        print("[AUTH] Plaintext passwords migrated to bcrypt hashes.")
 
 # ──────────────────────────────────────────────────────────────────────────────
 # USER SESSION LOGGING
@@ -214,6 +245,9 @@ app.register_blueprint(pjpa37_bp,    url_prefix='/api/pjpa37')
 app.register_blueprint(pjpa38_bp,    url_prefix='/api/pjpa38')
 app.register_blueprint(pjpa39_bp,    url_prefix='/api/pjpa39')
 app.register_blueprint(pjpa40_bp,    url_prefix='/api/pjpa40')
+
+# Migrate any existing plaintext passwords to bcrypt on startup
+migrate_plaintext_passwords()
 
 # ══════════════════════════════════════════════════════════════════════════════
 # FILE UPLOAD  — /api/upload
@@ -449,7 +483,7 @@ def login():
     password = data.get('password')
     users    = load_users()
     user     = next((u for u in users
-                     if u['username'] == username and u['password'] == password), None)
+                     if u['username'] == username and verify_password(password, u['password'])), None)
     if user:
         if user['status'] == 'Inactive':
             return jsonify({"message": "Account is inactive."}), 403
@@ -508,7 +542,7 @@ def add_user():
     if any(u['username'].lower() == username.lower() for u in users):
         return jsonify({"message": f"Username '{username}' already exists."}), 409
     new_user = {"id": get_next_id(users), "username": username,
-                "password": password, "role": role, "status": status}
+                "password": hash_password(password), "role": role, "status": status}
     users.append(new_user)
     save_users(users)
     log_activity("admin", "admin", "USER_CREATED",
@@ -530,7 +564,7 @@ def update_user(user_id):
     user['role']     = data.get('role',   user['role'])
     user['status']   = data.get('status', user['status'])
     if data.get('password'):
-        user['password'] = data['password']
+        user['password'] = hash_password(data['password'])
     save_users(users)
     log_activity("admin", "admin", "USER_UPDATED",
                  f"Updated user '{old_username}' → '{new_username}'")
@@ -777,4 +811,5 @@ def clear_session():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
+    migrate_plaintext_passwords()
     app.run(debug=True, port=5000)
