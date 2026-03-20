@@ -396,16 +396,16 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
     // 3. Wait exactly 5 seconds, then move to the report screen
     setTimeout(() => {
-      setIsRestoring(false); 
+      setIsRestoring(false);
       navigate(`${basePath}/report`);
 
       // Smoothly auto-scroll to the guaranteed-to-exist table!
       setTimeout(() => {
-        document.getElementById('restored-historical-insights')?.scrollIntoView({ 
-          behavior: 'smooth', 
-          block: 'center' 
+        document.getElementById('restored-historical-insights')?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
         });
-      }, 150); 
+      }, 150);
     }, 5000);
 
     // 4. Define the background restoration loop
@@ -494,13 +494,13 @@ const Uploader = ({ user, logo, handleLogout }) => {
   const startAnalysis = async () => {
     // 1. Instantly go to processing screen
     navigate(`${basePath}/processing`);
-    
+
     // 2. Wait exactly 5 seconds, then move to the report screen
     setTimeout(() => {
       navigate(`${basePath}/report`);
     }, 5000);
 
-    const currentReports = []; 
+    const currentReports = [];
     const toRun = [];
 
     selectedInsights.forEach(insightId => {
@@ -555,9 +555,9 @@ const Uploader = ({ user, logo, handleLogout }) => {
 
     try {
       // 1. Instantly mark ALL failed insights waiting for THIS specific file as "Uploading..."
-      setHistory(prev => prev.map(item => 
-        (item.status === 'Failed' && item.missingFiles?.includes(fileKey)) 
-          ? { ...item, reason: `Uploading file...` } 
+      setHistory(prev => prev.map(item =>
+        (item.status === 'Failed' && item.missingFiles?.includes(fileKey))
+          ? { ...item, reason: `Uploading file...` }
           : item
       ));
 
@@ -577,10 +577,10 @@ const Uploader = ({ user, logo, handleLogout }) => {
       });
 
       // 3. Upload the file to the backend
-      const uploadRes = await fetch("http://localhost:5000/api/upload", { 
-        method: "POST", 
-        headers: { "X-Username": user?.username || "default" }, 
-        body: formData 
+      const uploadRes = await fetch("http://localhost:5000/api/upload", {
+        method: "POST",
+        headers: { "X-Username": user?.username || "default" },
+        body: formData
       });
       if (!uploadRes.ok) throw new Error("Upload failed");
 
@@ -610,9 +610,9 @@ const Uploader = ({ user, logo, handleLogout }) => {
       });
 
     } catch (err) {
-      setHistory(prev => prev.map(item => 
-        (item.status === 'Failed' && item.missingFiles?.includes(fileKey)) 
-          ? { ...item, reason: "Upload failed. Try again." } 
+      setHistory(prev => prev.map(item =>
+        (item.status === 'Failed' && item.missingFiles?.includes(fileKey))
+          ? { ...item, reason: "Upload failed. Try again." }
           : item
       ));
     }
@@ -688,10 +688,10 @@ const Uploader = ({ user, logo, handleLogout }) => {
       // Find the requirements for this specific insight
       const insightDef = INSIGHT_OPTIONS.find(o => o.id === item.moduleId);
       if (!insightDef) return;
-      
+
       // Check if the required files are currently uploaded
       const stillMissing = insightDef.req.filter(reqFile => !files[reqFile]);
-      
+
       // If nothing is missing, launch the retry!
       if (stillMissing.length === 0) {
         handleRetryProcessing(item);
@@ -1075,21 +1075,21 @@ const Uploader = ({ user, logo, handleLogout }) => {
     // --- CSV DOWNLOAD HANDLER ---
     const handleDownloadCSV = () => {
       if (!displayData || displayData.length === 0) return;
-      
+
       const headers = Object.keys(displayData[0]);
-      const csvRows = displayData.map(row => 
+      const csvRows = displayData.map(row =>
         headers.map(fieldName => JSON.stringify(row[fieldName] ?? '')).join(',')
       );
-      
+
       const csvString = [headers.join(','), ...csvRows].join('\r\n');
       const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      
+
       const safeName = (currentExceptionName || 'data').replace(/[^a-z0-9]/gi, '_').toLowerCase();
       link.setAttribute('download', `${activeInsight.moduleId}_${safeName}.csv`);
-      
+
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1140,7 +1140,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
                 </div>
               )}
               {/* --------------------------- */}
-              
+
               <div style={{ overflowX: 'auto', maxHeight: '600px', overflowY: 'auto', border: '1px solid #f1f5f9', borderRadius: '8px' }}>
                 {displayData.length > 0 ? (
                   <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: '0' }}>
@@ -1168,8 +1168,53 @@ const Uploader = ({ user, logo, handleLogout }) => {
         <div className="animate-in" style={{ background: 'white', padding: '30px', borderRadius: '24px', maxWidth: '450px', width: '90%', textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.2)', position: 'relative' }}>
 
           {!isEditingProfile && (
-            <button onClick={() => { setTempProfile(profileData); setIsEditingProfile(true); }} style={{ position: 'absolute', top: '20px', right: '20px', background: '#f1f5f9', border: 'none', width: '36px', height: '36px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', transition: '0.2s' }} onMouseOver={e => { e.currentTarget.style.background = '#e2e8f0'; e.currentTarget.style.color = '#05192d'; }} onMouseOut={e => { e.currentTarget.style.background = '#f1f5f9'; e.currentTarget.style.color = '#64748b'; }} title="Edit Profile">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <button
+              onClick={() => {
+                setTempProfile(profileData);
+                setIsEditingProfile(true);
+              }}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: '#f1f5f9',
+                border: 'none',
+                width: '36px',
+                height: '36px',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#334155',
+                transition: '0.2s'
+              }}
+              onMouseOver={e => {
+                e.currentTarget.style.background = '#e2e8f0';
+                e.currentTarget.style.color = '#05192d';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseOut={e => {
+                e.currentTarget.style.background = '#f1f5f9';
+                e.currentTarget.style.color = '#334155';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              title="Edit Profile"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                style={{ display: 'block', flexShrink: 0 }}
+              >
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+              </svg>
             </button>
           )}
 
@@ -1424,22 +1469,22 @@ const Uploader = ({ user, logo, handleLogout }) => {
     return (
       <div className="animate-in" style={{ width: '100%', maxWidth: '1200px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
             <button onClick={() => navigate(`${basePath}/insight-selection`)} style={{ border: 'none', padding: '8px 15px', borderRadius: '8px', cursor: 'pointer', fontWeight: '600', background: '#e2e8f0', color: '#334155' }}>← Control Selection</button>
             <h2 style={{ color: '#05192d', fontSize: '28px', margin: 0 }}>Execution Report</h2>
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            
+
             {/* --- COMBINED SYNC BUTTON --- */}
-            <button 
-              onClick={() => { 
-                handleRefreshReport(); 
-                handleGlobalRetry(); 
-              }} 
-              style={{ background: '#00df81', color: '#05192d', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,223,129,0.2)', display: 'flex', alignItems: 'center', gap: '8px', transition: 'transform 0.2s' }} 
-              onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'} 
+            <button
+              onClick={() => {
+                handleRefreshReport();
+                handleGlobalRetry();
+              }}
+              style={{ background: '#00df81', color: '#05192d', border: 'none', padding: '10px 16px', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,223,129,0.2)', display: 'flex', alignItems: 'center', gap: '8px', transition: 'transform 0.2s' }}
+              onMouseOver={e => e.currentTarget.style.transform = 'translateY(-2px)'}
               onMouseOut={e => e.currentTarget.style.transform = 'translateY(0)'}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1466,7 +1511,7 @@ const Uploader = ({ user, logo, handleLogout }) => {
           </div>
         </div>
 
-       
+
 
         {history.length > 0 ? (
           <>
