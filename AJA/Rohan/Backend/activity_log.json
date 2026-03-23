@@ -880,5 +880,47 @@
     "role": "viewer",
     "action": "VIEW_INSIGHT",
     "details": "Viewed PJPA28 from session session_20260318_160842"
+  },
+  {
+    "timestamp": "2026-03-23T17:59:59.226549+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "LOGIN",
+    "details": "Logged in successfully"
+  },
+  {
+    "timestamp": "2026-03-23T18:01:22.030146+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "FILE_UPLOAD",
+    "details": "Uploaded: concurFile, leftEmpFile, empMasterFile, lineItemFile"
+  },
+  {
+    "timestamp": "2026-03-23T18:01:59.161193+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA31"
+  },
+  {
+    "timestamp": "2026-03-23T18:02:01.110053+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA32"
+  },
+  {
+    "timestamp": "2026-03-23T18:02:04.645186+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA30"
+  },
+  {
+    "timestamp": "2026-03-23T18:02:08.090481+05:30",
+    "username": "uploader",
+    "role": "uploader",
+    "action": "RUN_INSIGHTS",
+    "details": "Generated: PJPA28"
   }
 ]
