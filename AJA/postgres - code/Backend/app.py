@@ -1,3 +1,4 @@
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask import Flask, jsonify, request, send_file
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
@@ -7,9 +8,10 @@ import zipfile
 import io
 import traceback
 import shutil
-import json
+import json 
 from datetime import datetime, timezone, timedelta
 from main_orchestrator import run_selected_insights
+
 
 from routes.upload import upload_bp
 from routes.dashboard import dashboard_bp
@@ -30,7 +32,7 @@ app = Flask(__name__)
 # DATABASE CONFIGURATION & INITIALIZATION
 # ══════════════════════════════════════════════════════════════════════════════
 # TODO: Update 'postgres' and 'yourpassword' to match your local PG credentials
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:yourpassword@localhost:5432/jk_insights'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Password123@localhost:5433/jk_insights'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -62,7 +64,7 @@ class User(db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), nullable=False, default='viewer')
     status = db.Column(db.String(20), nullable=False, default='Active')
 
@@ -94,19 +96,21 @@ class SavedAudit(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     insights_list = db.Column(db.JSON, nullable=False) # Postgres Native JSON array
 
+
 # Auto-create tables and default users if database is empty
 with app.app_context():
     db.create_all()
     if not User.query.first():
         default_users = [
-            User(username="admin", password="password123", role="admin", status="Active"),
-            User(username="uploader", password="password123", role="uploader", status="Active"),
-            User(username="reviewer", password="password123", role="reviewer", status="Active"),
-            User(username="viewer", password="password123", role="viewer", status="Active"),
-            User(username="uploader2", password="password123", role="uploader", status="Active")
+            User(username="admin", password=generate_password_hash("password123"), role="admin", status="Active"),
+            User(username="uploader", password=generate_password_hash("password123"), role="uploader", status="Active"),
+            # User(username="reviewer", password=generate_password_hash("password123"), role="reviewer", status="Active"),
+            User(username="viewer", password=generate_password_hash("password123"), role="viewer", status="Active"),
+            User(username="uploader2", password=generate_password_hash("password123"), role="uploader", status="Active")
         ]
-        db.session.bulk_save_objects(default_users)
+        db.session.add_all(default_users)
         db.session.commit()
+
         print("✅ Database Initialized and Default Users Seeded.")
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -417,9 +421,10 @@ def login():
     username = data.get('username')
     password = data.get('password')
     
-    user = User.query.filter_by(username=username, password=password).first()
-    
-    if user:
+    user = User.query.filter_by(username=username).first()
+
+    if user and check_password_hash(user.password, password):    
+
         if user.status == 'Inactive':
             return jsonify({"message": "Account is inactive."}), 403
         
@@ -451,10 +456,10 @@ def change_password():
     if not user:
         return jsonify({"status": "error", "message": "User not found."}), 404
 
-    if user.password != old_password:
+    if not check_password_hash(user.password, old_password):
         return jsonify({"status": "error", "message": "Incorrect current password."}), 401
 
-    user.password = new_password
+    user.password = generate_password_hash(new_password)
     db.session.commit()
     log_activity(username, user.role, "PASSWORD_CHANGE", "User changed their password")
     
@@ -511,7 +516,12 @@ def add_user():
     if User.query.filter(User.username.ilike(username)).first():
         return jsonify({"message": f"Username '{username}' already exists."}), 409
         
-    new_user = User(username=username, password=password, role=role, status=status)
+    new_user = User(
+        username=username,
+        password=generate_password_hash(password),
+        role=role,
+        status=status
+    )
     db.session.add(new_user)
     db.session.commit()
     
@@ -537,7 +547,7 @@ def update_user(user_id):
     user.status   = data.get('status', user.status)
     
     if data.get('password'):
-        user.password = data['password']
+        user.password = generate_password_hash(data['password'])
         
     db.session.commit()
     log_activity("admin", "admin", "USER_UPDATED", f"Updated user '{old_username}' → '{new_username}'")
@@ -559,6 +569,97 @@ def delete_user(user_id):
     
     log_activity("admin", "admin", "USER_DELETED", f"Deleted user '{user.username}'")
     return jsonify({"message": "User deleted successfully."}), 200
+
+# ══════════════════════════════════════════════════════════════════════════════
+# MONITORING & PERFORMANCE ROUTES
+# ══════════════════════════════════════════════════════════════════════════════
+@app.route('/admin/activity_log', methods=['GET'])
+def get_activity_log():
+    try:
+        date_str = request.args.get('date')
+        if not date_str:
+            date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+            
+        # Parse date and filter logs for that day
+        search_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        logs = ActivityLog.query.filter(db.func.date(ActivityLog.timestamp) == search_date).order_by(ActivityLog.timestamp.desc()).all()
+        
+        return jsonify([{
+            "id": l.id,
+            "timestamp": l.timestamp.isoformat(),
+            "username": l.username,
+            "role": l.role,
+            "action": l.action,
+            "details": l.details
+        } for l in logs]), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/sessions_summary', methods=['GET'])
+def get_sessions_summary():
+    try:
+        sessions = AuthSession.query.order_by(AuthSession.login_time.desc()).limit(100).all()
+        return jsonify([{
+            "id": s.id,
+            "username": s.username,
+            "role": s.role,
+            "login_time": s.login_time.isoformat(),
+            "logout_time": s.logout_time.isoformat() if s.logout_time else None,
+            "logout_reason": s.logout_reason,
+            "expired": s.expired
+        } for s in sessions]), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/daily_report', methods=['GET'])
+def get_daily_report():
+    try:
+        today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        
+        total_logins = ActivityLog.query.filter(ActivityLog.action == 'LOGIN', ActivityLog.timestamp >= today).count()
+        total_events = ActivityLog.query.filter(ActivityLog.timestamp >= today).count()
+        
+        # User summaries for today
+        logs_today = ActivityLog.query.filter(ActivityLog.timestamp >= today).all()
+        user_data = {}
+        for l in logs_today:
+            if l.username not in user_data:
+                user_data[l.username] = {"username": l.username, "role": l.role, "actions": []}
+            user_data[l.username]["actions"].append({"action": l.action, "timestamp": l.timestamp.isoformat()})
+            
+        return jsonify({
+            "total_logins": total_logins,
+            "total_events": total_events,
+            "user_summaries": list(user_data.values())
+        }), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/admin/performance_history', methods=['GET'])
+def get_performance_history():
+    try:
+        days = int(request.args.get('days', 7))
+        history = []
+        
+        for i in range(days - 1, -1, -1):
+            date = (datetime.now(timezone.utc) - timedelta(days=i)).date()
+            
+            day_logins = ActivityLog.query.filter(ActivityLog.action == 'LOGIN', db.func.date(ActivityLog.timestamp) == date).count()
+            day_events = ActivityLog.query.filter(db.func.date(ActivityLog.timestamp) == date).count()
+            day_active_users = db.session.query(ActivityLog.username).filter(db.func.date(ActivityLog.timestamp) == date).distinct().count()
+            day_insights = ActivityLog.query.filter(ActivityLog.action == 'RUN_INSIGHTS', db.func.date(ActivityLog.timestamp) == date).count()
+            
+            history.append({
+                "date": date.isoformat(),
+                "total_logins": day_logins,
+                "total_events": day_events,
+                "active_users": day_active_users,
+                "insights_run": day_insights
+            })
+            
+        return jsonify(history), 200
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SESSION PERSISTENCE (PostgreSQL Database Metadata)
@@ -631,15 +732,21 @@ def save_session():
 def list_sessions():
     try:
         username = request.headers.get("X-Username", "default")
+        user = User.query.filter_by(username=username).first()
         
-        # Fetch from PostgreSQL!
-        audits = SavedAudit.query.filter_by(username=username).order_by(SavedAudit.timestamp.desc()).all()
+        # Admins and Viewers see all sessions
+        if user and (user.role == 'admin' or user.role == 'viewer'):
+            audits = SavedAudit.query.order_by(SavedAudit.timestamp.desc()).all()
+        else:
+            # Others only see their own
+            audits = SavedAudit.query.filter_by(username=username).order_by(SavedAudit.timestamp.desc()).all()
         
         sessions = [{
             "id": a.id,
             "name": a.name,
             "timestamp": a.timestamp.replace(tzinfo=timezone.utc).astimezone().isoformat(), # Convert back to local for UI
-            "insights": a.insights_list
+            "insights": a.insights_list,
+            "creator": a.username # Include creator for UI clarity
         } for a in audits]
         
         return jsonify(sessions), 200
@@ -672,7 +779,14 @@ def delete_session(session_id):
 def get_session_data(session_id, insight_id):
     try:
         username      = request.headers.get("X-Username", "default")
-        user_sess_dir = get_user_workspace(SESSIONS_DIR, username)
+        
+        # Look up the audit to find the creator
+        audit = SavedAudit.query.filter_by(id=session_id).first()
+        if not audit:
+            return jsonify({"status": "error", "message": "Session not found."}), 404
+            
+        creator_name = audit.username
+        user_sess_dir = get_user_workspace(SESSIONS_DIR, creator_name)
 
         # Still read the physical excel files from the disk
         if insight_id not in FILE_MAP:
