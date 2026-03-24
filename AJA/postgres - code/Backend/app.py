@@ -35,9 +35,6 @@ app = Flask(__name__)
 # DATABASE CONFIGURATION & INITIALIZATION
 # ══════════════════════════════════════════════════════════════════════════════
 # TODO: Update 'postgres' and 'yourpassword' to match your local PG credentials
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Password123@localhost:5433/jk_insights'
-# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# db = SQLAlchemy(app)
 
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
@@ -75,6 +72,7 @@ def get_user_workspace(base_dir, username):
 # ══════════════════════════════════════════════════════════════════════════════
 class User(db.Model):
     __tablename__ = 'users'
+    __table_args__ = {'schema': 'users'}
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password = db.Column(db.String(255), nullable=False)
@@ -83,6 +81,7 @@ class User(db.Model):
 
 class AuthSession(db.Model):
     __tablename__ = 'auth_sessions'
+    __table_args__ = {'schema': 'sessions'}
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
     role = db.Column(db.String(50), nullable=False)
@@ -94,6 +93,7 @@ class AuthSession(db.Model):
 
 class ActivityLog(db.Model):
     __tablename__ = 'activity_logs'
+    __table_args__ = {'schema': 'logs'}
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     username = db.Column(db.String(80), nullable=False)
@@ -103,6 +103,7 @@ class ActivityLog(db.Model):
 
 class SavedAudit(db.Model):
     __tablename__ = 'saved_audits'
+    __table_args__ = {'schema': 'sessions'}
     id = db.Column(db.String(100), primary_key=True) # e.g., session_2026...
     username = db.Column(db.String(80), nullable=False)
     name = db.Column(db.String(200), nullable=False)
@@ -112,7 +113,6 @@ class SavedAudit(db.Model):
 
 # Auto-create tables and default users if database is empty
 with app.app_context():
-    db.create_all()
     if not User.query.first():
         default_users = [
             User(username="admin", password=generate_password_hash("password123"), role="admin", status="Active"),
