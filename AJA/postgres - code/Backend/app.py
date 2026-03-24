@@ -26,13 +26,26 @@ from routes.pjpa38 import pjpa38_bp
 from routes.pjpa39 import pjpa39_bp
 from routes.pjpa40 import pjpa40_bp
 
+from dotenv import load_dotenv
+load_dotenv()
+
 app = Flask(__name__)
 
 # ══════════════════════════════════════════════════════════════════════════════
 # DATABASE CONFIGURATION & INITIALIZATION
 # ══════════════════════════════════════════════════════════════════════════════
 # TODO: Update 'postgres' and 'yourpassword' to match your local PG credentials
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Password123@localhost:5433/jk_insights'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Password123@localhost:5433/jk_insights'
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# db = SQLAlchemy(app)
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
+DB_NAME = os.getenv("DB_NAME")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
