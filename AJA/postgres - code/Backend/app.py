@@ -12,7 +12,6 @@ import json
 from datetime import datetime, timezone, timedelta
 from main_orchestrator import run_selected_insights
 
-
 from routes.upload import upload_bp
 from routes.dashboard import dashboard_bp
 from routes.pjpa27 import pjpa27_bp
@@ -34,13 +33,11 @@ app = Flask(__name__)
 # ══════════════════════════════════════════════════════════════════════════════
 # DATABASE CONFIGURATION & INITIALIZATION
 # ══════════════════════════════════════════════════════════════════════════════
-# TODO: Update 'postgres' and 'yourpassword' to match your local PG credentials
-
-DB_USER = os.getenv("DB_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
-DB_HOST = os.getenv("DB_HOST")
-DB_PORT = os.getenv("DB_PORT")
-DB_NAME = os.getenv("DB_NAME")
+DB_USER = os.getenv("DB_USER", "postgres")
+DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
+DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "5432")
+DB_NAME = os.getenv("DB_NAME", "audit_db")
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -110,24 +107,28 @@ class SavedAudit(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     insights_list = db.Column(db.JSON, nullable=False) # Postgres Native JSON array
 
-
 # Auto-create tables and default users if database is empty
 with app.app_context():
+    # Make sure schemas exist
+    db.session.execute(db.text("CREATE SCHEMA IF NOT EXISTS users;"))
+    db.session.execute(db.text("CREATE SCHEMA IF NOT EXISTS sessions;"))
+    db.session.execute(db.text("CREATE SCHEMA IF NOT EXISTS logs;"))
+    db.session.commit()
+    db.create_all()
+    
     if not User.query.first():
         default_users = [
             User(username="admin", password=generate_password_hash("password123"), role="admin", status="Active"),
             User(username="uploader", password=generate_password_hash("password123"), role="uploader", status="Active"),
-            # User(username="reviewer", password=generate_password_hash("password123"), role="reviewer", status="Active"),
             User(username="viewer", password=generate_password_hash("password123"), role="viewer", status="Active"),
             User(username="uploader2", password=generate_password_hash("password123"), role="uploader", status="Active")
         ]
         db.session.add_all(default_users)
         db.session.commit()
-
         print("✅ Database Initialized and Default Users Seeded.")
 
 # ──────────────────────────────────────────────────────────────────────────────
-# HELPER FUNCTIONS (Now routing to Postgres)
+# HELPER FUNCTIONS 
 # ──────────────────────────────────────────────────────────────────────────────
 SESSION_EXPIRY_HOURS = 24
 
@@ -403,19 +404,21 @@ def get_insight_data_by_id(insight_id):
         if not os.path.exists(fp):
             return jsonify({"status": "error", "message": "Data not generated yet. Please upload master data first."}), 404
 
-        if insight_id == "PJPA28":
-            df = pd.read_excel(fp, sheet_name='Anomalies (30-42)', skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
-            df.columns = df.columns.astype(str)
-            return jsonify({"status": "success", "insight_id": insight_id, "data": df.fillna("N/A").to_dict(orient='records')})
-
-        excel_file = pd.ExcelFile(fp)
-        if len(excel_file.sheet_names) > 1:
-            combined_data = {}
-            for sheet in excel_file.sheet_names:
-                df = pd.read_excel(fp, sheet_name=sheet, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
-                df.columns = df.columns.astype(str)
-                combined_data[sheet] = df.fillna("N/A").to_dict(orient='records')
-            return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
+        # ─── DYNAMIC MULTI-SHEET FIX (Protects Benford's Law) ───
+        try:
+            excel_file = pd.ExcelFile(fp)
+            if len(excel_file.sheet_names) > 1:
+                combined_data = {}
+                for sheet in excel_file.sheet_names:
+                    sr = SKIP_ROWS_MAP.get(insight_id, 0)
+                    if insight_id == "PJPA28" and not sheet.startswith("Anomalies"):
+                        sr = 3  # Summary stats usually have 3 blank rows
+                    df = pd.read_excel(fp, sheet_name=sheet, skiprows=sr)
+                    df.columns = df.columns.astype(str)
+                    combined_data[sheet] = df.fillna("N/A").to_dict(orient='records')
+                return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
+        except ValueError:
+            pass
 
         df = pd.read_excel(fp, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
         df.columns = df.columns.astype(str)
@@ -544,7 +547,7 @@ def add_user():
 @app.route('/update_user/<user_id>', methods=['PUT'])
 def update_user(user_id):
     data = request.get_json()
-    user = User.query.get(user_id)
+    user = db.session.get(User, int(user_id))
     
     if not user:
         return jsonify({"message": "User not found."}), 404
@@ -568,7 +571,7 @@ def update_user(user_id):
 
 @app.route('/delete_user/<user_id>', methods=['DELETE'])
 def delete_user(user_id):
-    user = User.query.get(user_id)
+    user = db.session.get(User, int(user_id))
     if not user:
         return jsonify({"message": "User not found."}), 404
         
@@ -593,7 +596,6 @@ def get_activity_log():
         if not date_str:
             date_str = datetime.now(timezone.utc).strftime('%Y-%m-%d')
             
-        # Parse date and filter logs for that day
         search_date = datetime.strptime(date_str, '%Y-%m-%d').date()
         logs = ActivityLog.query.filter(db.func.date(ActivityLog.timestamp) == search_date).order_by(ActivityLog.timestamp.desc()).all()
         
@@ -632,7 +634,6 @@ def get_daily_report():
         total_logins = ActivityLog.query.filter(ActivityLog.action == 'LOGIN', ActivityLog.timestamp >= today).count()
         total_events = ActivityLog.query.filter(ActivityLog.timestamp >= today).count()
         
-        # User summaries for today
         logs_today = ActivityLog.query.filter(ActivityLog.timestamp >= today).all()
         user_data = {}
         for l in logs_today:
@@ -822,19 +823,21 @@ def get_session_data(session_id, insight_id):
         if not os.path.exists(fp):
             return jsonify({"status": "error", "message": "Data not found in this session"}), 404
 
-        if insight_id == "PJPA28":
-            df = pd.read_excel(fp, sheet_name='Anomalies (30-42)', skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
-            df.columns = df.columns.astype(str)
-            return jsonify({"status": "success", "insight_id": insight_id, "data": df.fillna("N/A").to_dict(orient='records')})
-
-        excel_file = pd.ExcelFile(fp)
-        if len(excel_file.sheet_names) > 1:
-            combined_data = {}
-            for sheet in excel_file.sheet_names:
-                df = pd.read_excel(fp, sheet_name=sheet, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
-                df.columns = df.columns.astype(str)
-                combined_data[sheet] = df.fillna("N/A").to_dict(orient='records')
-            return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
+        # ─── DYNAMIC MULTI-SHEET FIX (Protects Benford's Law) ───
+        try:
+            excel_file = pd.ExcelFile(fp)
+            if len(excel_file.sheet_names) > 1:
+                combined_data = {}
+                for sheet in excel_file.sheet_names:
+                    sr = SKIP_ROWS_MAP.get(insight_id, 0)
+                    if insight_id == "PJPA28" and not sheet.startswith("Anomalies"):
+                        sr = 3  # Summary stats usually have 3 blank rows
+                    df = pd.read_excel(fp, sheet_name=sheet, skiprows=sr)
+                    df.columns = df.columns.astype(str)
+                    combined_data[sheet] = df.fillna("N/A").to_dict(orient='records')
+                return jsonify({"status": "success", "insight_id": insight_id, "data": combined_data})
+        except ValueError:
+            pass
 
         df = pd.read_excel(fp, skiprows=SKIP_ROWS_MAP.get(insight_id, 0))
         df.columns = df.columns.astype(str)
