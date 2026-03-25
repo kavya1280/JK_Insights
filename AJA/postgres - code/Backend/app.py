@@ -12,18 +12,6 @@ import json
 from datetime import datetime, timezone, timedelta
 from main_orchestrator import run_selected_insights
 
-from routes.upload import upload_bp
-from routes.dashboard import dashboard_bp
-from routes.pjpa27 import pjpa27_bp
-from routes.pjpa28 import pjpa28_bp
-from routes.pjpa32 import pjpa32_bp
-from routes.pjpa33 import pjpa33_bp
-from routes.pjpa34 import pjpa34_bp
-from routes.pjpa35 import pjpa35_bp
-from routes.pjpa37 import pjpa37_bp
-from routes.pjpa38 import pjpa38_bp
-from routes.pjpa39 import pjpa39_bp
-from routes.pjpa40 import pjpa40_bp
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -203,19 +191,6 @@ FILE_MAP = {
     "PJPA40": "PJPA40_Generated.xlsx",
 }
 
-# Register Blueprints
-app.register_blueprint(upload_bp,    url_prefix='/api/upload')
-app.register_blueprint(dashboard_bp, url_prefix='/api/dashboard')
-app.register_blueprint(pjpa27_bp,    url_prefix='/api/pjpa27')
-app.register_blueprint(pjpa28_bp,    url_prefix='/api/pjpa28')
-app.register_blueprint(pjpa32_bp,    url_prefix='/api/pjpa32')
-app.register_blueprint(pjpa33_bp,    url_prefix='/api/pjpa33')
-app.register_blueprint(pjpa34_bp,    url_prefix='/api/pjpa34')
-app.register_blueprint(pjpa35_bp,    url_prefix='/api/pjpa35')
-app.register_blueprint(pjpa37_bp,    url_prefix='/api/pjpa37')
-app.register_blueprint(pjpa38_bp,    url_prefix='/api/pjpa38')
-app.register_blueprint(pjpa39_bp,    url_prefix='/api/pjpa39')
-app.register_blueprint(pjpa40_bp,    url_prefix='/api/pjpa40')
 
 # ══════════════════════════════════════════════════════════════════════════════
 # FILE UPLOAD & KPI EXTRACTION
